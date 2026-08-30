@@ -21,6 +21,8 @@ export const metadata: Metadata = {
   description: "Student-run repository of Previous Year Questions (PYQs), notes, and exam-pattern references for BE-CSE at Chandigarh University.",
 };
 
+import { Analytics } from "@vercel/analytics/next";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
@@ -31,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <PrevuMascot />
         <AuthListener />
+        <Analytics />
       </body>
     </html>
   );

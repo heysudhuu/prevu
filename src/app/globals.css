@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-prevu-bg: #09090b;
+  --color-prevu-surface: #18181b;
+  --color-prevu-surface-light: #27272a;
+  --color-prevu-text: #fafafa;
+  --color-prevu-text-muted: #a1a1aa;
+  --color-prevu-accent: #8b5cf6;
+  --color-prevu-pending: #f59e0b;
+  --color-prevu-approved: #10b981;
+
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-source-serif);
+  --font-mono: var(--font-ibm-plex);
+}
+
+@layer utilities {
+  .animate-blob {
+    animation: blob 10s infinite;
+  }
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+  .animation-delay-4000 {
+    animation-delay: 4s;
+  }
+}
+
+@keyframes blob {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(40px, -60px) scale(1.1); }
+  66% { transform: translate(-30px, 30px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-down {
+  animation: slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

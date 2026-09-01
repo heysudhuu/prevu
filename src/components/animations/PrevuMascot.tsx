@@ -22,9 +22,9 @@ export default function PrevuMascot() {
     
     // Idle floating animation
     bodyControls.start({
-      y: [0, -10, 0],
+      y: [0, -8, 0],
       transition: { 
-        duration: 4, 
+        duration: 3.5, 
         repeat: Infinity, 
         ease: "easeInOut" 
       }
@@ -43,33 +43,33 @@ export default function PrevuMascot() {
     }).then(() => {
       // Resume floating
       bodyControls.start({
-        y: [0, -10, 0],
-        transition: { duration: 4, repeat: Infinity, ease: "easeInOut" }
+        y: [0, -8, 0],
+        transition: { duration: 3.5, repeat: Infinity, ease: "easeInOut" }
       })
     })
   }
 
-  // Hide on very small screens for performance and layout reasons
   return (
     <motion.div 
-      className="fixed bottom-8 right-8 z-50 cursor-pointer hidden md:flex flex-col items-center group"
+      className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 z-50 cursor-pointer flex flex-col items-center group scale-90 sm:scale-100 select-none"
       animate={bodyControls}
       onClick={handleClick}
       whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.95 }}
     >
       {/* Speech bubble on hover */}
       <motion.div 
-        className="absolute -top-12 opacity-0 group-hover:opacity-100 bg-prevu-surface border border-prevu-surface-light px-3 py-1.5 rounded-xl text-xs font-medium text-prevu-text shadow-lg whitespace-nowrap transition-opacity pointer-events-none"
-        initial={{ y: 10 }}
+        className="absolute -top-10 opacity-0 group-hover:opacity-100 bg-prevu-surface/95 border border-prevu-surface-light px-3 py-1 rounded-xl text-[11px] font-medium text-prevu-text shadow-xl whitespace-nowrap transition-opacity pointer-events-none"
+        initial={{ y: 5 }}
         whileHover={{ y: 0 }}
       >
         Need study materials?
       </motion.div>
 
       {/* Mascot Body */}
-      <div className="relative w-16 h-16 bg-gradient-to-br from-prevu-surface to-prevu-bg border-2 border-prevu-surface-light rounded-2xl shadow-xl shadow-black/50 overflow-hidden flex items-center justify-center">
+      <div className="relative w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-prevu-surface to-prevu-bg border-2 border-prevu-surface-light rounded-2xl shadow-2xl shadow-black/60 overflow-hidden flex items-center justify-center">
         {/* Glow effect inside */}
-        <div className="absolute inset-0 bg-prevu-accent/10"></div>
+        <div className="absolute inset-0 bg-prevu-accent/15"></div>
         
         {/* Eyes track the cursor */}
         <motion.div className="flex gap-2" animate={eyeControls}>
@@ -78,11 +78,11 @@ export default function PrevuMascot() {
         </motion.div>
         
         {/* Smile / Mouth */}
-        <motion.div className="absolute bottom-3 w-4 h-1 bg-prevu-text-muted rounded-full" />
+        <motion.div className="absolute bottom-2.5 sm:bottom-3 w-3.5 h-1 bg-prevu-text-muted rounded-full" />
       </div>
       
       {/* Cute little floating base shadow */}
-      <div className="w-10 h-1 bg-black/40 blur-sm rounded-full mt-4"></div>
+      <div className="w-8 sm:w-10 h-1 bg-black/50 blur-sm rounded-full mt-2.5 sm:mt-3"></div>
     </motion.div>
   )
 }

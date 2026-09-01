@@ -1,10 +1,9 @@
 'use client'
 
 import { motion, useAnimation } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 export default function PrevuMascot() {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const eyeControls = useAnimation()
   const bodyControls = useAnimation()
   
@@ -13,7 +12,6 @@ export default function PrevuMascot() {
       // Calculate cursor position relative to screen center
       const x = (e.clientX / window.innerWidth - 0.5) * 20
       const y = (e.clientY / window.innerHeight - 0.5) * 10
-      setMousePosition({ x, y })
       
       eyeControls.start({
         x: x,

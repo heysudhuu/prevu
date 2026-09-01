@@ -34,7 +34,7 @@ export default async function VerifyEmailLayout({
     if (userData?.cu_verified) {
       redirect('/upload')
     }
-  } catch (error) {
+  } catch {
     redirect('/login')
   }
 

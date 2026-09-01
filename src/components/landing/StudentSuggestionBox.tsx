@@ -1,21 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card'
+import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { submitStudentSuggestion } from '@/app/suggestions/actions'
 import { 
   Lightbulb, 
   Sparkles, 
   Send, 
-  CheckCircle2, 
   AlertCircle, 
   MessageSquarePlus, 
   Loader2, 
-  HelpCircle,
-  Flame,
-  User,
-  Mail
+  User, 
+  Mail 
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -31,11 +28,11 @@ export default function StudentSuggestionBox() {
   const [submitted, setSubmitted] = useState(false)
 
   const categories = [
-    { id: 'idea', label: '💡 New Feature Idea', desc: 'A new tool or feature for students' },
-    { id: 'subject', label: '📚 Missing Subject / Papers', desc: 'Requesting specific academic tracks' },
-    { id: 'ui', label: '🎨 Design & UI Tweak', desc: 'Suggestions to improve experience' },
-    { id: 'community', label: '🚀 Community Initiative', desc: 'Ideas for study clubs and peer sharing' },
-    { id: 'bug', label: '🐛 Report a Glitch', desc: 'Something not working properly' },
+    { id: 'idea', label: '💡 New Feature Idea' },
+    { id: 'subject', label: '📚 Missing Subject / Papers' },
+    { id: 'ui', label: '🎨 Design & UI Tweak' },
+    { id: 'community', label: '🚀 Community Initiative' },
+    { id: 'bug', label: '🐛 Report a Glitch' },
   ]
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -64,7 +61,7 @@ export default function StudentSuggestionBox() {
   }
 
   return (
-    <section className="py-20 bg-gradient-to-b from-prevu-bg via-prevu-surface/50 to-prevu-bg border-t border-prevu-surface-light relative overflow-hidden">
+    <section className="py-24 bg-gradient-to-b from-prevu-bg via-prevu-surface/50 to-prevu-bg border-t border-prevu-surface-light relative overflow-hidden">
       
       {/* Background Decorative Glows */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-prevu-accent/10 blur-[150px] rounded-full pointer-events-none" />
@@ -73,12 +70,12 @@ export default function StudentSuggestionBox() {
         
         {/* Section Heading */}
         <div className="text-center mb-10 space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 uppercase tracking-wider mb-2">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 uppercase tracking-wider mb-2">
             <Lightbulb className="w-3.5 h-3.5" />
             <span>Student Idea & Feedback Box</span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-prevu-text tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
             Have an idea to make Prevu even better?
           </h2>
           <p className="text-sm text-prevu-text-muted max-w-xl mx-auto">
@@ -98,11 +95,11 @@ export default function StudentSuggestionBox() {
                   exit={{ opacity: 0, scale: 0.95 }}
                   className="py-12 text-center space-y-4"
                 >
-                  <div className="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto text-2xl shadow-lg shadow-emerald-500/20">
+                  <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 border-2 border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto text-2xl shadow-lg shadow-emerald-500/20">
                     🎉
                   </div>
                   
-                  <h3 className="text-2xl font-bold text-prevu-text">
+                  <h3 className="text-2xl font-bold text-white">
                     Thank you for your suggestion!
                   </h3>
                   
@@ -134,13 +131,13 @@ export default function StudentSuggestionBox() {
                           type="button"
                           // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           onClick={() => setCategory(c.id as any)}
-                          className={`p-2.5 rounded-xl border text-xs font-medium text-left transition-all flex flex-col justify-between ${
+                          className={`p-3 rounded-xl border text-xs font-medium text-left transition-all flex flex-col justify-between ${
                             category === c.id
-                              ? 'bg-prevu-accent/20 border-prevu-accent text-white shadow-md shadow-prevu-accent/20'
+                              ? 'bg-prevu-accent text-white border-prevu-accent shadow-md shadow-prevu-accent/25'
                               : 'bg-prevu-bg border-prevu-surface-light text-prevu-text-muted hover:text-prevu-text hover:border-prevu-surface-light/80'
                           }`}
                         >
-                          <span className="font-semibold text-[11px]">{c.label}</span>
+                          <span className="font-semibold text-xs">{c.label}</span>
                         </button>
                       ))}
                     </div>
@@ -158,7 +155,7 @@ export default function StudentSuggestionBox() {
                       onChange={e => setTitle(e.target.value)}
                       placeholder="e.g. Add 1-click Semester Question Paper ZIP Bundle or AI formula sheet"
                       required
-                      className="w-full px-4 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text focus:outline-none focus:border-prevu-accent transition-colors"
+                      className="w-full px-4 py-3 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text placeholder:text-prevu-text-muted/40 focus:outline-none focus:border-prevu-accent transition-colors"
                     />
                   </div>
 
@@ -174,7 +171,7 @@ export default function StudentSuggestionBox() {
                       placeholder="Explain how this feature or improvement will help you and other Chandigarh University students..."
                       rows={3}
                       required
-                      className="w-full px-4 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text focus:outline-none focus:border-prevu-accent transition-colors"
+                      className="w-full px-4 py-3 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text placeholder:text-prevu-text-muted/40 focus:outline-none focus:border-prevu-accent transition-colors"
                     />
                   </div>
 
@@ -190,7 +187,7 @@ export default function StudentSuggestionBox() {
                         value={name}
                         onChange={e => setName(e.target.value)}
                         placeholder="e.g. Student Name (@handle)"
-                        className="w-full px-4 py-2 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-prevu-text focus:outline-none focus:border-prevu-accent transition-colors"
+                        className="w-full px-4 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-prevu-text placeholder:text-prevu-text-muted/40 focus:outline-none focus:border-prevu-accent transition-colors"
                       />
                     </div>
 
@@ -204,14 +201,14 @@ export default function StudentSuggestionBox() {
                         value={email}
                         onChange={e => setEmail(e.target.value)}
                         placeholder="e.g. 23bcsXXXX@cuchd.in"
-                        className="w-full px-4 py-2 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-prevu-text focus:outline-none focus:border-prevu-accent transition-colors"
+                        className="w-full px-4 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-prevu-text placeholder:text-prevu-text-muted/40 focus:outline-none focus:border-prevu-accent transition-colors"
                       />
                     </div>
                   </div>
 
                   {/* Error display */}
                   {error && (
-                    <div className="p-3 bg-red-500/10 border border-red-500/25 rounded-xl text-xs text-red-400 flex items-center gap-2">
+                    <div className="p-3.5 bg-red-500/10 border border-red-500/25 rounded-xl text-xs text-red-400 flex items-center gap-2">
                       <AlertCircle className="w-4 h-4 shrink-0" />
                       <span>{error}</span>
                     </div>
@@ -220,9 +217,9 @@ export default function StudentSuggestionBox() {
                   {/* Submit Button */}
                   <div className="pt-2 flex justify-end">
                     <Button 
-                      type="submit"
+                      type="submit" 
                       disabled={isSubmitting}
-                      className="w-full sm:w-auto px-6 py-2.5 text-sm flex items-center justify-center gap-2 shadow-lg shadow-prevu-accent/25"
+                      className="w-full sm:w-auto px-6 py-2.5 text-sm flex items-center justify-center gap-2 shadow-lg shadow-prevu-accent/25 font-bold"
                     >
                       {isSubmitting ? (
                         <>

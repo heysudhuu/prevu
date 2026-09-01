@@ -25,7 +25,7 @@ export async function checkAdmin() {
   let decoded
   try {
     decoded = await authAdmin.verifyIdToken(token)
-  } catch (error) {
+  } catch {
     return false
   }
 

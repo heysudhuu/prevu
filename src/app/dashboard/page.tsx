@@ -3,7 +3,6 @@ import { cookies } from 'next/headers'
 import { authAdmin } from '@/lib/firebase/server'
 import { getSupabaseAdmin } from '@/utils/supabase/admin'
 import Header from '@/components/Header'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 import { 
@@ -24,11 +23,7 @@ export const metadata = {
   description: 'Manage study materials, exams, saved question papers, and requests on Prevu.',
 }
 
-export default async function StudentDashboardPage({
-  searchParams
-}: {
-  searchParams?: Promise<{ view?: string }>
-}) {
+export default async function StudentDashboardPage() {
   const token = (await cookies()).get('firebase-token')?.value
   if (!token) {
     redirect('/login')
@@ -64,7 +59,6 @@ export default async function StudentDashboardPage({
     .order('created_at', { ascending: false })
 
   const approvedCount = myResources?.filter(r => r.status === 'approved').length || 0
-  const pendingCount = myResources?.filter(r => r.status === 'pending').length || 0
 
   // Fetch bookmarks & requests
   const savedResources = await getBookmarkedResources()
@@ -134,7 +128,7 @@ export default async function StudentDashboardPage({
                   )}
                 </div>
 
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-prevu-text tracking-tight">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
                   Welcome back, {userProfile?.name || 'Student'}! 👋
                 </h1>
                 
@@ -153,27 +147,27 @@ export default async function StudentDashboardPage({
 
             {/* Quick Primary Actions */}
             <div className="flex flex-wrap items-center gap-2.5">
-              <Button asChild className="py-2.5 px-4 shadow-lg shadow-prevu-accent/20">
-                <Link href="/upload" className="flex items-center gap-1.5 text-xs font-semibold">
+              <Button asChild className="py-2.5 px-4 shadow-lg shadow-prevu-accent/20 font-bold">
+                <Link href="/upload" className="flex items-center gap-1.5 text-xs">
                   <Upload className="w-4 h-4" /> Upload Paper
                 </Link>
               </Button>
               
-              <Button variant="outline" asChild className="py-2.5 px-4 border-prevu-surface-light hover:border-prevu-accent">
-                <Link href="/profile" className="flex items-center gap-1.5 text-xs font-semibold">
+              <Button variant="outline" asChild className="py-2.5 px-4 border-prevu-surface-light hover:border-prevu-accent font-semibold">
+                <Link href="/profile" className="flex items-center gap-1.5 text-xs">
                   <User className="w-4 h-4 text-prevu-accent" /> My Profile
                 </Link>
               </Button>
 
-              <Button variant="outline" size="sm" asChild className="py-2.5 px-3 border-prevu-surface-light">
-                <Link href="/browse" className="flex items-center gap-1.5 text-xs font-semibold">
+              <Button variant="outline" size="sm" asChild className="py-2.5 px-3 border-prevu-surface-light font-semibold">
+                <Link href="/browse" className="flex items-center gap-1.5 text-xs">
                   <Search className="w-4 h-4" /> Browse
                 </Link>
               </Button>
 
               {isAdmin && (
-                <Button variant="secondary" asChild className="py-2.5 px-4 bg-purple-600/20 text-purple-300 hover:bg-purple-600/30 border border-purple-500/30">
-                  <Link href="/admin" className="flex items-center gap-1.5 text-xs font-semibold">
+                <Button variant="secondary" asChild className="py-2.5 px-4 bg-purple-600/20 text-purple-300 hover:bg-purple-600/30 border border-purple-500/30 font-bold">
+                  <Link href="/admin" className="flex items-center gap-1.5 text-xs">
                     <ShieldCheck className="w-4 h-4" /> Admin Portal
                   </Link>
                 </Button>
@@ -187,7 +181,7 @@ export default async function StudentDashboardPage({
           
           <div className="p-4 rounded-2xl border border-prevu-surface-light bg-prevu-surface/70">
             <div className="text-xs text-prevu-text-muted mb-1">My Contributions</div>
-            <div className="text-2xl font-bold font-mono text-prevu-text">{myResources?.length || 0}</div>
+            <div className="text-2xl font-bold font-mono text-white">{myResources?.length || 0}</div>
             <div className="text-[11px] text-prevu-accent mt-0.5">Uploaded papers</div>
           </div>
 
@@ -200,7 +194,7 @@ export default async function StudentDashboardPage({
           <div className="p-4 rounded-2xl border border-prevu-surface-light bg-prevu-surface/70">
             <div className="text-xs text-prevu-text-muted mb-1">Community Requests</div>
             <div className="text-2xl font-bold font-mono text-purple-400">{paperRequests.length}</div>
-            <div className="text-[11px] text-purple-400/80 mt-0.5">Peer study bounty</div>
+            <div className="text-[11px] text-purple-400/80 mt-0.5">Peer study requests</div>
           </div>
 
           <div className="p-4 rounded-2xl border border-prevu-surface-light bg-prevu-surface/70">

@@ -44,7 +44,7 @@ export async function uploadResource(formData: FormData) {
   let decoded
   try {
     decoded = await authAdmin.verifyIdToken(token)
-  } catch (error) {
+  } catch {
     return { error: 'Invalid or expired authentication session. Please log in again.' }
   }
 

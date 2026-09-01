@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowUpRight, Users, Sparkles, MessageSquare } from 'lucide-react'
+import { ArrowUpRight, Users } from 'lucide-react'
 
 function InstagramIcon({ className = "w-6 h-6" }: { className?: string }) {
   return (
@@ -51,7 +51,7 @@ export default function CommunityConnect() {
             <span>Official Student Channels</span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-prevu-text tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
             Connect directly with the creators & CU community
           </h2>
 
@@ -64,7 +64,7 @@ export default function CommunityConnect() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           
           {/* INSTAGRAM CARD */}
-          <div className="relative group rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-pink-950/20 via-prevu-surface to-prevu-surface border border-pink-500/30 hover:border-pink-500/60 transition-all duration-300 shadow-xl overflow-hidden flex flex-col justify-between space-y-6">
+          <div className="relative group rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-pink-950/20 via-prevu-surface to-prevu-surface border border-pink-500/30 hover:border-pink-500/60 transition-all duration-300 shadow-xl overflow-hidden flex flex-col justify-between space-y-6 hover:-translate-y-1">
             <div className="absolute top-0 right-0 w-40 h-40 bg-pink-500/10 blur-3xl rounded-full pointer-events-none" />
 
             <div className="space-y-4 relative z-10">
@@ -76,7 +76,7 @@ export default function CommunityConnect() {
                 <div className="text-xs font-mono text-pink-400 font-bold uppercase tracking-wider">
                   Official Instagram
                 </div>
-                <h3 className="text-2xl font-extrabold text-prevu-text mt-0.5 flex items-center gap-2">
+                <h3 className="text-2xl font-extrabold text-white mt-0.5 flex items-center gap-2">
                   <span>@cu.exclusive</span>
                 </h3>
               </div>
@@ -99,7 +99,7 @@ export default function CommunityConnect() {
           </div>
 
           {/* WHATSAPP COMMUNITY CARD */}
-          <div className="relative group rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-emerald-950/20 via-prevu-surface to-prevu-surface border border-emerald-500/30 hover:border-emerald-500/60 transition-all duration-300 shadow-xl overflow-hidden flex flex-col justify-between space-y-6">
+          <div className="relative group rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-emerald-950/20 via-prevu-surface to-prevu-surface border border-emerald-500/30 hover:border-emerald-500/60 transition-all duration-300 shadow-xl overflow-hidden flex flex-col justify-between space-y-6 hover:-translate-y-1">
             <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-500/10 blur-3xl rounded-full pointer-events-none" />
 
             <div className="space-y-4 relative z-10">
@@ -111,7 +111,7 @@ export default function CommunityConnect() {
                 <div className="text-xs font-mono text-emerald-400 font-bold uppercase tracking-wider">
                   WhatsApp Student Channel
                 </div>
-                <h3 className="text-2xl font-extrabold text-prevu-text mt-0.5 flex items-center gap-2">
+                <h3 className="text-2xl font-extrabold text-white mt-0.5 flex items-center gap-2">
                   <span>CU Community Hub</span>
                 </h3>
               </div>

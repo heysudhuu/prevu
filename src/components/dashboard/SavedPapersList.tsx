@@ -1,10 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { toggleBookmark } from '@/app/dashboard/actions'
-import { Bookmark, ExternalLink, Download, Trash2, BookOpen, Layers, Star } from 'lucide-react'
+import { ExternalLink, Download, Trash2, Star } from 'lucide-react'
 import Link from 'next/link'
 
 interface SavedPapersProps {
@@ -25,13 +24,13 @@ export default function SavedPapersList({ resources: initialResources }: SavedPa
 
   if (resources.length === 0) {
     return (
-      <div className="p-12 text-center border border-dashed border-prevu-surface-light rounded-3xl bg-prevu-surface/40 my-4">
+      <div className="p-12 text-center border border-dashed border-prevu-surface-light rounded-3xl bg-prevu-surface/40 my-4 shadow-xl">
         <Star className="w-10 h-10 text-amber-400/50 mx-auto mb-3" />
-        <h3 className="text-lg font-bold text-prevu-text">No Saved Papers Yet</h3>
+        <h3 className="text-lg font-bold text-white">No Saved Papers Yet</h3>
         <p className="text-xs text-prevu-text-muted mt-1 max-w-sm mx-auto">
           Click the bookmark icon on any exam paper while browsing to save it here for fast revision during exams.
         </p>
-        <Button size="sm" className="mt-4 text-xs" asChild>
+        <Button size="sm" className="mt-4 text-xs font-bold" asChild>
           <Link href="/browse">Browse Exam Archive</Link>
         </Button>
       </div>
@@ -39,7 +38,7 @@ export default function SavedPapersList({ resources: initialResources }: SavedPa
   }
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-prevu-surface-light bg-prevu-surface/80 shadow-xl">
+    <div className="overflow-x-auto rounded-2xl border border-prevu-surface-light bg-prevu-surface/90 shadow-xl">
       <table className="w-full text-left text-xs">
         <thead className="bg-prevu-bg/90 text-prevu-text-muted border-b border-prevu-surface-light">
           <tr>
@@ -54,10 +53,10 @@ export default function SavedPapersList({ resources: initialResources }: SavedPa
           {resources.map((resource) => (
             <tr key={resource.id} className="hover:bg-prevu-surface-light/30 transition-colors">
               <td className="p-4">
-                <div className="font-semibold text-prevu-text text-sm">
+                <div className="font-semibold text-white text-sm">
                   {resource.subjects?.name}
                 </div>
-                <div className="font-mono text-prevu-text-muted text-[11px]">
+                <div className="font-mono text-prevu-accent text-[11px]">
                   {resource.subjects?.code}
                 </div>
               </td>
@@ -77,9 +76,9 @@ export default function SavedPapersList({ resources: initialResources }: SavedPa
                 )}
               </td>
               <td className="p-4 text-right flex items-center justify-end gap-2">
-                <Button size="sm" variant="secondary" className="h-8 px-2.5 text-xs" asChild>
+                <Button size="sm" variant="secondary" className="h-8 px-2.5 text-xs font-semibold" asChild>
                   <a href={`/api/preview/${resource.id}`} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="w-3.5 h-3.5 mr-1" /> View
+                    <ExternalLink className="w-3.5 h-3.5 mr-1 text-prevu-accent" /> View
                   </a>
                 </Button>
                 <Button size="sm" variant="outline" className="h-8 px-2 text-xs border-prevu-surface-light" asChild>
@@ -90,7 +89,7 @@ export default function SavedPapersList({ resources: initialResources }: SavedPa
                 <Button 
                   size="sm" 
                   variant="ghost" 
-                  className="h-8 px-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                  className="h-8 px-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 cursor-pointer"
                   disabled={removingId === resource.id}
                   onClick={() => handleRemoveBookmark(resource.id)}
                   title="Remove from saved"

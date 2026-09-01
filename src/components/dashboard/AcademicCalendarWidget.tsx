@@ -2,19 +2,10 @@
 
 import { useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { 
   CalendarDays, 
-  Clock, 
-  Sparkles, 
-  BookOpen, 
-  FileText, 
   ChevronRight, 
-  Calendar, 
-  Flame, 
-  Award,
-  AlertCircle,
   Search
 } from 'lucide-react'
 import Link from 'next/link'
@@ -326,7 +317,6 @@ export default function AcademicCalendarWidget({ semester = 1 }: { semester?: nu
                 const isExam = item.category === 'exam'
                 const isPractical = item.category === 'practical'
                 const isHoliday = item.category === 'holiday'
-                const isResult = item.category === 'result'
 
                 return (
                   <tr 

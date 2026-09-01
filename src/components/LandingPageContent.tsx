@@ -2,12 +2,13 @@
 
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
-import { ArrowRight, Upload, Search, Sparkles } from 'lucide-react'
+import { ArrowRight, Upload, Search, Sparkles, X } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatedPapersIcon, AnimatedNotesIcon, AnimatedVerifiedIcon, AnimatedCommunityIcon } from './animations/AnimatedIcons'
 import AboutUsSection from './landing/AboutUsSection'
+import UpcomingFeaturesRoadmap from './landing/UpcomingFeaturesRoadmap'
 import CommunityConnect from './landing/CommunityConnect'
 import StudentSuggestionBox from './landing/StudentSuggestionBox'
 
@@ -35,48 +36,61 @@ export default function LandingPageContent() {
       {/* ============================================================ */}
       {/* 1. HERO SECTION */}
       {/* ============================================================ */}
-      <section className="relative overflow-hidden pt-20 pb-24 lg:pt-32 lg:pb-36 border-b border-prevu-surface-light">
-        {/* Academic grid background */}
-        <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]" />
-        <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[350px] w-[350px] rounded-full bg-purple-600 opacity-20 blur-[120px]" />
+      <section className="relative overflow-hidden pt-16 pb-20 lg:pt-28 lg:pb-32 border-b border-prevu-surface-light">
+        {/* Academic grid & ambient radial glows */}
+        <div className="absolute inset-0 z-0 grid-pattern opacity-60" />
+        <div className="absolute left-1/2 top-10 -translate-x-1/2 -z-10 h-[450px] w-[650px] rounded-full bg-purple-600/15 blur-[140px] pointer-events-none" />
+        <div className="absolute right-10 top-1/3 -z-10 h-[300px] w-[300px] rounded-full bg-cyan-500/10 blur-[120px] pointer-events-none" />
         
         {/* 3D Scene */}
         <Hero3DScene />
 
-        <div className="container mx-auto px-4 relative z-10 flex flex-col items-center text-center">
+        <div className="container mx-auto px-4 relative z-10 flex flex-col items-center text-center max-w-5xl">
           
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-prevu-surface-light bg-prevu-surface px-4 py-1.5 text-xs font-semibold text-prevu-text-muted mb-6 shadow-sm">
+          {/* Top Badge */}
+          <div className="inline-flex items-center gap-2 rounded-full border border-prevu-accent/30 bg-prevu-surface/90 px-4 py-1.5 text-xs font-semibold text-prevu-text mb-6 shadow-lg shadow-prevu-accent/10 animate-fade-in">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Chandigarh University BE-CSE Digital Vault</span>
+            <span className="text-prevu-text-muted">Chandigarh University</span>
+            <span className="text-prevu-surface-light">•</span>
+            <span className="text-prevu-accent font-bold">BE-CSE Digital Vault</span>
           </div>
           
           {/* Main Headline */}
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-sans font-extrabold tracking-tighter text-prevu-text mb-6 max-w-4xl leading-tight">
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-sans font-extrabold tracking-tight text-white mb-6 max-w-4xl leading-[1.1] animate-fade-in">
             The Ultimate Archive for <br className="hidden sm:block" />
-            <span className="text-prevu-accent">BE-CSE Papers.</span>
+            <span className="text-gradient-purple">BE-CSE Question Papers.</span>
           </h1>
           
           {/* Subtitle */}
-          <p className="text-base sm:text-lg text-prevu-text-muted max-w-2xl mb-8 leading-relaxed">
-            Stop endlessly searching WhatsApp groups. Prevu is your centralized, student-run repository for Previous Year Questions, high-quality notes, and exam-pattern references for Chandigarh University.
+          <p className="text-base sm:text-lg text-prevu-text-muted max-w-2xl mb-8 leading-relaxed animate-fade-in">
+            Stop endlessly searching chaotic WhatsApp groups. Prevu is your centralized, student-run vault for Previous Year Questions (MST-1, MST-2, EST), semester notes, and exam blueprints for Chandigarh University.
           </p>
           
           {/* Quick Hero Search Input */}
           <form 
             onSubmit={handleHeroSearch}
-            className="w-full max-w-lg mb-8 relative"
+            className="w-full max-w-xl mb-6 relative group animate-fade-in"
           >
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-prevu-text-muted" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-prevu-text-muted group-focus-within:text-prevu-accent transition-colors" />
             <input 
               type="text"
               value={heroSearch}
               onChange={e => setHeroSearch(e.target.value)}
               placeholder="Search by subject or code (e.g. 23CST-201, OS, DBMS)..."
-              className="w-full pl-11 pr-28 py-3.5 bg-prevu-surface/90 backdrop-blur-xl border border-prevu-surface-light hover:border-prevu-accent/50 focus:border-prevu-accent rounded-2xl text-sm text-prevu-text placeholder:text-prevu-text-muted/60 focus:outline-none transition-all shadow-xl shadow-prevu-accent/5"
+              className="w-full pl-11 pr-28 py-3.5 bg-prevu-surface/95 backdrop-blur-2xl border border-prevu-surface-light hover:border-prevu-accent/50 focus:border-prevu-accent rounded-2xl text-sm text-prevu-text placeholder:text-prevu-text-muted/50 focus:outline-none transition-all shadow-xl shadow-black/40"
             />
+            {heroSearch && (
+              <button
+                type="button"
+                onClick={() => setHeroSearch('')}
+                className="absolute right-24 top-1/2 -translate-y-1/2 text-prevu-text-muted hover:text-prevu-text p-1"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
             <Button 
               type="submit"
+              size="sm"
               className="absolute right-2 top-1/2 -translate-y-1/2 h-9 px-4 text-xs font-bold rounded-xl"
             >
               Search
@@ -84,27 +98,29 @@ export default function LandingPageContent() {
           </form>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mb-8">
-            <Button size="lg" className="text-sm px-6 py-5 h-auto transition-transform hover:-translate-y-0.5 shadow-md shadow-prevu-accent/10 font-bold" asChild>
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mb-8 animate-fade-in">
+            <Button size="lg" className="text-sm px-6 py-3.5 h-auto font-bold shadow-lg shadow-prevu-accent/25" asChild>
               <Link href="/browse">
-                Browse Full Archive <ArrowRight className="ml-2 h-4 w-4" />
+                <span>Browse Full Archive</span>
+                <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="text-sm px-6 py-5 h-auto transition-transform hover:-translate-y-0.5 hover:bg-prevu-surface bg-transparent border-prevu-surface-light text-prevu-text font-semibold" asChild>
+            <Button size="lg" variant="outline" className="text-sm px-6 py-3.5 h-auto font-semibold border-prevu-surface-light hover:border-prevu-accent/50" asChild>
               <Link href="/upload">
-                <Upload className="mr-2 h-4 w-4" /> Contribute Paper
+                <Upload className="w-4 h-4 text-prevu-accent" />
+                <span>Contribute Paper</span>
               </Link>
             </Button>
           </div>
 
           {/* 1-Click Semester Quick Jump Chips */}
-          <div className="flex flex-wrap items-center justify-center gap-2 max-w-xl">
+          <div className="flex flex-wrap items-center justify-center gap-2 max-w-xl animate-fade-in">
             <span className="text-xs text-prevu-text-muted font-medium mr-1">Quick Jump:</span>
             {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
               <Link
                 key={sem}
                 href={`/browse?sem=${sem}`}
-                className="px-2.5 py-1 rounded-lg border border-prevu-surface-light/80 bg-prevu-surface/60 hover:bg-prevu-surface hover:border-prevu-accent text-xs font-mono font-semibold text-prevu-text-muted hover:text-prevu-accent transition-colors"
+                className="px-3 py-1.5 rounded-xl border border-prevu-surface-light bg-prevu-surface/70 hover:bg-prevu-surface hover:border-prevu-accent text-xs font-mono font-bold text-prevu-text-muted hover:text-prevu-accent transition-all shadow-sm hover:scale-105"
               >
                 Sem {sem}
               </Link>
@@ -112,38 +128,106 @@ export default function LandingPageContent() {
           </div>
 
         </div>
+
+        {/* Live Academic Feature Strip */}
+        <div className="container mx-auto px-4 mt-16 max-w-5xl">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 p-4 rounded-3xl bg-prevu-surface/60 border border-prevu-surface-light shadow-xl backdrop-blur-xl text-center">
+            
+            <div className="p-3">
+              <div className="text-2xl sm:text-3xl font-extrabold font-mono text-purple-300">8</div>
+              <div className="text-xs text-prevu-text-muted font-semibold mt-0.5">Semesters Vault</div>
+            </div>
+
+            <div className="p-3">
+              <div className="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-400">100%</div>
+              <div className="text-xs text-prevu-text-muted font-semibold mt-0.5">Free & Open</div>
+            </div>
+
+            <div className="p-3">
+              <div className="text-2xl sm:text-3xl font-extrabold font-mono text-cyan-400">MST & EST</div>
+              <div className="text-xs text-prevu-text-muted font-semibold mt-0.5">CU Exam Patterns</div>
+            </div>
+
+            <div className="p-3">
+              <div className="text-2xl sm:text-3xl font-extrabold font-mono text-amber-400">Instant</div>
+              <div className="text-xs text-prevu-text-muted font-semibold mt-0.5">PDF Previews</div>
+            </div>
+
+          </div>
+        </div>
+
       </section>
 
       {/* ============================================================ */}
-      {/* 2. FEATURE SECTION */}
+      {/* 2. FEATURE BENTO GRID */}
       {/* ============================================================ */}
       <section className="py-24 relative overflow-hidden bg-prevu-bg border-b border-prevu-surface-light">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16 max-w-3xl mx-auto">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-sans font-extrabold tracking-tight text-prevu-text mb-6">
+        <div className="container mx-auto px-4 max-w-6xl">
+          
+          <div className="text-center mb-16 max-w-3xl mx-auto space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-prevu-accent/15 text-prevu-accent border border-prevu-accent/30 uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Smart Exam Preparation</span>
+            </div>
+            
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-sans font-extrabold tracking-tight text-white">
               Everything you need to ace your exams.
             </h2>
-            <p className="text-prevu-text-muted text-base sm:text-lg leading-relaxed">
-              Built by students, for students. We understand the struggle of finding reliable study material right before exams. Prevu solves this by crowdsourcing and organizing the best resources.
+            
+            <p className="text-prevu-text-muted text-sm sm:text-base leading-relaxed">
+              Built by CU students, for CU students. We understand the panic right before MSTs and ESTs. Prevu crowdsources, verifies, and categorizes study materials by subject code and semester.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
-              { title: "Past Year Papers", desc: "Access authentic PYQs to understand the exact exam pattern and frequently asked topics.", icon: <AnimatedPapersIcon /> },
-              { title: "Curated Notes", desc: "High-quality, easy-to-understand notes contributed by top-performing seniors and peers.", icon: <AnimatedNotesIcon /> },
-              { title: "Community Verified", desc: "Resources are reviewed and approved to ensure you only get accurate, trustworthy material.", icon: <AnimatedVerifiedIcon /> },
-              { title: "Free Forever", desc: "Knowledge should be accessible. Prevu is a free, open platform for all CU BE-CSE students.", icon: <AnimatedCommunityIcon /> }
+              { 
+                title: "Past Year Papers", 
+                desc: "Access verified MST 1, MST 2, and EST question papers mapped to exact CU course codes.", 
+                icon: <AnimatedPapersIcon />,
+                badge: "MST & EST"
+              },
+              { 
+                title: "Curated Notes", 
+                desc: "High-yield, easy-to-understand notes and revision cheatsheets shared by top seniors and peers.", 
+                icon: <AnimatedNotesIcon />,
+                badge: "High Yield"
+              },
+              { 
+                title: "Peer Verified", 
+                desc: "Every submission is checked for legibility, accurate subject code, and correct semester.", 
+                icon: <AnimatedVerifiedIcon />,
+                badge: "Admin Checked"
+              },
+              { 
+                title: "Free Forever", 
+                desc: "Knowledge should be open. Prevu has zero paywalls, subscriptions, coin locks, or annoying ads.", 
+                icon: <AnimatedCommunityIcon />,
+                badge: "No Paywalls"
+              }
             ].map((feature, i) => (
               <div 
                 key={i} 
-                className="bg-prevu-surface border border-prevu-surface-light p-8 rounded-2xl transition-all duration-300 relative group overflow-hidden hover:border-prevu-accent/50 shadow-lg"
+                className="bg-prevu-surface/85 backdrop-blur-xl border border-prevu-surface-light p-6 rounded-2xl transition-all duration-300 relative group overflow-hidden hover:border-prevu-accent/50 shadow-xl hover:-translate-y-1 flex flex-col justify-between"
               >
-                <div className="w-12 h-12 bg-prevu-bg rounded-xl flex items-center justify-center mb-6 border border-prevu-surface-light group-hover:scale-105 transition-transform">
-                  {feature.icon}
+                <div>
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="w-12 h-12 bg-prevu-bg rounded-xl flex items-center justify-center border border-prevu-surface-light group-hover:scale-110 group-hover:border-prevu-accent/40 transition-all shadow-inner">
+                      {feature.icon}
+                    </div>
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-prevu-surface-light text-prevu-text-muted border border-prevu-surface-light">
+                      {feature.badge}
+                    </span>
+                  </div>
+                  
+                  <h3 className="text-lg font-bold text-prevu-text mb-2 group-hover:text-prevu-accent transition-colors">
+                    {feature.title}
+                  </h3>
+                  
+                  <p className="text-prevu-text-muted text-xs sm:text-sm leading-relaxed">
+                    {feature.desc}
+                  </p>
                 </div>
-                <h3 className="text-xl font-bold text-prevu-text mb-3">{feature.title}</h3>
-                <p className="text-prevu-text-muted text-xs sm:text-sm leading-relaxed">{feature.desc}</p>
               </div>
             ))}
           </div>
@@ -153,42 +237,50 @@ export default function LandingPageContent() {
       {/* ============================================================ */}
       {/* 3. HOW IT WORKS */}
       {/* ============================================================ */}
-      <section className="py-24 bg-prevu-surface/60 border-b border-prevu-surface-light">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-sans font-extrabold tracking-tight text-center text-prevu-text mb-20">
-            How it works
-          </h2>
+      <section className="py-24 bg-prevu-surface/40 border-b border-prevu-surface-light relative">
+        <div className="container mx-auto px-4 max-w-5xl">
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-5xl mx-auto relative pl-8 md:pl-0">
-            <div className="relative z-10 flex flex-col md:items-center text-left md:text-center group">
-              <div className="absolute md:relative left-[-3.25rem] md:left-0 top-0 md:top-auto w-14 h-14 bg-prevu-surface border-2 border-prevu-surface-light group-hover:border-prevu-accent rounded-full flex items-center justify-center text-xl font-sans font-bold text-prevu-text group-hover:text-prevu-accent mb-6 shadow-sm transition-colors duration-500 z-10">
+          <div className="text-center mb-16 space-y-2">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-sans font-extrabold tracking-tight text-white">
+              How Prevu Works
+            </h2>
+            <p className="text-xs sm:text-sm text-prevu-text-muted max-w-md mx-auto">
+              Three seamless steps from finding questions to acing your semester exams.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <div className="p-6 rounded-3xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-purple-500/40 transition-all shadow-xl space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-lg font-mono font-bold text-purple-300 shadow-md">
                 1
               </div>
-              <h3 className="text-xl font-bold text-prevu-text mb-3">Search</h3>
-              <p className="text-prevu-text-muted text-xs sm:text-sm leading-relaxed">
-                Use our instant search and filters to find exactly what you need by semester, subject, or exam year.
+              <h3 className="text-lg font-bold text-white">Search & Filter</h3>
+              <p className="text-xs text-prevu-text-muted leading-relaxed">
+                Filter instantly by semester, course code (e.g. 23CST-201), exam pattern (MST 1, MST 2, EST), or academic year.
               </p>
             </div>
             
-            <div className="relative z-10 flex flex-col md:items-center text-left md:text-center group">
-              <div className="absolute md:relative left-[-3.25rem] md:left-0 top-0 md:top-auto w-14 h-14 bg-prevu-surface border-2 border-prevu-surface-light group-hover:border-prevu-accent rounded-full flex items-center justify-center text-xl font-sans font-bold text-prevu-text group-hover:text-prevu-accent mb-6 shadow-sm transition-colors duration-500 z-10">
+            <div className="p-6 rounded-3xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-cyan-500/40 transition-all shadow-xl space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-lg font-mono font-bold text-cyan-300 shadow-md">
                 2
               </div>
-              <h3 className="text-xl font-bold text-prevu-text mb-3">Solve & Prepare</h3>
-              <p className="text-prevu-text-muted text-xs sm:text-sm leading-relaxed">
-                Access PDFs and past papers instantly. Free preview, download, and 1-click WhatsApp study group sharing.
+              <h3 className="text-lg font-bold text-white">Preview, Solve & Share</h3>
+              <p className="text-xs text-prevu-text-muted leading-relaxed">
+                Open in-browser PDF previews, download with 1-click, or share directly to your WhatsApp study groups.
               </p>
             </div>
             
-            <div className="relative z-10 flex flex-col md:items-center text-left md:text-center group">
-              <div className="absolute md:relative left-[-3.25rem] md:left-0 top-0 md:top-auto w-14 h-14 bg-prevu-surface border-2 border-prevu-surface-light group-hover:border-prevu-accent rounded-full flex items-center justify-center text-xl font-sans font-bold text-prevu-text group-hover:text-prevu-accent mb-6 shadow-sm transition-colors duration-500 z-10">
+            <div className="p-6 rounded-3xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-emerald-500/40 transition-all shadow-xl space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-lg font-mono font-bold text-emerald-300 shadow-md">
                 3
               </div>
-              <h3 className="text-xl font-bold text-prevu-text mb-3">Contribute</h3>
-              <p className="text-prevu-text-muted text-xs sm:text-sm leading-relaxed">
-                Upload your MST and EST question papers. Give back to the community and help your juniors succeed.
+              <h3 className="text-lg font-bold text-white">Contribute & Help Peers</h3>
+              <p className="text-xs text-prevu-text-muted leading-relaxed">
+                Upload your MST and EST question papers. Earn verified contributor credits and help your batchmates succeed.
               </p>
             </div>
+
           </div>
         </div>
       </section>
@@ -197,6 +289,11 @@ export default function LandingPageContent() {
       {/* 4. ABOUT US & CAMPUS STORY */}
       {/* ============================================================ */}
       <AboutUsSection />
+
+      {/* ============================================================ */}
+      {/* 5. MULTI-DEPARTMENT EXPANSION & UPCOMING ROADMAP */}
+      {/* ============================================================ */}
+      <UpcomingFeaturesRoadmap />
 
       {/* ============================================================ */}
       {/* 5. OFFICIAL INSTAGRAM & WHATSAPP COMMUNITY */}
@@ -211,9 +308,12 @@ export default function LandingPageContent() {
       {/* ============================================================ */}
       {/* 7. FOOTER */}
       {/* ============================================================ */}
-      <footer className="py-12 border-t border-prevu-surface-light bg-prevu-surface/60 text-center text-xs text-prevu-text-muted space-y-4">
-        <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 font-semibold text-prevu-text">
+      <footer className="py-12 border-t border-prevu-surface-light bg-prevu-surface/80 text-xs text-prevu-text-muted space-y-4">
+        <div className="container mx-auto px-4 max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5 font-semibold text-prevu-text">
+            <div className="w-6 h-6 rounded-lg bg-prevu-accent flex items-center justify-center text-white text-xs font-bold">
+              P
+            </div>
             <span>Prevu</span>
             <span>•</span>
             <span className="text-prevu-accent">Chandigarh University BE-CSE Vault</span>
@@ -227,7 +327,7 @@ export default function LandingPageContent() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-500/10 text-pink-300 border border-pink-500/25 hover:bg-pink-500/20 transition-colors"
             >
-              <span>📸 Instagram: @cu.exclusive</span>
+              <span>📸 @cu.exclusive</span>
             </a>
 
             <a 
@@ -240,7 +340,7 @@ export default function LandingPageContent() {
             </a>
           </div>
 
-          <p>© 2026 Prevu. Student-run academic library.</p>
+          <p>© 2026 Prevu. Student-run academic archive.</p>
         </div>
       </footer>
 

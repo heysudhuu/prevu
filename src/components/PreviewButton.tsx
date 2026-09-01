@@ -21,7 +21,8 @@ export default function PreviewButton({ resource }: PreviewButtonProps) {
   const handleClick = () => {
     try {
       const stored = localStorage.getItem('prevu_recent_papers')
-      let recents = stored ? JSON.parse(stored) : []
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let recents: any[] = stored ? JSON.parse(stored) : []
       
       const newEntry = {
         id: resource.id,
@@ -45,12 +46,12 @@ export default function PreviewButton({ resource }: PreviewButtonProps) {
     <Button 
       variant="secondary" 
       size="sm" 
-      className="flex-1 text-xs" 
+      className="flex-1 text-xs font-semibold hover:bg-prevu-surface-elevated" 
       asChild
       onClick={handleClick}
     >
       <a href={`/api/preview/${resource.id}`} target="_blank" rel="noopener noreferrer">
-        <ExternalLink className="w-3 h-3 mr-1" /> Preview
+        <ExternalLink className="w-3.5 h-3.5 mr-1 text-prevu-accent" /> Preview
       </a>
     </Button>
   )

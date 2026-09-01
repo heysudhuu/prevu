@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Share2, Check, Copy } from 'lucide-react'
 
 function WhatsAppIcon({ className = "w-3.5 h-3.5" }: { className?: string }) {
@@ -29,6 +29,19 @@ interface SharePaperButtonProps {
 export default function SharePaperButton({ resource }: SharePaperButtonProps) {
   const [copied, setCopied] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false)
+      }
+    }
+    if (showMenu) {
+      document.addEventListener('click', handleClickOutside)
+    }
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [showMenu])
 
   const subjectName = resource.subjects?.name || 'Question Paper'
   const subjectCode = resource.subjects?.code || ''
@@ -64,14 +77,14 @@ export default function SharePaperButton({ resource }: SharePaperButtonProps) {
   }
 
   return (
-    <div className="relative inline-block">
+    <div className="relative inline-block" ref={menuRef}>
       <button
         onClick={(e) => {
           e.stopPropagation()
           setShowMenu(!showMenu)
         }}
         title="Share with Classmates"
-        className="p-1.5 rounded-lg border border-prevu-surface-light bg-prevu-bg/80 hover:bg-prevu-surface hover:border-prevu-accent/50 text-prevu-text-muted hover:text-prevu-accent transition-all text-xs flex items-center justify-center"
+        className="p-1.5 rounded-lg border border-prevu-surface-light bg-prevu-bg/90 hover:bg-prevu-surface hover:border-prevu-accent/50 text-prevu-text-muted hover:text-prevu-accent transition-all text-xs flex items-center justify-center cursor-pointer"
       >
         <Share2 className="w-3.5 h-3.5" />
       </button>
@@ -80,28 +93,28 @@ export default function SharePaperButton({ resource }: SharePaperButtonProps) {
       {showMenu && (
         <div 
           onClick={(e) => e.stopPropagation()}
-          className="absolute right-0 bottom-full mb-1.5 w-44 rounded-xl border border-prevu-surface-light bg-prevu-surface/95 backdrop-blur-xl shadow-2xl p-1.5 z-30 space-y-1 animate-scale-in"
+          className="absolute right-0 bottom-full mb-1.5 w-48 rounded-xl border border-prevu-surface-light bg-prevu-surface/98 backdrop-blur-2xl shadow-2xl p-1.5 z-30 space-y-1 animate-scale-in"
         >
           <button
             onClick={handleWhatsAppShare}
-            className="w-full px-2.5 py-1.5 rounded-lg text-left text-xs font-medium text-prevu-text hover:bg-emerald-500/15 hover:text-emerald-300 flex items-center gap-2 transition-colors"
+            className="w-full px-2.5 py-2 rounded-lg text-left text-xs font-medium text-prevu-text hover:bg-emerald-500/15 hover:text-emerald-300 flex items-center gap-2 transition-colors cursor-pointer"
           >
-            <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-400" />
+            <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
             <span>Share on WhatsApp</span>
           </button>
 
           <button
             onClick={handleCopy}
-            className="w-full px-2.5 py-1.5 rounded-lg text-left text-xs font-medium text-prevu-text hover:bg-prevu-accent/15 hover:text-prevu-accent flex items-center gap-2 transition-colors"
+            className="w-full px-2.5 py-2 rounded-lg text-left text-xs font-medium text-prevu-text hover:bg-prevu-accent/15 hover:text-prevu-accent flex items-center gap-2 transition-colors cursor-pointer"
           >
             {copied ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-emerald-400">Copied Link!</span>
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span className="text-emerald-400 font-semibold">Copied Link!</span>
               </>
             ) : (
               <>
-                <Copy className="w-3.5 h-3.5 text-prevu-text-muted" />
+                <Copy className="w-3.5 h-3.5 text-prevu-text-muted shrink-0" />
                 <span>Copy Share Link</span>
               </>
             )}

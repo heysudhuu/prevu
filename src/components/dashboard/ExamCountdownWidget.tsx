@@ -3,17 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
-import { 
-  Clock, 
-  Calendar, 
-  Sparkles, 
-  ChevronRight, 
-  CalendarDays, 
-  BookOpen, 
-  CheckCircle2, 
-  Flame,
-  Award
-} from 'lucide-react'
+import { Clock, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 
 export interface AcademicMilestone {
@@ -163,7 +153,7 @@ export default function ExamCountdownWidget({ semester = 1 }: { semester?: numbe
                 </span>
               )}
             </div>
-            <CardTitle className="text-xl sm:text-2xl font-extrabold text-prevu-text tracking-tight">
+            <CardTitle className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
               {activeEvent.name}
             </CardTitle>
           </div>
@@ -176,17 +166,17 @@ export default function ExamCountdownWidget({ semester = 1 }: { semester?: numbe
         <div className="grid grid-cols-4 gap-2.5 sm:gap-3 text-center">
           
           <div className="p-3 sm:p-4 rounded-2xl bg-prevu-bg/90 border border-prevu-surface-light shadow-inner group">
-            <div className="text-2xl sm:text-4xl font-extrabold font-mono text-prevu-text">{days}</div>
+            <div className="text-2xl sm:text-4xl font-extrabold font-mono text-white">{days}</div>
             <div className="text-[10px] sm:text-xs text-prevu-text-muted uppercase tracking-wider font-semibold mt-1">Days</div>
           </div>
 
           <div className="p-3 sm:p-4 rounded-2xl bg-prevu-bg/90 border border-prevu-surface-light shadow-inner">
-            <div className="text-2xl sm:text-4xl font-extrabold font-mono text-prevu-text">{hours}</div>
+            <div className="text-2xl sm:text-4xl font-extrabold font-mono text-white">{hours}</div>
             <div className="text-[10px] sm:text-xs text-prevu-text-muted uppercase tracking-wider font-semibold mt-1">Hours</div>
           </div>
 
           <div className="p-3 sm:p-4 rounded-2xl bg-prevu-bg/90 border border-prevu-surface-light shadow-inner">
-            <div className="text-2xl sm:text-4xl font-extrabold font-mono text-prevu-text">{minutes}</div>
+            <div className="text-2xl sm:text-4xl font-extrabold font-mono text-white">{minutes}</div>
             <div className="text-[10px] sm:text-xs text-prevu-text-muted uppercase tracking-wider font-semibold mt-1">Mins</div>
           </div>
 
@@ -200,7 +190,7 @@ export default function ExamCountdownWidget({ semester = 1 }: { semester?: numbe
         {/* Milestone Description & Action Strip */}
         <div className="p-4 rounded-2xl bg-prevu-bg/70 border border-prevu-surface-light/80 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="text-xs font-semibold text-prevu-text">{activeEvent.description}</div>
+            <div className="text-xs font-semibold text-white">{activeEvent.description}</div>
             <div className="text-[11px] font-mono text-prevu-text-muted">
               📅 Date: {activeEvent.startDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
               {activeEvent.endDate ? ` — ${activeEvent.endDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}
@@ -210,7 +200,7 @@ export default function ExamCountdownWidget({ semester = 1 }: { semester?: numbe
           {activeEvent.practiceExamType && (
             <Link 
               href={`/browse?sem=${semester}&type=${activeEvent.practiceExamType}`}
-              className="shrink-0 px-4 py-2 rounded-xl bg-prevu-accent text-white hover:bg-prevu-accent/90 shadow-lg shadow-prevu-accent/25 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all"
+              className="shrink-0 px-4 py-2 rounded-xl bg-prevu-accent text-white hover:bg-purple-600 shadow-lg shadow-prevu-accent/25 font-bold text-xs flex items-center justify-center gap-1.5 transition-all"
             >
               <span>Solve {activeEvent.practiceExamType} Papers</span>
               <ChevronRight className="w-4 h-4" />
@@ -222,7 +212,7 @@ export default function ExamCountdownWidget({ semester = 1 }: { semester?: numbe
         <div className="space-y-2">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-prevu-text-muted flex items-center justify-between">
             <span>Official Semester Exam Timeline</span>
-            <span className="text-[10px] text-prevu-accent font-normal">Click any milestone to inspect</span>
+            <span className="text-[10px] text-prevu-accent font-medium">Click any milestone to inspect</span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
@@ -234,9 +224,9 @@ export default function ExamCountdownWidget({ semester = 1 }: { semester?: numbe
                 <button
                   key={event.id}
                   onClick={() => setSelectedEventId(event.id)}
-                  className={`p-2.5 rounded-xl border text-left transition-all ${
+                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                     isEventSelected 
-                      ? 'bg-prevu-accent/15 border-prevu-accent text-prevu-text shadow-md shadow-prevu-accent/10' 
+                      ? 'bg-prevu-accent/20 border-prevu-accent text-white shadow-md shadow-prevu-accent/15' 
                       : isPast
                       ? 'bg-prevu-surface/40 border-prevu-surface-light/40 text-prevu-text-muted opacity-70 hover:opacity-100'
                       : 'bg-prevu-surface/70 border-prevu-surface-light hover:border-prevu-surface-light/80 text-prevu-text'

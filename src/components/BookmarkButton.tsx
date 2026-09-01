@@ -39,10 +39,10 @@ export default function BookmarkButton({
       onClick={handleToggle}
       disabled={isLoading}
       title={isBookmarked ? 'Remove bookmark' : 'Save paper'}
-      className={`p-1.5 rounded-lg border transition-all ${
+      className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
         isBookmarked 
           ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm' 
-          : 'bg-prevu-bg/80 text-prevu-text-muted hover:text-amber-400 hover:border-amber-500/30 border-prevu-surface-light'
+          : 'bg-prevu-bg/90 text-prevu-text-muted hover:text-amber-400 hover:border-amber-500/30 border-prevu-surface-light'
       }`}
     >
       <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-amber-400 text-amber-400' : ''}`} />

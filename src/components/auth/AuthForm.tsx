@@ -60,15 +60,8 @@ export default function AuthForm({ initialMode = 'login' }: { initialMode?: 'log
     return () => unsubscribe()
   }, [])
 
-  const [mode, setMode] = useState<AuthMode>(() => {
-    if (urlMode === 'signup' || initialMode === 'signup') return 'signup'
-    return 'login'
-  })
-
-  useEffect(() => {
-    if (urlMode === 'signup') setMode('signup')
-    else if (urlMode === 'login') setMode('login')
-  }, [urlMode])
+  const [internalMode, setInternalMode] = useState<AuthMode | null>(null)
+  const mode: AuthMode = internalMode ?? (urlMode === 'signup' || initialMode === 'signup' ? 'signup' : 'login')
 
   // Form Fields
   const [identifier, setIdentifier] = useState('') // Sign In: Username, UID, or Email
@@ -99,7 +92,7 @@ export default function AuthForm({ initialMode = 'login' }: { initialMode?: 'log
 
   const handleModeSwitch = (newMode: AuthMode) => {
     clearMessages()
-    setMode(newMode)
+    setInternalMode(newMode)
     setPassword('')
     setConfirmPassword('')
   }

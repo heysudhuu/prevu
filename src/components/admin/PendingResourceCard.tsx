@@ -1,26 +1,22 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/Card'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
-import { approveResource, rejectResource, deleteResource } from '@/app/admin/actions'
+import { approveResource, rejectResource } from '@/app/admin/actions'
 import { 
   CheckCircle, 
   XCircle, 
   Edit3, 
   ExternalLink, 
   User, 
-  Calendar, 
   BookOpen, 
-  Layers, 
   AlertTriangle,
-  Loader2,
-  Trash2
+  Loader2
 } from 'lucide-react'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function PendingResourceCard({ resource, subjects }: { resource: any, subjects?: any[] }) {
+export function PendingResourceCard({ resource }: { resource: any; subjects?: any[] }) {
   const [isEditing, setIsEditing] = useState(false)
   
   // Editable fields

@@ -3,19 +3,14 @@
 import { useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
-import { createPaperRequest, fulfillPaperRequest } from '@/app/dashboard/actions'
+import { createPaperRequest } from '@/app/dashboard/actions'
 import { 
   HelpCircle, 
   Plus, 
   UploadCloud, 
   CheckCircle2, 
-  Clock, 
-  User, 
-  Calendar, 
-  Sparkles,
-  Loader2,
-  AlertCircle
+  Loader2, 
+  AlertCircle 
 } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -26,7 +21,7 @@ interface PaperRequestsProps {
 }
 
 export default function PaperRequestsBoard({ requests: initialRequests }: PaperRequestsProps) {
-  const [requests, setRequests] = useState(initialRequests || [])
+  const [requests] = useState(initialRequests || [])
   const [showModal, setShowModal] = useState(false)
   
   // Form state
@@ -75,7 +70,7 @@ export default function PaperRequestsBoard({ requests: initialRequests }: PaperR
       {/* Header with Request Button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-lg font-bold text-prevu-text flex items-center gap-2">
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
             <span>Missing Paper Requests</span>
             <span className="text-xs px-2.5 py-0.5 rounded-full font-mono font-semibold bg-purple-500/15 text-purple-300 border border-purple-500/30">
               Community Board
@@ -88,7 +83,7 @@ export default function PaperRequestsBoard({ requests: initialRequests }: PaperR
 
         <Button 
           onClick={() => setShowModal(true)}
-          className="text-xs py-2 px-4 flex items-center gap-1.5 shadow-lg shadow-prevu-accent/20"
+          className="text-xs py-2 px-4 flex items-center gap-1.5 shadow-lg shadow-prevu-accent/20 font-bold"
         >
           <Plus className="w-4 h-4" /> Request a Missing Paper
         </Button>
@@ -97,7 +92,7 @@ export default function PaperRequestsBoard({ requests: initialRequests }: PaperR
       {/* Request Modal */}
       <AnimatePresence>
         {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -107,13 +102,13 @@ export default function PaperRequestsBoard({ requests: initialRequests }: PaperR
               <Card className="border-prevu-surface-light bg-prevu-surface shadow-2xl">
                 <CardHeader className="pb-3 border-b border-prevu-surface-light/60">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-bold text-prevu-text flex items-center gap-2">
+                    <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
                       <HelpCircle className="w-5 h-5 text-prevu-accent" />
                       Request a Past Paper
                     </CardTitle>
                     <button 
                       onClick={() => setShowModal(false)}
-                      className="text-xs text-prevu-text-muted hover:text-prevu-text"
+                      className="text-xs text-prevu-text-muted hover:text-white cursor-pointer"
                     >
                       ✕ Close
                     </button>
@@ -131,7 +126,7 @@ export default function PaperRequestsBoard({ requests: initialRequests }: PaperR
                         onChange={e => setSubjectName(e.target.value)}
                         placeholder="e.g. Operating Systems"
                         required
-                        className="w-full px-3 py-2 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-prevu-text focus:outline-none focus:border-prevu-accent"
+                        className="w-full px-3 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-prevu-text placeholder:text-prevu-text-muted/40 focus:outline-none focus:border-prevu-accent"
                       />
                     </div>
 
@@ -141,7 +136,7 @@ export default function PaperRequestsBoard({ requests: initialRequests }: PaperR
                         <select 
                           value={examType}
                           onChange={e => setExamType(e.target.value)}
-                          className="w-full px-2 py-2 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-prevu-text font-medium"
+                          className="w-full px-2 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-prevu-text font-medium"
                         >
                           <option value="MST1">MST 1</option>
                           <option value="MST2">MST 2</option>
@@ -152,13 +147,13 @@ export default function PaperRequestsBoard({ requests: initialRequests }: PaperR
                       <div className="space-y-1">
                         <label className="text-xs text-prevu-text-muted">Exam Year</label>
                         <input 
-                          type="number"
+                          type="number" 
                           value={examYear}
                           onChange={e => setExamYear(Number(e.target.value))}
                           required
                           min={2018}
                           max={new Date().getFullYear()}
-                          className="w-full px-2 py-2 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-prevu-text font-mono"
+                          className="w-full px-2 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-prevu-text font-mono"
                         />
                       </div>
 
@@ -167,7 +162,7 @@ export default function PaperRequestsBoard({ requests: initialRequests }: PaperR
                         <select 
                           value={semester}
                           onChange={e => setSemester(Number(e.target.value))}
-                          className="w-full px-2 py-2 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-prevu-text"
+                          className="w-full px-2 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-prevu-text"
                         >
                           {[1, 2, 3, 4, 5, 6, 7, 8].map(s => (
                             <option key={s} value={s}>Sem {s}</option>
@@ -183,7 +178,7 @@ export default function PaperRequestsBoard({ requests: initialRequests }: PaperR
                         onChange={e => setNote(e.target.value)}
                         placeholder="e.g. Looking specifically for Set A or 2023 regular batch question paper"
                         rows={2}
-                        className="w-full px-3 py-2 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-prevu-text focus:outline-none focus:border-prevu-accent"
+                        className="w-full px-3 py-2 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-prevu-text placeholder:text-prevu-text-muted/40 focus:outline-none focus:border-prevu-accent"
                       />
                     </div>
 
@@ -208,7 +203,7 @@ export default function PaperRequestsBoard({ requests: initialRequests }: PaperR
                   <Button variant="outline" size="sm" onClick={() => setShowModal(false)} className="text-xs">
                     Cancel
                   </Button>
-                  <Button type="submit" form="request-form" size="sm" disabled={isSubmitting} className="text-xs">
+                  <Button type="submit" form="request-form" size="sm" disabled={isSubmitting} className="text-xs font-bold">
                     {isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Post Request'}
                   </Button>
                 </CardFooter>
@@ -223,7 +218,7 @@ export default function PaperRequestsBoard({ requests: initialRequests }: PaperR
         {requests.length === 0 ? (
           <div className="col-span-full p-10 text-center border border-dashed border-prevu-surface-light rounded-3xl bg-prevu-surface/30">
             <HelpCircle className="w-8 h-8 text-prevu-text-muted/40 mx-auto mb-2" />
-            <h4 className="font-bold text-sm text-prevu-text">No Open Requests</h4>
+            <h4 className="font-bold text-sm text-white">No Open Requests</h4>
             <p className="text-xs text-prevu-text-muted mt-1">
               Have a question paper that is missing? Click above to post a request to your classmates.
             </p>
@@ -232,7 +227,7 @@ export default function PaperRequestsBoard({ requests: initialRequests }: PaperR
           requests.map((req) => (
             <div 
               key={req.id}
-              className="p-4 rounded-2xl bg-prevu-surface/80 border border-prevu-surface-light hover:border-purple-500/40 transition-all flex flex-col justify-between shadow-lg space-y-3"
+              className="p-4 rounded-2xl bg-prevu-surface/85 border border-prevu-surface-light hover:border-purple-500/40 transition-all flex flex-col justify-between shadow-lg space-y-3"
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -244,7 +239,7 @@ export default function PaperRequestsBoard({ requests: initialRequests }: PaperR
                   </span>
                 </div>
 
-                <h4 className="font-bold text-sm text-prevu-text">
+                <h4 className="font-bold text-sm text-white">
                   {req.subject_name}
                 </h4>
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Sparkles, Heart, FileText, ArrowRight, UploadCloud, CheckCircle } from 'lucide-react'
+import { Sparkles, ArrowRight, UploadCloud, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 

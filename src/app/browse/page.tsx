@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Header from '@/components/Header'
 import { getUserBookmarkIds } from '@/app/dashboard/actions'
 import BrowseFilterBar from '@/components/browse/BrowseFilterBar'
-import { Sparkles, MessageSquarePlus, FileQuestion, ArrowRight } from 'lucide-react'
+import { Sparkles, MessageSquarePlus, FileQuestion } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -75,31 +75,48 @@ export default async function BrowsePage({
       
       <main className="flex-1">
         {/* RESOURCE ARCHIVE SECTION */}
-        <section id="resources" className="container mx-auto px-4 py-10 max-w-7xl">
+        <section id="resources" className="container mx-auto px-4 py-8 sm:py-10 max-w-7xl">
           
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 gap-4 border-b border-prevu-surface-light pb-6">
             <div>
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-2 mb-1.5">
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-prevu-accent/15 text-prevu-accent border border-prevu-accent/30 uppercase tracking-wider">
                   Verified Archive
                 </span>
                 <span className="text-xs font-mono text-prevu-text-muted">
-                  {resources.length} Question Papers Available
+                  {resources.length} Question Papers
                 </span>
               </div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-prevu-text">
+              <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">
                 Academic Resource Archive
               </h1>
-              <p className="text-sm text-prevu-text-muted mt-1">
-                Browse verified Previous Year Questions (MST-1, MST-2, EST) & study materials.
+              <p className="text-xs sm:text-sm text-prevu-text-muted mt-1">
+                Browse verified Previous Year Questions (MST-1, MST-2, EST) & study materials for Chandigarh University.
               </p>
             </div>
 
-            <Button size="sm" className="shadow-md shadow-prevu-accent/20 text-xs" asChild>
+            <Button size="sm" className="shadow-lg shadow-prevu-accent/20 text-xs font-bold" asChild>
               <Link href="/upload">
                 <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Contribute Paper
               </Link>
             </Button>
+          </div>
+
+          {/* Branch Expansion Notice Ribbon */}
+          <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-purple-950/30 via-prevu-surface to-indigo-950/30 border border-purple-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2.5">
+              <span className="text-base">🚀</span>
+              <p className="text-prevu-text-muted">
+                <strong className="text-purple-300">From another branch (ECE, Mech, Civil, Biotech, Management)?</strong> We are actively collecting question papers for your departments too!
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button variant="outline" size="sm" asChild className="h-7 text-[11px] border-purple-500/30 text-purple-300 hover:bg-purple-500/10">
+                <Link href="/dashboard?tab=requests">
+                  Request Your Branch Papers
+                </Link>
+              </Button>
+            </div>
           </div>
 
           {/* Interactive Filter Bar */}
@@ -116,7 +133,7 @@ export default async function BrowsePage({
           {/* Resources Grid */}
           <section>
             {resources.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-fade-in">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 animate-fade-in">
                 {resources.map((resource) => (
                   <ResourceCard 
                     key={resource.id} 
@@ -126,16 +143,16 @@ export default async function BrowsePage({
                 ))}
               </div>
             ) : (
-              <div className="text-center py-20 border border-prevu-surface-light bg-prevu-surface/40 rounded-3xl p-8 space-y-4 max-w-2xl mx-auto shadow-xl">
+              <div className="text-center py-20 border border-prevu-surface-light bg-prevu-surface/60 rounded-3xl p-8 space-y-4 max-w-xl mx-auto shadow-2xl">
                 <div className="w-16 h-16 rounded-2xl bg-prevu-surface border border-prevu-surface-light flex items-center justify-center mx-auto text-prevu-text-muted">
                   <FileQuestion className="w-8 h-8 text-prevu-accent" />
                 </div>
                 
-                <h3 className="text-xl font-bold text-prevu-text">
+                <h3 className="text-xl font-bold text-white">
                   No question papers found
                 </h3>
                 
-                <p className="text-sm text-prevu-text-muted leading-relaxed">
+                <p className="text-xs sm:text-sm text-prevu-text-muted leading-relaxed">
                   {searchFilter 
                     ? `We couldn't find any uploaded papers matching "${searchFilter}". You can request batchmates to upload it!`
                     : "No approved question papers match the selected filters."
@@ -147,7 +164,7 @@ export default async function BrowsePage({
                     <Link href="/browse">Clear All Filters</Link>
                   </Button>
                   
-                  <Button size="sm" className="text-xs bg-prevu-accent text-white" asChild>
+                  <Button size="sm" className="text-xs bg-prevu-accent text-white font-bold" asChild>
                     <Link href={`/dashboard?tab=requests`}>
                       <MessageSquarePlus className="w-3.5 h-3.5 mr-1.5" /> Request this Paper
                     </Link>

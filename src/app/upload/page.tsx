@@ -4,11 +4,10 @@ import { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { getFormDataOptions, checkHashExists, uploadResource } from './actions'
-import { Upload, FileText, CheckCircle2, AlertCircle, Sparkles, BookOpen, Layers } from 'lucide-react'
+import { Upload, AlertCircle, Sparkles, BookOpen, Layers } from 'lucide-react'
 import UploadCelebrationMascot from '@/components/animations/UploadCelebrationMascot'
 
 type Subject = { id: number, name: string, code: string, year: number, semester: number, branch_id: number }
-type ExamType = { id: number, name: string }
 
 export default function UploadPage() {
   const [subjects, setSubjects] = useState<Subject[]>([])
@@ -140,16 +139,16 @@ export default function UploadPage() {
       <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[550px] h-[550px] rounded-full bg-prevu-accent/10 blur-[150px] pointer-events-none" />
       
       <div className="relative z-10 w-full max-w-xl">
-        <Card className="w-full backdrop-blur-xl bg-prevu-surface/90 border-prevu-surface-light shadow-2xl">
+        <Card className="w-full backdrop-blur-2xl bg-prevu-surface/90 border-prevu-surface-light shadow-2xl">
           <CardHeader className="space-y-1">
             <div className="flex items-center gap-2 text-prevu-accent text-xs font-semibold uppercase tracking-wider">
               <Sparkles className="w-4 h-4" />
               <span>Contribute to Archive</span>
             </div>
-            <CardTitle className="text-2xl font-bold tracking-tight text-prevu-text">
+            <CardTitle className="text-2xl font-bold tracking-tight text-white">
               Upload Exam Resource
             </CardTitle>
-            <CardDescription className="text-sm text-prevu-text-muted">
+            <CardDescription className="text-xs sm:text-sm text-prevu-text-muted">
               Share past exam papers (MST 1, MST 2, EST) or notes for BE-CSE students.
             </CardDescription>
           </CardHeader>
@@ -160,7 +159,7 @@ export default function UploadPage() {
               {/* Year & Semester Grid */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-prevu-text-muted" htmlFor="year">
+                  <label className="text-xs font-semibold text-prevu-text-muted" htmlFor="year">
                     Academic Year
                   </label>
                   <select 
@@ -171,7 +170,7 @@ export default function UploadPage() {
                       setSelectedYear(yr)
                       setSelectedSemester(yr * 2 - 1)
                     }}
-                    className="w-full px-3 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text focus:outline-none focus:border-prevu-accent transition-colors"
+                    className="w-full px-3 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text focus:outline-none focus:border-prevu-accent transition-colors cursor-pointer"
                   >
                     {[1, 2, 3, 4].map(y => (
                       <option key={y} value={y}>Year {y}</option>
@@ -180,14 +179,14 @@ export default function UploadPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-prevu-text-muted" htmlFor="semester">
+                  <label className="text-xs font-semibold text-prevu-text-muted" htmlFor="semester">
                     Semester
                   </label>
                   <select 
                     id="semester" 
                     value={selectedSemester}
                     onChange={(e) => setSelectedSemester(Number(e.target.value))}
-                    className="w-full px-3 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text focus:outline-none focus:border-prevu-accent transition-colors"
+                    className="w-full px-3 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text focus:outline-none focus:border-prevu-accent transition-colors cursor-pointer"
                   >
                     {[selectedYear * 2 - 1, selectedYear * 2].map(s => (
                       <option key={s} value={s}>Semester {s}</option>
@@ -200,10 +199,10 @@ export default function UploadPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-medium text-prevu-text-muted" htmlFor="subject_name">
+                    <label className="text-xs font-semibold text-prevu-text-muted" htmlFor="subject_name">
                       Subject Name
                     </label>
-                    <span className="text-[11px] text-prevu-accent">Write your own</span>
+                    <span className="text-[11px] text-prevu-accent font-medium">Write your own</span>
                   </div>
                   <div className="relative">
                     <BookOpen className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-prevu-text-muted" />
@@ -226,8 +225,8 @@ export default function UploadPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-prevu-text-muted" htmlFor="subject_code">
-                    Code <span className="text-prevu-text-muted/60">(Optional)</span>
+                  <label className="text-xs font-semibold text-prevu-text-muted" htmlFor="subject_code">
+                    Code <span className="text-prevu-text-muted/60 font-normal">(Optional)</span>
                   </label>
                   <input 
                     type="text"
@@ -243,7 +242,7 @@ export default function UploadPage() {
               {/* Exam Type (MST1, MST2, EST) & Exam Year */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-prevu-text-muted" htmlFor="exam_type">
+                  <label className="text-xs font-semibold text-prevu-text-muted" htmlFor="exam_type">
                     Exam Type
                   </label>
                   <div className="relative">
@@ -253,7 +252,7 @@ export default function UploadPage() {
                       value={examType}
                       onChange={(e) => setExamType(e.target.value)}
                       required
-                      className="w-full pl-10 pr-3 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text focus:outline-none focus:border-prevu-accent transition-colors font-medium"
+                      className="w-full pl-10 pr-3 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text focus:outline-none focus:border-prevu-accent transition-colors font-medium cursor-pointer"
                     >
                       <option value="MST1">MST 1 (Mid Semester 1)</option>
                       <option value="MST2">MST 2 (Mid Semester 2)</option>
@@ -263,7 +262,7 @@ export default function UploadPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-prevu-text-muted" htmlFor="exam_year">
+                  <label className="text-xs font-semibold text-prevu-text-muted" htmlFor="exam_year">
                     Exam Year
                   </label>
                   <input 
@@ -281,7 +280,7 @@ export default function UploadPage() {
 
               {/* File Upload Box */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-prevu-text-muted" htmlFor="file">
+                <label className="text-xs font-semibold text-prevu-text-muted" htmlFor="file">
                   Document / Paper (PDF, JPG, PNG, DOC/DOCX)
                 </label>
                 <div className="relative">
@@ -291,7 +290,7 @@ export default function UploadPage() {
                     accept=".pdf, .jpg, .jpeg, .png, .doc, .docx, .xls, .xlsx, .ppt, .pptx"
                     required
                     onChange={handleFileChange}
-                    className="w-full text-xs text-prevu-text-muted file:mr-3 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-prevu-accent/15 file:text-prevu-accent hover:file:bg-prevu-accent/25 cursor-pointer border border-prevu-surface-light rounded-xl p-1.5 bg-prevu-bg"
+                    className="w-full text-xs text-prevu-text-muted file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-prevu-accent/15 file:text-prevu-accent hover:file:bg-prevu-accent/25 cursor-pointer border border-prevu-surface-light rounded-xl p-2 bg-prevu-bg"
                   />
                 </div>
               </div>
@@ -316,7 +315,7 @@ export default function UploadPage() {
             <Button 
               type="submit" 
               form="upload-form" 
-              className="w-full py-3 text-sm flex items-center justify-center gap-2 shadow-lg shadow-prevu-accent/20"
+              className="w-full py-3 text-sm flex items-center justify-center gap-2 shadow-lg shadow-prevu-accent/25 font-bold"
               disabled={isUploading || !file || !fileHash || !subjectName.trim()}
             >
               <Upload className="w-4 h-4" />

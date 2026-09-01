@@ -1,10 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
+import { useSyncExternalStore } from 'react'
 import { Button } from '@/components/ui/Button'
-import { History, ExternalLink, Download, FileText, ArrowRight } from 'lucide-react'
-import Link from 'next/link'
+import { History, ExternalLink, Download } from 'lucide-react'
 
 interface RecentPaper {
   id: string
@@ -15,37 +13,69 @@ interface RecentPaper {
   viewedAt: number
 }
 
-export default function RecentlyViewedBar() {
-  const [recentPapers, setRecentPapers] = useState<RecentPaper[]>([])
+const EMPTY_RECENTS: RecentPaper[] = []
+let lastRawRecents: string | null = null
+let cachedRecents: RecentPaper[] = EMPTY_RECENTS
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem('prevu_recent_papers')
-      if (stored) {
-        setRecentPapers(JSON.parse(stored))
-      }
-    } catch {
-      // Ignore storage errors
+function subscribe(callback: () => void) {
+  window.addEventListener('storage', callback)
+  window.addEventListener('prevu-recents-updated', callback)
+  return () => {
+    window.removeEventListener('storage', callback)
+    window.removeEventListener('prevu-recents-updated', callback)
+  }
+}
+
+function getSnapshot(): RecentPaper[] {
+  if (typeof window === 'undefined') return EMPTY_RECENTS
+  try {
+    const raw = localStorage.getItem('prevu_recent_papers')
+    if (raw === lastRawRecents) {
+      return cachedRecents
     }
-  }, [])
+    lastRawRecents = raw
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      cachedRecents = Array.isArray(parsed) ? parsed : EMPTY_RECENTS
+    } else {
+      cachedRecents = EMPTY_RECENTS
+    }
+    return cachedRecents
+  } catch {
+    return EMPTY_RECENTS
+  }
+}
+
+function getServerSnapshot(): RecentPaper[] {
+  return EMPTY_RECENTS
+}
+
+export default function RecentlyViewedBar() {
+  const recentPapers = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 
   if (recentPapers.length === 0) return null
 
   const handleClearHistory = () => {
-    localStorage.removeItem('prevu_recent_papers')
-    setRecentPapers([])
+    try {
+      localStorage.removeItem('prevu_recent_papers')
+      lastRawRecents = null
+      cachedRecents = EMPTY_RECENTS
+      window.dispatchEvent(new Event('prevu-recents-updated'))
+    } catch {
+      // Ignore storage errors
+    }
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 pt-2">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm font-bold text-prevu-text">
-          <History className="w-4 h-4 text-prevu-accent" />
+        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-prevu-text-muted">
+          <History className="w-3.5 h-3.5 text-prevu-accent" />
           <span>Recently Viewed Papers</span>
         </div>
         <button 
           onClick={handleClearHistory}
-          className="text-[11px] text-prevu-text-muted hover:text-prevu-text transition-colors"
+          className="text-[11px] text-prevu-text-muted hover:text-red-400 transition-colors cursor-pointer"
         >
           Clear History
         </button>
@@ -67,7 +97,7 @@ export default function RecentlyViewedBar() {
                 </span>
               </div>
               
-              <h4 className="font-semibold text-xs text-prevu-text truncate" title={paper.subjectName}>
+              <h4 className="font-semibold text-xs text-white truncate" title={paper.subjectName}>
                 {paper.subjectName}
               </h4>
               {paper.subjectCode && (
@@ -78,14 +108,14 @@ export default function RecentlyViewedBar() {
             </div>
 
             <div className="mt-3 pt-2.5 border-t border-prevu-surface-light/60 flex gap-2">
-              <Button size="sm" variant="secondary" className="flex-1 h-7 text-[11px]" asChild>
+              <Button size="sm" variant="secondary" className="flex-1 h-7 text-[11px] font-medium" asChild>
                 <a href={`/api/preview/${paper.id}`} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="w-3 h-3 mr-1" /> View
+                  <ExternalLink className="w-3 h-3 mr-1 text-prevu-accent" /> View
                 </a>
               </Button>
               <Button size="sm" variant="outline" className="h-7 px-2 text-[11px] border-prevu-surface-light" asChild>
                 <a href={`/api/download/${paper.id}`}>
-                  <Download className="w-3 h-3" />
+                  <Download className="w-3 h-3 text-prevu-text-muted" />
                 </a>
               </Button>
             </div>

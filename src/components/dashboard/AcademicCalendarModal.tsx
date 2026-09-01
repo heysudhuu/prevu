@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Calendar, X, ExternalLink, Sparkles } from 'lucide-react'
+import { Calendar, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import AcademicCalendarWidget from './AcademicCalendarWidget'
 

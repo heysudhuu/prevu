@@ -1,22 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
 import { 
   ShieldCheck, 
-  Sparkles, 
   BookOpen, 
-  GraduationCap, 
   Heart, 
-  CheckCircle2, 
   ChevronDown, 
   ChevronUp,
   HelpCircle,
   Zap,
   Users
 } from 'lucide-react'
-import { motion } from 'framer-motion'
 
 export default function AboutUsSection() {
   const [openFaq, setOpenFaq] = useState<number | null>(0)
@@ -55,9 +49,9 @@ export default function AboutUsSection() {
             <span>Our Story & Mission</span>
           </div>
 
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-prevu-text tracking-tight leading-tight">
+          <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
             Built by CU students, <br className="hidden sm:block" />
-            <span className="text-prevu-accent">for CU students.</span>
+            <span className="text-gradient-purple">for CU students.</span>
           </h2>
 
           <p className="text-base sm:text-lg text-prevu-text-muted leading-relaxed">
@@ -68,41 +62,41 @@ export default function AboutUsSection() {
         {/* 4 Core Guarantees & Pillars Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           
-          <div className="p-6 rounded-2xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-purple-500/40 transition-all space-y-3 shadow-lg">
+          <div className="p-6 rounded-2xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-purple-500/40 transition-all space-y-3 shadow-lg hover:-translate-y-1">
             <div className="w-12 h-12 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-300">
               <Zap className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-bold text-prevu-text">100% Free Forever</h3>
+            <h3 className="text-base font-bold text-white">100% Free Forever</h3>
             <p className="text-xs text-prevu-text-muted leading-relaxed">
               No paywalls, subscriptions, or pay-to-unlock coin gates. Pure open academic knowledge for all.
             </p>
           </div>
 
-          <div className="p-6 rounded-2xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-emerald-500/40 transition-all space-y-3 shadow-lg">
+          <div className="p-6 rounded-2xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-emerald-500/40 transition-all space-y-3 shadow-lg hover:-translate-y-1">
             <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
               <ShieldCheck className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-bold text-prevu-text">Verified Quality</h3>
+            <h3 className="text-base font-bold text-white">Verified Quality</h3>
             <p className="text-xs text-prevu-text-muted leading-relaxed">
               Every single paper and document is reviewed for clarity and correctness before going live on the archive.
             </p>
           </div>
 
-          <div className="p-6 rounded-2xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-amber-500/40 transition-all space-y-3 shadow-lg">
+          <div className="p-6 rounded-2xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-amber-500/40 transition-all space-y-3 shadow-lg hover:-translate-y-1">
             <div className="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-300">
               <BookOpen className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-bold text-prevu-text">Exact CU Blueprint</h3>
+            <h3 className="text-base font-bold text-white">Exact CU Blueprint</h3>
             <p className="text-xs text-prevu-text-muted leading-relaxed">
               Mapped directly to Chandigarh University’s official MST 1, MST 2, and EST question patterns.
             </p>
           </div>
 
-          <div className="p-6 rounded-2xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-cyan-500/40 transition-all space-y-3 shadow-lg">
+          <div className="p-6 rounded-2xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-cyan-500/40 transition-all space-y-3 shadow-lg hover:-translate-y-1">
             <div className="w-12 h-12 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-300">
               <Users className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-bold text-prevu-text">Student Community</h3>
+            <h3 className="text-base font-bold text-white">Student Community</h3>
             <p className="text-xs text-prevu-text-muted leading-relaxed">
               Maintained and powered by peer contributions from every semester and engineering specialization.
             </p>
@@ -110,30 +104,10 @@ export default function AboutUsSection() {
 
         </div>
 
-        {/* Campus Stats Highlights Bar */}
-        <div className="p-8 rounded-3xl bg-gradient-to-r from-prevu-surface via-prevu-surface/80 to-prevu-surface border border-prevu-surface-light shadow-xl grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
-          <div>
-            <div className="text-3xl sm:text-4xl font-extrabold font-mono text-prevu-accent">8</div>
-            <div className="text-xs text-prevu-text-muted font-medium mt-1">Semesters Covered</div>
-          </div>
-          <div>
-            <div className="text-3xl sm:text-4xl font-extrabold font-mono text-emerald-400">100%</div>
-            <div className="text-xs text-prevu-text-muted font-medium mt-1">Free & Ad-Free</div>
-          </div>
-          <div>
-            <div className="text-3xl sm:text-4xl font-extrabold font-mono text-purple-300">3 Types</div>
-            <div className="text-xs text-prevu-text-muted font-medium mt-1">MST1, MST2 & EST</div>
-          </div>
-          <div>
-            <div className="text-3xl sm:text-4xl font-extrabold font-mono text-amber-400">Instant</div>
-            <div className="text-xs text-prevu-text-muted font-medium mt-1">Preview & Download</div>
-          </div>
-        </div>
-
         {/* Interactive FAQ Section */}
         <div className="space-y-6 max-w-3xl mx-auto">
           <div className="text-center space-y-1">
-            <h3 className="text-2xl font-bold text-prevu-text flex items-center justify-center gap-2">
+            <h3 className="text-2xl font-bold text-white flex items-center justify-center gap-2">
               <HelpCircle className="w-5 h-5 text-prevu-accent" />
               Frequently Asked Questions
             </h3>
@@ -144,7 +118,7 @@ export default function AboutUsSection() {
             {faqs.map((faq, idx) => (
               <div 
                 key={idx}
-                className="rounded-2xl border border-prevu-surface-light bg-prevu-surface/70 overflow-hidden transition-colors"
+                className="rounded-2xl border border-prevu-surface-light bg-prevu-surface/80 overflow-hidden transition-all shadow-md"
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
@@ -159,7 +133,7 @@ export default function AboutUsSection() {
                 </button>
 
                 {openFaq === idx && (
-                  <div className="px-4 pb-4 pt-1 text-xs text-prevu-text-muted leading-relaxed border-t border-prevu-surface-light/40">
+                  <div className="px-4 pb-4 pt-1 text-xs text-prevu-text-muted leading-relaxed border-t border-prevu-surface-light/40 animate-fade-in">
                     {faq.a}
                   </div>
                 )}

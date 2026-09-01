@@ -26,7 +26,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
         .single()
       
       isAdmin = userData?.role === 'admin'
-    } catch (error) {
+    } catch {
       // invalid token, treat as anonymous
     }
   }

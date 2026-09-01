@@ -2,19 +2,12 @@
 
 import { useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { 
   FileSpreadsheet, 
   Clock, 
   Award, 
-  HelpCircle, 
-  CheckCircle2, 
-  Layers, 
-  Flame, 
-  Sparkles,
-  ChevronRight,
-  BookOpen
+  Sparkles
 } from 'lucide-react'
 import Link from 'next/link'
 

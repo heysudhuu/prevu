@@ -18,9 +18,7 @@ import {
   Save, 
   Loader2, 
   Lock,
-  Camera,
-  UploadCloud,
-  ImageIcon
+  Camera
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -174,7 +172,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
           {/* User Bio Details */}
           <div className="text-center sm:text-left space-y-1.5 flex-1">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-              <h2 className="text-2xl font-bold text-prevu-text">{name || 'Student Name'}</h2>
+              <h2 className="text-2xl font-bold text-white">{name || 'Student Name'}</h2>
               <span className="px-2.5 py-0.5 rounded-full font-mono text-xs font-semibold bg-prevu-accent/15 text-prevu-accent border border-prevu-accent/25">
                 @{username || 'username'}
               </span>
@@ -187,7 +185,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
               {studentUid && (
                 <>
                   <span>•</span>
-                  <span className="font-mono text-prevu-text">UID: {studentUid}</span>
+                  <span className="font-mono text-white">UID: {studentUid}</span>
                 </>
               )}
             </div>
@@ -198,7 +196,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
                 variant="outline" 
                 size="sm" 
                 onClick={() => fileInputRef.current?.click()}
-                className="h-7 text-[11px] flex items-center gap-1.5 border-prevu-surface-light hover:border-prevu-accent"
+                className="h-8 text-[11px] font-semibold flex items-center gap-1.5 border-prevu-surface-light hover:border-prevu-accent"
               >
                 <Camera className="w-3.5 h-3.5 text-prevu-accent" />
                 <span>Upload Profile Photo</span>
@@ -227,7 +225,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
             <User className="w-4 h-4" />
             <span>Profile Settings</span>
           </div>
-          <CardTitle className="text-xl font-bold text-prevu-text">
+          <CardTitle className="text-xl font-bold text-white">
             Personal & Academic Information
           </CardTitle>
           <CardDescription className="text-xs text-prevu-text-muted">
@@ -243,7 +241,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
               
               {/* Full Name */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-prevu-text-muted flex items-center gap-1.5" htmlFor="name">
+                <label className="text-xs font-semibold text-prevu-text-muted flex items-center gap-1.5" htmlFor="name">
                   <User className="w-3.5 h-3.5 text-prevu-accent" /> Full Name
                 </label>
                 <input 
@@ -260,7 +258,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
               {/* Username with Change Counter */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-medium text-prevu-text-muted flex items-center gap-1.5" htmlFor="username">
+                  <label className="text-xs font-semibold text-prevu-text-muted flex items-center gap-1.5" htmlFor="username">
                     <AtSign className="w-3.5 h-3.5 text-prevu-accent" /> Username / Handle
                   </label>
                   
@@ -307,7 +305,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
               
               {/* Student UID */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-prevu-text-muted flex items-center gap-1.5" htmlFor="student_uid">
+                <label className="text-xs font-semibold text-prevu-text-muted flex items-center gap-1.5" htmlFor="student_uid">
                   <Hash className="w-3.5 h-3.5 text-prevu-accent" /> University UID
                 </label>
                 <input 
@@ -322,14 +320,14 @@ export default function ProfileForm({ user }: ProfileFormProps) {
 
               {/* Branch Selection */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-prevu-text-muted flex items-center gap-1.5" htmlFor="branch">
+                <label className="text-xs font-semibold text-prevu-text-muted flex items-center gap-1.5" htmlFor="branch">
                   <GraduationCap className="w-3.5 h-3.5 text-prevu-accent" /> Branch & Track
                 </label>
                 <select 
                   id="branch"
                   value={branch}
                   onChange={e => setBranch(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text focus:outline-none focus:border-prevu-accent transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text focus:outline-none focus:border-prevu-accent transition-colors cursor-pointer"
                 >
                   {branches.map(b => (
                     <option key={b.id} value={b.id}>{b.label}</option>
@@ -344,14 +342,14 @@ export default function ProfileForm({ user }: ProfileFormProps) {
               
               {/* Current Semester */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-prevu-text-muted flex items-center gap-1.5" htmlFor="current_semester">
+                <label className="text-xs font-semibold text-prevu-text-muted flex items-center gap-1.5" htmlFor="current_semester">
                   <Layers className="w-3.5 h-3.5 text-prevu-accent" /> Current Semester
                 </label>
                 <select 
                   id="current_semester"
                   value={currentSemester}
                   onChange={e => setCurrentSemester(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text focus:outline-none focus:border-prevu-accent transition-colors font-medium"
+                  className="w-full px-3.5 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text focus:outline-none focus:border-prevu-accent transition-colors font-medium cursor-pointer"
                 >
                   {[1, 2, 3, 4, 5, 6, 7, 8].map(s => (
                     <option key={s} value={s}>Semester {s} (Year {Math.ceil(s / 2)})</option>
@@ -361,8 +359,8 @@ export default function ProfileForm({ user }: ProfileFormProps) {
 
               {/* Phone Number */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-prevu-text-muted flex items-center gap-1.5" htmlFor="phone_number">
-                  <Phone className="w-3.5 h-3.5 text-prevu-accent" /> Phone Number (Optional)
+                <label className="text-xs font-semibold text-prevu-text-muted flex items-center gap-1.5" htmlFor="phone_number">
+                  <Phone className="w-3.5 h-3.5 text-prevu-accent" /> Phone Number <span className="text-prevu-text-muted/60 font-normal">(Optional)</span>
                 </label>
                 <input 
                   type="tel"
@@ -379,7 +377,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
             {/* University Email */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-prevu-text-muted flex items-center gap-1.5" htmlFor="cu_email">
+                <label className="text-xs font-semibold text-prevu-text-muted flex items-center gap-1.5" htmlFor="cu_email">
                   <Mail className="w-3.5 h-3.5 text-prevu-accent" /> Chandigarh University Email
                 </label>
                 {isCUVerified ? (
@@ -433,10 +431,10 @@ export default function ProfileForm({ user }: ProfileFormProps) {
 
         <CardFooter className="border-t border-prevu-surface-light/60 p-6 flex justify-end">
           <Button 
-            type="submit"
-            form="profile-form"
+            type="submit" 
+            form="profile-form" 
             disabled={isSaving}
-            className="w-full sm:w-auto px-6 py-2.5 text-sm flex items-center justify-center gap-2 shadow-lg shadow-prevu-accent/20"
+            className="w-full sm:w-auto px-6 py-2.5 text-sm flex items-center justify-center gap-2 shadow-lg shadow-prevu-accent/25 font-bold"
           >
             {isSaving ? (
               <>

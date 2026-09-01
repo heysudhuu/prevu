@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { PendingResourceCard } from '@/components/admin/PendingResourceCard'
 import { deleteResource } from '@/app/admin/actions'
 import { Button } from '@/components/ui/Button'
@@ -13,17 +12,10 @@ import {
   Upload, 
   Search, 
   Trash2, 
-  ExternalLink, 
   ShieldCheck, 
   Eye, 
-  ArrowUpRight, 
-  Clock, 
   CheckCircle2,
   FileCheck,
-  Sparkles,
-  Layers,
-  Activity,
-  Plus,
   Compass
 } from 'lucide-react'
 import Link from 'next/link'
@@ -50,7 +42,6 @@ export default function AdminDashboardClient({
   pendingResources,
   approvedResources,
   users,
-  subjects,
   suggestions = []
 }: AdminDashboardClientProps) {
   const [activeTab, setActiveTab] = useState<AdminTab>('pending')

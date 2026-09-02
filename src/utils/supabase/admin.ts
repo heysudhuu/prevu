@@ -1,13 +1,21 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from "@supabase/supabase-js"
 
 export function getSupabaseAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ceqhxxvaioegvqfaszgx.supabase.co'
-  let key = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-  // Fallback to anon key if service role key is missing, masked, or contains non-ASCII characters
-  if (!key || /[^\x00-\x7F]/.test(key) || key.includes('•')) {
-    key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_okMJGtXAg-vuOCZgFzUTAA_TJ9Z007f'
+  if (!url) {
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL")
   }
 
-  return createClient(url, key)
+  if (!serviceRoleKey) {
+    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY")
+  }
+
+  return createClient(url, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  })
 }

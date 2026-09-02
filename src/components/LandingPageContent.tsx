@@ -320,21 +320,30 @@ export default function LandingPageContent() {
           </div>
 
           {/* Social Quick Links */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap justify-center">
             <a 
               href="https://www.instagram.com/cu.exclusive?igsi=ZDNlZDc0MzIxNw==" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-500/10 text-pink-300 border border-pink-500/25 hover:bg-pink-500/20 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-500/10 text-pink-300 border border-pink-500/25 hover:bg-pink-500/20 transition-colors text-xs font-medium"
             >
               <span>📸 @cu.exclusive</span>
+            </a>
+
+            <a 
+              href="https://www.instagram.com/cuupdates1?igsi=MTltajU5cGM2YXBwag==" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/25 hover:bg-indigo-500/20 transition-colors text-xs font-medium"
+            >
+              <span>🤝 @cuupdates1</span>
             </a>
 
             <a 
               href="https://chat.whatsapp.com/BpwkcISe9Cz327ud2T4IkF?s=cl&p=a&ilr=1&utm_source=ig&utm_medium=social&utm_content=link_in_bio" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/25 hover:bg-emerald-500/20 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/25 hover:bg-emerald-500/20 transition-colors text-xs font-medium"
             >
               <span>💬 WhatsApp Community</span>
             </a>

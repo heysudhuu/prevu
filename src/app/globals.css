@@ -1,22 +1,40 @@
 @import "tailwindcss";
 
 @theme inline {
+  /* Colors */
   --color-prevu-bg: #09090d;
   --color-prevu-surface: #121218;
   --color-prevu-surface-light: #20202c;
   --color-prevu-surface-elevated: #282838;
+
   --color-prevu-text: #fafafa;
   --color-prevu-text-muted: #9494a6;
+
   --color-prevu-accent: #8b5cf6;
   --color-prevu-accent-hover: #7c3aed;
   --color-prevu-accent-light: #a78bfa;
+
   --color-prevu-pending: #f59e0b;
   --color-prevu-approved: #10b981;
   --color-prevu-cyan: #06b6d4;
 
+  /* Fonts */
   --font-sans: var(--font-inter);
-  --font-serif: var(--font-source-serif);
+  --font-serif: Georgia, "Times New Roman", serif;
   --font-mono: var(--font-ibm-plex);
+}
+
+/* Global base styles */
+html {
+  min-height: 100%;
+  background: #09090d;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: #09090d;
+  color: #fafafa;
 }
 
 /* Custom Scrollbar */
@@ -44,32 +62,53 @@
   color: #ffffff;
 }
 
+/* Custom Utilities */
 @layer utilities {
   .animate-blob {
     animation: blob 10s infinite;
   }
+
   .animation-delay-2000 {
     animation-delay: 2s;
   }
+
   .animation-delay-4000 {
     animation-delay: 4s;
   }
 
   .text-gradient {
-    background: linear-gradient(135deg, #ffffff 0%, #d4d4d8 50%, #a1a1aa 100%);
+    background: linear-gradient(
+      135deg,
+      #ffffff 0%,
+      #d4d4d8 50%,
+      #a1a1aa 100%
+    );
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
   .text-gradient-purple {
-    background: linear-gradient(135deg, #c084fc 0%, #8b5cf6 50%, #6366f1 100%);
+    background: linear-gradient(
+      135deg,
+      #c084fc 0%,
+      #8b5cf6 50%,
+      #6366f1 100%
+    );
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
   .text-gradient-emerald {
-    background: linear-gradient(135deg, #6ee7b7 0%, #10b981 50%, #059669 100%);
+    background: linear-gradient(
+      135deg,
+      #6ee7b7 0%,
+      #10b981 50%,
+      #059669 100%
+    );
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
@@ -100,43 +139,94 @@
   }
 
   .grid-pattern {
-    background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                      linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-image:
+      linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0.03) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.03) 1px,
+        transparent 1px
+      );
+
     background-size: 32px 32px;
   }
 
   .radial-glow {
-    background: radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.18), transparent 70%);
+    background: radial-gradient(
+      circle at 50% 0%,
+      rgba(139, 92, 246, 0.18),
+      transparent 70%
+    );
   }
 }
 
+/* Animations */
+
 @keyframes blob {
-  0% { transform: translate(0px, 0px) scale(1); }
-  33% { transform: translate(30px, -40px) scale(1.08); }
-  66% { transform: translate(-20px, 20px) scale(0.94); }
-  100% { transform: translate(0px, 0px) scale(1); }
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+
+  33% {
+    transform: translate(30px, -40px) scale(1.08);
+  }
+
+  66% {
+    transform: translate(-20px, 20px) scale(0.94);
+  }
+
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
 }
 
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-16px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
 .animate-slide-down {
   animation: slideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
 .animate-fade-in {
   animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
+
 .animate-scale-in {
   animation: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

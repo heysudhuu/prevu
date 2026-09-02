@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+
 import PrevuMascot from "@/components/animations/PrevuMascot";
 import AuthListener from "@/components/auth/AuthListener";
 
@@ -8,7 +9,6 @@ const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
 });
-
 
 const ibmPlexMono = IBM_Plex_Mono({
   variable: "--font-ibm-plex",
@@ -18,12 +18,15 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "Prevu | BE-CSE Exam Resources",
-  description: "Student-run repository of Previous Year Questions (PYQs), notes, and exam-pattern references for BE-CSE at Chandigarh University.",
+  description:
+    "Student-run repository of Previous Year Questions (PYQs), notes, and exam-pattern references for BE-CSE at Chandigarh University.",
 };
 
-import { Analytics } from "@vercel/analytics/next";
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html
       lang="en"
@@ -33,7 +36,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <PrevuMascot />
         <AuthListener />
-        <Analytics />
       </body>
     </html>
   );

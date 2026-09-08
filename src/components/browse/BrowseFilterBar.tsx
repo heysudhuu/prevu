@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Search, X, Filter } from 'lucide-react'
+import { Search, X, Filter, BookOpen } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
 interface BrowseFilterBarProps {
@@ -10,6 +10,9 @@ interface BrowseFilterBarProps {
   subjects: any[]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   examTypes: any[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  branches?: any[]
+  currentBranch?: number
   currentYear?: number
   currentSem?: number
   currentSubject?: number
@@ -20,6 +23,8 @@ interface BrowseFilterBarProps {
 export default function BrowseFilterBar({
   subjects,
   examTypes,
+  branches = [],
+  currentBranch,
   currentYear,
   currentSem,
   currentSubject,
@@ -31,10 +36,13 @@ export default function BrowseFilterBar({
   const [, startTransition] = useTransition()
 
   const [searchTerm, setSearchTerm] = useState(currentSearch)
-  const [showAdvanced, setShowAdvanced] = useState(Boolean(currentYear || currentSubject))
+  const [showAdvanced, setShowAdvanced] = useState(Boolean(currentYear || currentSubject || currentBranch))
 
   const updateFilters = (updates: Record<string, string | number | undefined>) => {
     const params = new URLSearchParams(searchParams.toString())
+
+    // When filters change, reset to page 1
+    params.delete('page')
 
     Object.entries(updates).forEach(([key, value]) => {
       if (value === undefined || value === '' || value === null) {
@@ -61,7 +69,7 @@ export default function BrowseFilterBar({
     })
   }
 
-  const hasActiveFilters = Boolean(currentYear || currentSem || currentSubject || currentType || currentSearch)
+  const hasActiveFilters = Boolean(currentBranch || currentYear || currentSem || currentSubject || currentType || currentSearch)
 
   return (
     <div className="space-y-4 mb-8">
@@ -105,7 +113,7 @@ export default function BrowseFilterBar({
           variant="outline"
           onClick={() => setShowAdvanced(!showAdvanced)}
           className={`h-11 px-4 rounded-2xl border text-xs font-medium flex items-center gap-2 ${
-            showAdvanced || currentYear || currentSubject
+            showAdvanced || currentYear || currentSubject || currentBranch
               ? 'border-prevu-accent/50 bg-prevu-accent/10 text-prevu-accent'
               : 'border-prevu-surface-light text-prevu-text-muted'
           }`}
@@ -188,6 +196,22 @@ export default function BrowseFilterBar({
         <div className="p-4 rounded-2xl border border-prevu-surface-light bg-prevu-surface/95 shadow-xl grid grid-cols-1 sm:grid-cols-3 gap-3 animate-slide-down">
           
           <div className="space-y-1">
+            <label className="text-[11px] font-semibold uppercase tracking-wider text-prevu-text-muted flex items-center gap-1">
+              <BookOpen className="w-3 h-3 text-prevu-accent" /> Branch / Department
+            </label>
+            <select
+              value={currentBranch || ''}
+              onChange={e => updateFilters({ branch: e.target.value ? Number(e.target.value) : undefined })}
+              className="w-full px-3 py-2 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-prevu-text focus:outline-none focus:border-prevu-accent cursor-pointer"
+            >
+              <option value="">All Branches (BE-CSE, BCA, MCA...)</option>
+              {branches.map(b => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1">
             <label className="text-[11px] font-semibold uppercase tracking-wider text-prevu-text-muted">
               Academic Year
             </label>
@@ -204,7 +228,7 @@ export default function BrowseFilterBar({
             </select>
           </div>
 
-          <div className="space-y-1 sm:col-span-2">
+          <div className="space-y-1">
             <label className="text-[11px] font-semibold uppercase tracking-wider text-prevu-text-muted">
               Filter by Subject Catalog
             </label>

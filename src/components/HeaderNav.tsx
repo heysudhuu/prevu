@@ -14,7 +14,8 @@ import {
   X, 
   BookOpen, 
   Sparkles,
-  LogIn
+  LogIn,
+  Trophy
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -30,6 +31,7 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
 
   const navLinks = [
     { href: '/browse', label: 'Browse', icon: <BookOpen className="w-4 h-4" /> },
+    { href: '/leaderboard', label: 'Leaderboard', icon: <Trophy className="w-4 h-4 text-amber-400" /> },
     ...(user && !isAdmin
       ? [{ href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> }]
       : []),

@@ -1,16 +1,10 @@
 'use server'
 
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/utils/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
 import { authAdmin } from '@/lib/firebase/server'
-
-async function getAdminDb() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-}
+import { sendOtpEmail } from '@/lib/email/send-verification'
 
 async function getAuthUser() {
   const token = (await cookies()).get('firebase-token')?.value
@@ -23,25 +17,34 @@ async function getAuthUser() {
 }
 
 export async function sendVerificationOTP(formData: FormData) {
-  const cuEmail = formData.get('cu_email') as string
+  const cuEmail = (formData.get('cu_email') as string)?.trim().toLowerCase()
 
-  if (!cuEmail.endsWith('@cuchd.in')) {
-    return { error: 'Must use a valid @cuchd.in email address.' }
+  if (!cuEmail || !cuEmail.endsWith('@cuchd.in')) {
+    return { error: 'Must provide a valid @cuchd.in Chandigarh University email address.' }
   }
 
   const user = await getAuthUser()
-  if (!user) return { error: 'Not logged in.' }
+  if (!user) return { error: 'Please log in to verify your university email.' }
 
-  const supabaseAdmin = await getAdminDb()
+  const supabaseAdmin = getSupabaseAdmin()
+
+  // Rate-limiting: Check if an OTP was already requested within the last 60 seconds
+  const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString()
+  const { data: recentOtp } = await supabaseAdmin
+    .from('otp_verifications')
+    .select('id')
+    .eq('user_id', user.uid)
+    .gt('created_at', oneMinuteAgo)
+    .limit(1)
+
+  if (recentOtp && recentOtp.length > 0) {
+    return { error: 'Please wait at least 60 seconds before requesting a new code.' }
+  }
 
   // Generate 6 digit OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString()
 
-  // In a real app we would send an email here using Resend or similar.
-  // For this v1, since no SMTP is provided, we will just simulate it by returning it or logging it.
-  console.log(`[DEV ONLY] OTP for ${cuEmail} is: ${otp}`)
-
-  const { error } = await supabaseAdmin
+  const { error: insertError } = await supabaseAdmin
     .from('otp_verifications')
     .insert({
       user_id: user.uid,
@@ -50,11 +53,23 @@ export async function sendVerificationOTP(formData: FormData) {
       expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString() // 15 mins
     })
 
-  if (error) {
-    return { error: 'Failed to generate OTP. Please try again.' }
+  if (insertError) {
+    return { error: 'Failed to generate verification code. Please try again.' }
   }
 
-  return { success: true, simulatedOtp: otp } // returning simulatedOtp just for easy testing without SMTP
+  // Send real email via Resend or simulated fallback
+  const mailResult = await sendOtpEmail({ toEmail: cuEmail, otp })
+  if (!mailResult.success) {
+    return { error: mailResult.error || 'Failed to send verification code email.' }
+  }
+
+  return {
+    success: true,
+    message: mailResult.simulated 
+      ? 'Verification code generated! (Running in simulation mode - check developer logs)'
+      : 'Verification code sent to your @cuchd.in inbox.',
+    simulatedOtp: mailResult.simulated && process.env.NODE_ENV !== 'production' ? otp : undefined
+  }
 }
 
 export async function verifyOTP(formData: FormData) {
@@ -64,7 +79,7 @@ export async function verifyOTP(formData: FormData) {
   const user = await getAuthUser()
   if (!user) return { error: 'Not logged in.' }
 
-  const supabaseAdmin = await getAdminDb()
+  const supabaseAdmin = getSupabaseAdmin()
 
   // Check OTP
   const { data: verification, error } = await supabaseAdmin

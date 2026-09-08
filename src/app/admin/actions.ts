@@ -4,11 +4,7 @@ import { getSupabaseAdmin } from '@/utils/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
 import { authAdmin } from '@/lib/firebase/server'
-
-// List of super-admin email addresses
-const ADMIN_EMAILS = [
-  'py7716496@gmail.com'
-]
+import { isSuperAdminEmail } from '@/lib/auth/admin-check'
 
 async function getAdminDb() {
   return getSupabaseAdmin()
@@ -30,7 +26,7 @@ export async function checkAdmin() {
   }
 
   const email = decoded.email?.toLowerCase() || ''
-  const isWhitelisted = ADMIN_EMAILS.includes(email)
+  const isWhitelisted = isSuperAdminEmail(email)
 
   const supabase = await getAdminDb()
 

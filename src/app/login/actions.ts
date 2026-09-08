@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers'
 import { authAdmin } from '@/lib/firebase/server'
 import { getSupabaseAdmin } from '@/utils/supabase/admin'
+import { isSuperAdminEmail } from '@/lib/auth/admin-check'
 
 /**
  * Checks whether a given username is available or already taken.
@@ -114,8 +115,8 @@ export async function syncUserToServer(idToken: string, name?: string, username?
     const fallbackUsername = email ? email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '').toLowerCase() : undefined
     const resolvedUsername = username?.trim().toLowerCase() || existingUser?.username || fallbackUsername
 
-    const isSuperAdminEmail = email?.toLowerCase() === 'py7716496@gmail.com'
-    const finalRole = isSuperAdminEmail ? 'admin' : (existingUser?.role || 'student')
+    const isSuperAdmin = isSuperAdminEmail(email)
+    const finalRole = isSuperAdmin ? 'admin' : (existingUser?.role || 'student')
 
     if (!existingUser) {
       await supabase.from('users').insert({
@@ -129,7 +130,7 @@ export async function syncUserToServer(idToken: string, name?: string, username?
       })
     } else {
       const updates: { name?: string; username?: string; cu_verified?: boolean; cu_email?: string; role?: string } = {}
-      if (isSuperAdminEmail && existingUser.role !== 'admin') {
+      if (isSuperAdmin && existingUser.role !== 'admin') {
         updates.role = 'admin'
       }
       if (name?.trim() && (!existingUser.name || existingUser.name === 'Unknown User')) {

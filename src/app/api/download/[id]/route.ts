@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/utils/supabase/admin'
 import { cookies } from 'next/headers'
 import { authAdmin } from '@/lib/firebase/server'
 
@@ -11,10 +11,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   let decoded = null
   let isAdmin = false
 
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  const supabaseAdmin = getSupabaseAdmin()
 
   if (token) {
     try {

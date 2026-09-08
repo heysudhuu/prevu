@@ -5,6 +5,7 @@ import { ShieldCheck, CheckCircle, Download, FileText } from 'lucide-react'
 import BookmarkButton from '@/components/BookmarkButton'
 import PreviewButton from '@/components/PreviewButton'
 import SharePaperButton from '@/components/SharePaperButton'
+import Link from 'next/link'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function ResourceCard({ resource, isBookmarked = false }: { resource: any; isBookmarked?: boolean }) {
@@ -17,6 +18,9 @@ export function ResourceCard({ resource, isBookmarked = false }: { resource: any
     examName === 'MST2' ? 'mst2' : 
     examName === 'EST' ? 'est' : 'stamp'
   
+  const subjectCode = resource.subjects?.code || resource.subject_id
+  const subjectUrl = `/subject/${encodeURIComponent(subjectCode)}`
+
   return (
     <Card className={`w-full flex flex-col h-full group transition-all duration-300 ${
       isAdmin 
@@ -46,13 +50,18 @@ export function ResourceCard({ resource, isBookmarked = false }: { resource: any
         </div>
 
         <CardTitle className="text-base sm:text-lg font-bold line-clamp-2 text-white group-hover:text-prevu-accent transition-colors">
-          {resource.subjects?.name}
+          <Link href={subjectUrl} className="hover:underline">
+            {resource.subjects?.name}
+          </Link>
         </CardTitle>
 
         <div className="flex items-center gap-2 mt-1.5">
-          <span className="text-[11px] font-mono font-semibold text-prevu-accent bg-prevu-accent/10 px-2 py-0.5 rounded border border-prevu-accent/20">
+          <Link 
+            href={subjectUrl}
+            className="text-[11px] font-mono font-semibold text-prevu-accent bg-prevu-accent/10 hover:bg-prevu-accent/20 px-2 py-0.5 rounded border border-prevu-accent/20 transition-colors"
+          >
             {resource.subjects?.code}
-          </span>
+          </Link>
           <span className="text-xs font-mono text-prevu-text-muted">
             Sem {resource.subjects?.semester} (Year {resource.subjects?.year || Math.ceil((resource.subjects?.semester || 1) / 2)})
           </span>

@@ -1,24 +1,19 @@
 'use client'
 
+import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
-import { ExternalLink } from 'lucide-react'
+import { Eye } from 'lucide-react'
+import PDFViewerModal from '@/components/preview/PDFViewerModal'
 
 interface PreviewButtonProps {
-  resource: {
-    id: string
-    exam_year: number
-    subjects?: {
-      name?: string
-      code?: string
-    }
-    exam_types?: {
-      name?: string
-    }
-  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  resource: any
 }
 
 export default function PreviewButton({ resource }: PreviewButtonProps) {
-  const handleClick = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  const handleOpen = () => {
     try {
       const stored = localStorage.getItem('prevu_recent_papers')
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,19 +35,28 @@ export default function PreviewButton({ resource }: PreviewButtonProps) {
     } catch {
       // Ignore storage errors
     }
+
+    setIsModalOpen(true)
   }
 
   return (
-    <Button 
-      variant="secondary" 
-      size="sm" 
-      className="flex-1 text-xs font-semibold hover:bg-prevu-surface-elevated" 
-      asChild
-      onClick={handleClick}
-    >
-      <a href={`/api/preview/${resource.id}`} target="_blank" rel="noopener noreferrer">
-        <ExternalLink className="w-3.5 h-3.5 mr-1 text-prevu-accent" /> Preview
-      </a>
-    </Button>
+    <>
+      <Button 
+        variant="secondary" 
+        size="sm" 
+        className="flex-1 text-xs font-semibold hover:bg-prevu-surface-elevated cursor-pointer" 
+        onClick={handleOpen}
+      >
+        <Eye className="w-3.5 h-3.5 mr-1 text-prevu-accent" /> Preview
+      </Button>
+
+      {isModalOpen && (
+        <PDFViewerModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          resource={resource}
+        />
+      )}
+    </>
   )
 }

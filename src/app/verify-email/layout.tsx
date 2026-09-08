@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { authAdmin } from '@/lib/firebase/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/utils/supabase/admin'
 import Header from '@/components/Header'
 
 export default async function VerifyEmailLayout({
@@ -19,10 +19,7 @@ export default async function VerifyEmailLayout({
     const decoded = await authAdmin.verifyIdToken(token)
     
     // Check cu_verified status using Service Role Key
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+    const supabase = getSupabaseAdmin()
     
     const { data: userData } = await supabase
       .from('users')

@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { authAdmin } from '@/lib/firebase/server'
 import { v4 as uuidv4 } from 'uuid'
 import { revalidatePath } from 'next/cache'
+import { isSuperAdminEmail } from '@/lib/auth/admin-check'
 
 export async function checkHashExists(hash: string) {
   const supabase = getSupabaseAdmin()
@@ -50,12 +51,12 @@ export async function uploadResource(formData: FormData) {
 
   const supabase = getSupabaseAdmin()
   const email = decoded.email?.toLowerCase() || ''
-  const isSuperAdminEmail = email === 'py7716496@gmail.com'
+  const isSuperAdmin = isSuperAdminEmail(email)
   
   // Ensure user exists in users table (in case user logged in before table was created)
   const { data: userData } = await supabase.from('users').select('id, cu_verified, email, role').eq('id', decoded.uid).maybeSingle()
   
-  const isAdmin = isSuperAdminEmail || userData?.role === 'admin'
+  const isAdmin = isSuperAdmin || userData?.role === 'admin'
 
   if (!userData) {
     const fallbackUsername = email ? email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '').toLowerCase() : `user_${decoded.uid.slice(0, 5)}`
@@ -70,7 +71,7 @@ export async function uploadResource(formData: FormData) {
     })
   } else {
     const updates: { cu_verified?: boolean; cu_email?: string; role?: string } = {}
-    if (isSuperAdminEmail && userData.role !== 'admin') {
+    if (isSuperAdmin && userData.role !== 'admin') {
       updates.role = 'admin'
     }
     if (!userData.cu_verified && (userData.email?.endsWith('@cuchd.in') || email.endsWith('@cuchd.in'))) {

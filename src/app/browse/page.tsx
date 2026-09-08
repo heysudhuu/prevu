@@ -5,14 +5,24 @@ import Link from 'next/link'
 import Header from '@/components/Header'
 import { getUserBookmarkIds } from '@/app/dashboard/actions'
 import BrowseFilterBar from '@/components/browse/BrowseFilterBar'
-import { Sparkles, MessageSquarePlus, FileQuestion } from 'lucide-react'
+import { Sparkles, MessageSquarePlus, FileQuestion, ChevronLeft, ChevronRight } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
+
+const PAGE_SIZE = 12
 
 export default async function BrowsePage({
   searchParams,
 }: {
-  searchParams: Promise<{ year?: string, sem?: string, subject?: string, type?: string, search?: string }>
+  searchParams: Promise<{
+    year?: string
+    sem?: string
+    subject?: string
+    type?: string
+    branch?: string
+    search?: string
+    page?: string
+  }>
 }) {
   const supabase = await createClient()
   const bookmarkIds = await getUserBookmarkIds()
@@ -23,11 +33,30 @@ export default async function BrowsePage({
   const semFilter = params.sem ? parseInt(params.sem) : undefined
   const subjectFilter = params.subject ? parseInt(params.subject) : undefined
   const typeFilter = params.type ? parseInt(params.type) : undefined
+  const branchFilter = params.branch ? parseInt(params.branch) : undefined
   const searchFilter = params.search?.trim() || ''
+  const currentPage = Math.max(1, parseInt(params.page || '1') || 1)
 
-  // Fetch filter options
-  const { data: subjectsData } = await supabase.from('subjects').select('*').order('name')
-  const { data: examTypesData } = await supabase.from('exam_types').select('*').order('id')
+  // Fetch branches, subjects, and exam types
+  const [
+    { data: branchesData },
+    { data: subjectsData },
+    { data: examTypesData }
+  ] = await Promise.all([
+    supabase.from('branches').select('*').order('name'),
+    supabase.from('subjects').select('*').order('name'),
+    supabase.from('exam_types').select('*').order('id')
+  ])
+
+  const defaultBranches = [
+    { id: 1, name: 'BE-CSE' },
+    { id: 2, name: 'BE-CSE (AI & ML)' },
+    { id: 3, name: 'BE-CSE (Data Science)' },
+    { id: 4, name: 'BCA' },
+    { id: 5, name: 'MCA' }
+  ]
+  const branches = (branchesData && branchesData.length > 0) ? branchesData : defaultBranches
+
   const defaultExamTypes: { id: number, name: string }[] = [
     { id: 1, name: 'MST1' },
     { id: 2, name: 'MST2' },
@@ -36,38 +65,67 @@ export default async function BrowsePage({
   const resolvedExamTypes = (examTypesData && examTypesData.length > 0) ? examTypesData : defaultExamTypes
   const subjects = subjectsData || []
 
-  // Fetch resources
+  // Build Query with Server-side filtering
   let query = supabase
     .from('resources')
     .select(`
-      id, exam_year,
-      subjects!inner ( name, code, semester, year ),
+      id, exam_year, file_path, file_type, original_filename,
+      subjects!inner ( name, code, semester, year, branch_id ),
       exam_types!inner ( name ),
       users!inner ( name, cu_verified, username, role )
-    `)
+    `, { count: 'exact' })
     .eq('status', 'approved')
     .order('created_at', { ascending: false })
 
+  if (branchFilter) query = query.eq('subjects.branch_id', branchFilter)
   if (yearFilter) query = query.eq('subjects.year', yearFilter)
   if (semFilter) query = query.eq('subjects.semester', semFilter)
   if (subjectFilter) query = query.eq('subject_id', subjectFilter)
   if (typeFilter) query = query.eq('exam_type_id', typeFilter)
 
-  const { data: rawResources } = await query
+  // Server-side keyword search
+  if (searchFilter) {
+    const { data: matchingSubjects } = await supabase
+      .from('subjects')
+      .select('id')
+      .or(`name.ilike.%${searchFilter}%,code.ilike.%${searchFilter}%`)
 
-  // Apply client-side keyword search filter if provided
-  const resources = (rawResources || []).filter(r => {
-    if (!searchFilter) return true
-    const term = searchFilter.toLowerCase()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const subName = (r.subjects as any)?.name?.toLowerCase() || ''
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const subCode = (r.subjects as any)?.code?.toLowerCase() || ''
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const examType = (r.exam_types as any)?.name?.toLowerCase() || ''
-    const year = String(r.exam_year || '')
-    return subName.includes(term) || subCode.includes(term) || examType.includes(term) || year.includes(term)
-  })
+    const subjectIds = (matchingSubjects || []).map(s => s.id)
+
+    if (subjectIds.length > 0) {
+      query = query.in('subject_id', subjectIds)
+    } else {
+      const isYear = !isNaN(parseInt(searchFilter)) && parseInt(searchFilter) > 2000
+      if (isYear) {
+        query = query.eq('exam_year', parseInt(searchFilter))
+      } else {
+        query = query.ilike('original_filename', `%${searchFilter}%`)
+      }
+    }
+  }
+
+  // Calculate range pagination
+  const from = (currentPage - 1) * PAGE_SIZE
+  const to = from + PAGE_SIZE - 1
+  query = query.range(from, to)
+
+  const { data: resourcesData, count } = await query
+  const resources = resourcesData || []
+  const totalCount = count || 0
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1
+
+  // Helper function to build page URLs while preserving current filters
+  const buildPageUrl = (targetPage: number) => {
+    const p = new URLSearchParams()
+    if (params.search) p.set('search', params.search)
+    if (params.branch) p.set('branch', params.branch)
+    if (params.year) p.set('year', params.year)
+    if (params.sem) p.set('sem', params.sem)
+    if (params.subject) p.set('subject', params.subject)
+    if (params.type) p.set('type', params.type)
+    p.set('page', String(targetPage))
+    return `/browse?${p.toString()}`
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-prevu-bg">
@@ -84,7 +142,7 @@ export default async function BrowsePage({
                   Verified Archive
                 </span>
                 <span className="text-xs font-mono text-prevu-text-muted">
-                  {resources.length} Question Papers
+                  {totalCount} Question Papers Available
                 </span>
               </div>
               <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">
@@ -102,27 +160,12 @@ export default async function BrowsePage({
             </Button>
           </div>
 
-          {/* Branch Expansion Notice Ribbon */}
-          <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-purple-950/30 via-prevu-surface to-indigo-950/30 border border-purple-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2.5">
-              <span className="text-base">🚀</span>
-              <p className="text-prevu-text-muted">
-                <strong className="text-purple-300">From another branch (ECE, Mech, Civil, Biotech, Management)?</strong> We are actively collecting question papers for your departments too!
-              </p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <Button variant="outline" size="sm" asChild className="h-7 text-[11px] border-purple-500/30 text-purple-300 hover:bg-purple-500/10">
-                <Link href="/dashboard?tab=requests">
-                  Request Your Branch Papers
-                </Link>
-              </Button>
-            </div>
-          </div>
-
           {/* Interactive Filter Bar */}
           <BrowseFilterBar 
             subjects={subjects}
             examTypes={resolvedExamTypes}
+            branches={branches}
+            currentBranch={branchFilter}
             currentYear={yearFilter}
             currentSem={semFilter}
             currentSubject={subjectFilter}
@@ -133,15 +176,94 @@ export default async function BrowsePage({
           {/* Resources Grid */}
           <section>
             {resources.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 animate-fade-in">
-                {resources.map((resource) => (
-                  <ResourceCard 
-                    key={resource.id} 
-                    resource={resource} 
-                    isBookmarked={bookmarkIds.includes(resource.id)}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 animate-fade-in">
+                  {resources.map((resource) => (
+                    <ResourceCard 
+                      key={resource.id} 
+                      resource={resource} 
+                      isBookmarked={bookmarkIds.includes(resource.id)}
+                    />
+                  ))}
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-prevu-surface-light/80">
+                    <div className="text-xs text-prevu-text-muted font-mono">
+                      Showing <strong className="text-white">{from + 1}</strong> to <strong className="text-white">{Math.min(to + 1, totalCount)}</strong> of <strong className="text-white">{totalCount}</strong> papers
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={currentPage <= 1}
+                        className="h-9 px-3 text-xs border-prevu-surface-light text-prevu-text-muted hover:text-white disabled:opacity-40"
+                        asChild={currentPage > 1}
+                      >
+                        {currentPage > 1 ? (
+                          <Link href={buildPageUrl(currentPage - 1)}>
+                            <ChevronLeft className="w-3.5 h-3.5 mr-1" /> Previous
+                          </Link>
+                        ) : (
+                          <span><ChevronLeft className="w-3.5 h-3.5 mr-1 inline" /> Previous</span>
+                        )}
+                      </Button>
+
+                      <div className="flex items-center gap-1 px-2">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1)
+                          .filter(page => page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1)
+                          .map((page, index, array) => {
+                            const isCurrent = page === currentPage
+                            const prevPage = array[index - 1]
+                            const showEllipsis = prevPage && page - prevPage > 1
+
+                            return (
+                              <div key={page} className="flex items-center">
+                                {showEllipsis && (
+                                  <span className="px-1.5 text-prevu-text-muted text-xs">...</span>
+                                )}
+                                <Button
+                                  variant={isCurrent ? 'default' : 'ghost'}
+                                  size="sm"
+                                  className={`h-8 w-8 p-0 text-xs font-mono font-bold rounded-lg ${
+                                    isCurrent 
+                                      ? 'bg-prevu-accent text-white shadow-md shadow-prevu-accent/20' 
+                                      : 'text-prevu-text-muted hover:text-white'
+                                  }`}
+                                  asChild={!isCurrent}
+                                >
+                                  {isCurrent ? (
+                                    <span>{page}</span>
+                                  ) : (
+                                    <Link href={buildPageUrl(page)}>{page}</Link>
+                                  )}
+                                </Button>
+                              </div>
+                            )
+                          })}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={currentPage >= totalPages}
+                        className="h-9 px-3 text-xs border-prevu-surface-light text-prevu-text-muted hover:text-white disabled:opacity-40"
+                        asChild={currentPage < totalPages}
+                      >
+                        {currentPage < totalPages ? (
+                          <Link href={buildPageUrl(currentPage + 1)}>
+                            Next <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                          </Link>
+                        ) : (
+                          <span>Next <ChevronRight className="w-3.5 h-3.5 ml-1 inline" /></span>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-20 border border-prevu-surface-light bg-prevu-surface/60 rounded-3xl p-8 space-y-4 max-w-xl mx-auto shadow-2xl">
                 <div className="w-16 h-16 rounded-2xl bg-prevu-surface border border-prevu-surface-light flex items-center justify-center mx-auto text-prevu-text-muted">

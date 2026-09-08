@@ -51,70 +51,92 @@ export default function SharePaperButton({ resource }: SharePaperButtonProps) {
 
   const shareText = `📚 *Chandigarh University Question Paper*\n*Subject:* ${subjectName} (${subjectCode})\n*Pattern:* ${examType} - ${examYear} (Sem ${semester})\n\nAccess it free on Prevu:\n`
 
+  const getShareUrl = () => {
+    if (typeof window === 'undefined') return ''
+    return `${window.location.origin}/browse?sem=${semester}&search=${encodeURIComponent(subjectCode || subjectName)}`
+  }
+
+  const handleButtonClick = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const url = getShareUrl()
+
+    // If mobile native share sheet is available, use it directly
+    if (typeof navigator !== 'undefined' && navigator.share && /mobile|android|iphone|ipad/i.test(navigator.userAgent)) {
+      try {
+        await navigator.share({
+          title: `${subjectName} (${subjectCode}) Question Paper | Prevu`,
+          text: `${subjectName} (${subjectCode}) - ${examType} ${examYear} on Prevu`,
+          url: url
+        })
+        return
+      } catch {
+        // User cancelled or failed, fallback to dropdown
+      }
+    }
+
+    setShowMenu(prev => !prev)
+  }
+
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation()
-    const url = typeof window !== 'undefined' 
-      ? `${window.location.origin}/browse?sem=${semester}&search=${encodeURIComponent(subjectCode || subjectName)}` 
-      : ''
+    const url = getShareUrl()
     
     navigator.clipboard.writeText(`${shareText}${url}`)
     setCopied(true)
     setTimeout(() => {
       setCopied(false)
       setShowMenu(false)
-    }, 2000)
+    }, 1800)
   }
 
   const handleWhatsAppShare = (e: React.MouseEvent) => {
     e.stopPropagation()
-    const url = typeof window !== 'undefined' 
-      ? `${window.location.origin}/browse?sem=${semester}&search=${encodeURIComponent(subjectCode || subjectName)}` 
-      : ''
-    
+    const url = getShareUrl()
     const fullMessage = encodeURIComponent(`${shareText}${url}`)
     window.open(`https://api.whatsapp.com/send?text=${fullMessage}`, '_blank')
     setShowMenu(false)
   }
 
   return (
-    <div className="relative inline-block" ref={menuRef}>
+    <div className="relative inline-block z-30" ref={menuRef}>
       <button
-        onClick={(e) => {
-          e.stopPropagation()
-          setShowMenu(!showMenu)
-        }}
+        onClick={handleButtonClick}
         title="Share with Classmates"
-        className="p-1.5 rounded-lg border border-prevu-surface-light bg-prevu-bg/90 hover:bg-prevu-surface hover:border-prevu-accent/50 text-prevu-text-muted hover:text-prevu-accent transition-all text-xs flex items-center justify-center cursor-pointer"
+        className="p-1.5 rounded-lg border border-prevu-surface-light bg-prevu-bg/90 hover:bg-prevu-surface hover:border-prevu-accent/50 text-prevu-text-muted hover:text-prevu-accent transition-all text-xs flex items-center justify-center cursor-pointer active:scale-95"
       >
         <Share2 className="w-3.5 h-3.5" />
       </button>
 
-      {/* Popover Menu */}
+      {/* Popover Menu - Opens downwards into the card body so it is never clipped */}
       {showMenu && (
         <div 
           onClick={(e) => e.stopPropagation()}
-          className="absolute right-0 bottom-full mb-1.5 w-48 rounded-xl border border-prevu-surface-light bg-prevu-surface/98 backdrop-blur-2xl shadow-2xl p-1.5 z-30 space-y-1 animate-scale-in"
+          className="absolute right-0 top-full mt-2 w-52 rounded-2xl border border-prevu-surface-light bg-prevu-surface/98 backdrop-blur-2xl shadow-2xl p-2 z-50 space-y-1 animate-scale-in"
         >
+          <div className="px-2 py-1 text-[10px] font-mono font-bold text-prevu-text-muted uppercase tracking-wider border-b border-prevu-surface-light/60 mb-1">
+            Share Question Paper
+          </div>
+
           <button
             onClick={handleWhatsAppShare}
-            className="w-full px-2.5 py-2 rounded-lg text-left text-xs font-medium text-prevu-text hover:bg-emerald-500/15 hover:text-emerald-300 flex items-center gap-2 transition-colors cursor-pointer"
+            className="w-full px-2.5 py-2 rounded-xl text-left text-xs font-semibold text-prevu-text hover:bg-emerald-500/15 hover:text-emerald-300 flex items-center gap-2 transition-colors cursor-pointer"
           >
-            <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <WhatsAppIcon className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>Share on WhatsApp</span>
           </button>
 
           <button
             onClick={handleCopy}
-            className="w-full px-2.5 py-2 rounded-lg text-left text-xs font-medium text-prevu-text hover:bg-prevu-accent/15 hover:text-prevu-accent flex items-center gap-2 transition-colors cursor-pointer"
+            className="w-full px-2.5 py-2 rounded-xl text-left text-xs font-semibold text-prevu-text hover:bg-prevu-accent/15 hover:text-prevu-accent flex items-center gap-2 transition-colors cursor-pointer"
           >
             {copied ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span className="text-emerald-400 font-semibold">Copied Link!</span>
+                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="text-emerald-400 font-bold">Copied to Clipboard!</span>
               </>
             ) : (
               <>
-                <Copy className="w-3.5 h-3.5 text-prevu-text-muted shrink-0" />
+                <Copy className="w-4 h-4 text-prevu-text-muted shrink-0" />
                 <span>Copy Share Link</span>
               </>
             )}

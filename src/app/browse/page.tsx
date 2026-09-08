@@ -287,7 +287,7 @@ export default async function BrowsePage({
                   </Button>
                   
                   <Button size="sm" className="text-xs bg-prevu-accent text-white font-bold" asChild>
-                    <Link href={`/dashboard?tab=requests`}>
+                    <Link href="/dashboard?tab=requests&action=new">
                       <MessageSquarePlus className="w-3.5 h-3.5 mr-1.5" /> Request this Paper
                     </Link>
                   </Button>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { 
@@ -35,6 +36,8 @@ interface StudentDashboardTabsProps {
   paperRequests: any[]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   liveResources?: any[]
+  initialTab?: string
+  initialAction?: string
 }
 
 type TabType = 'browse' | 'saved' | 'requests' | 'my-uploads'
@@ -44,9 +47,31 @@ export default function StudentDashboardTabs({
   myResources,
   savedResources,
   paperRequests,
-  liveResources = []
+  liveResources = [],
+  initialTab = 'browse',
+  initialAction
 }: StudentDashboardTabsProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('browse')
+  const searchParams = useSearchParams()
+  const validTabs: TabType[] = ['browse', 'saved', 'requests', 'my-uploads']
+  const paramTab = searchParams.get('tab') as TabType
+  const [userSelectedTab, setUserSelectedTab] = useState<TabType | null>(null)
+
+  // Derive active tab from user selection, URL parameter, or initial tab fallback
+  const activeTab: TabType = userSelectedTab && validTabs.includes(userSelectedTab)
+    ? userSelectedTab
+    : (paramTab && validTabs.includes(paramTab)
+      ? paramTab
+      : (validTabs.includes(initialTab as TabType) ? (initialTab as TabType) : 'browse'))
+
+  const handleTabChange = (newTab: TabType) => {
+    setUserSelectedTab(newTab)
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      url.searchParams.set('tab', newTab)
+      url.searchParams.delete('action')
+      window.history.replaceState(null, '', url.toString())
+    }
+  }
   
   // Dashboard in-page search & filter states
   const userSem = userProfile?.current_semester || 1
@@ -77,7 +102,7 @@ export default function StudentDashboardTabs({
       {/* Navigation Tabs */}
       <div className="flex items-center gap-2 border-b border-prevu-surface-light pb-2 overflow-x-auto">
         <button
-          onClick={() => setActiveTab('browse')}
+          onClick={() => handleTabChange('browse')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'browse'
               ? 'bg-prevu-accent text-white shadow-lg shadow-prevu-accent/25'
@@ -94,7 +119,7 @@ export default function StudentDashboardTabs({
         </button>
 
         <button
-          onClick={() => setActiveTab('saved')}
+          onClick={() => handleTabChange('saved')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'saved'
               ? 'bg-prevu-accent text-white shadow-lg shadow-prevu-accent/25'
@@ -111,7 +136,7 @@ export default function StudentDashboardTabs({
         </button>
 
         <button
-          onClick={() => setActiveTab('requests')}
+          onClick={() => handleTabChange('requests')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'requests'
               ? 'bg-prevu-accent text-white shadow-lg shadow-prevu-accent/25'
@@ -128,7 +153,7 @@ export default function StudentDashboardTabs({
         </button>
 
         <button
-          onClick={() => setActiveTab('my-uploads')}
+          onClick={() => handleTabChange('my-uploads')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'my-uploads'
               ? 'bg-prevu-accent text-white shadow-lg shadow-prevu-accent/25'
@@ -298,7 +323,7 @@ export default function StudentDashboardTabs({
                   }
                 </p>
                 <div className="pt-2">
-                  <Button size="sm" onClick={() => setActiveTab('requests')} className="text-xs bg-prevu-accent text-white font-bold">
+                  <Button size="sm" onClick={() => handleTabChange('requests')} className="text-xs bg-prevu-accent text-white font-bold">
                     <MessageSquarePlus className="w-3.5 h-3.5 mr-1.5" /> Request this Paper
                   </Button>
                 </div>
@@ -326,7 +351,10 @@ export default function StudentDashboardTabs({
       {/* ------------------------------------------------------------ */}
       {activeTab === 'requests' && (
         <div className="space-y-4 animate-fade-in">
-          <PaperRequestsBoard requests={paperRequests} />
+          <PaperRequestsBoard 
+            requests={paperRequests} 
+            autoOpenModal={initialAction === 'new' || searchParams.get('action') === 'new'}
+          />
         </div>
       )}
 

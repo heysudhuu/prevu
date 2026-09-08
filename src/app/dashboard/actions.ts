@@ -150,19 +150,19 @@ export async function getPaperRequests() {
 }
 
 /**
- * Submits a new paper request
+ * Submits a new paper request (supports both logged-in students and guest requests)
  */
 export async function createPaperRequest(formData: FormData) {
+  let userId: string | null = null
   const token = (await cookies()).get('firebase-token')?.value
-  if (!token) {
-    return { error: 'Please log in to submit a paper request.' }
-  }
 
-  let decoded
-  try {
-    decoded = await authAdmin.verifyIdToken(token)
-  } catch {
-    return { error: 'Authentication expired.' }
+  if (token) {
+    try {
+      const decoded = await authAdmin.verifyIdToken(token)
+      userId = decoded.uid
+    } catch {
+      // Allow guest submission if token expired
+    }
   }
 
   const subjectName = (formData.get('subject_name') as string)?.trim()
@@ -170,29 +170,42 @@ export async function createPaperRequest(formData: FormData) {
   const examYear = parseInt(formData.get('exam_year') as string)
   const semester = parseInt(formData.get('semester') as string || '1')
   const note = (formData.get('note') as string)?.trim()
+  const branch = (formData.get('branch') as string)?.trim()
+  const studentName = (formData.get('student_name') as string)?.trim()
 
   if (!subjectName || !examType || isNaN(examYear)) {
     return { error: 'Please specify the subject name, exam type, and year.' }
+  }
+
+  // Combine branch and student details into note if present for full visibility
+  let combinedNote = note || ''
+  if (branch && !combinedNote.toLowerCase().includes(branch.toLowerCase())) {
+    combinedNote = `[Branch: ${branch}] ${combinedNote}`.trim()
+  }
+  if (!userId && studentName) {
+    combinedNote = `${combinedNote} (Requested by: ${studentName})`.trim()
   }
 
   const supabase = getSupabaseAdmin()
   const { error } = await supabase
     .from('paper_requests')
     .insert({
-      requested_by: decoded.uid,
+      requested_by: userId,
       subject_name: subjectName,
       exam_type: examType,
       exam_year: examYear,
       semester: semester,
-      note: note || null,
+      note: combinedNote || null,
       status: 'open'
     })
 
   if (error) {
+    console.error("Paper request insertion error:", error)
     return { error: error.message }
   }
 
   revalidatePath('/dashboard')
+  revalidatePath('/')
   return { success: true }
 }
 

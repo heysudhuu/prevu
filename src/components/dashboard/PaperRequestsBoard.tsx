@@ -18,11 +18,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 interface PaperRequestsProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   requests: any[]
+  autoOpenModal?: boolean
 }
 
-export default function PaperRequestsBoard({ requests: initialRequests }: PaperRequestsProps) {
+export default function PaperRequestsBoard({ 
+  requests: initialRequests,
+  autoOpenModal = false 
+}: PaperRequestsProps) {
   const [requests] = useState(initialRequests || [])
-  const [showModal, setShowModal] = useState(false)
+  const [showModal, setShowModal] = useState(autoOpenModal)
   
   // Form state
   const [subjectName, setSubjectName] = useState('')

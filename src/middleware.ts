@@ -5,20 +5,23 @@ export async function middleware(request: NextRequest) {
   // Simple check for Firebase token in cookies
   const hasToken = request.cookies.has('firebase-token')
 
-  // If already logged in, redirect away from /login and /signup to dashboard
+  // If already logged in, redirect away from /login and /signup to dashboard or requested redirect
   if (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup')) {
     if (hasToken) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+      const redirectParam = request.nextUrl.searchParams.get('redirect')
+      return NextResponse.redirect(new URL(redirectParam || '/dashboard', request.url))
     }
   }
 
-  // Protect upload, verify-email, and admin routes
+  // Protect upload, verify-email, admin, and dashboard routes
   if (request.nextUrl.pathname.startsWith('/upload') || 
       request.nextUrl.pathname.startsWith('/verify-email') ||
-      request.nextUrl.pathname.startsWith('/admin')) {
+      request.nextUrl.pathname.startsWith('/admin') ||
+      request.nextUrl.pathname.startsWith('/dashboard')) {
     if (!hasToken) {
       const redirectUrl = new URL('/login', request.url)
-      redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)
+      const fullPath = request.nextUrl.pathname + request.nextUrl.search
+      redirectUrl.searchParams.set('redirect', fullPath)
       return NextResponse.redirect(redirectUrl)
     }
   }

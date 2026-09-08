@@ -23,17 +23,31 @@ export const metadata = {
   description: 'Manage study materials, exams, saved question papers, and requests on Prevu.',
 }
 
-export default async function StudentDashboardPage() {
+export default async function StudentDashboardPage({
+  searchParams
+}: {
+  searchParams?: Promise<{ tab?: string; action?: string; branch?: string }>
+}) {
+  const resolvedParams = searchParams ? await searchParams : {}
+  const targetTab = resolvedParams.tab || 'browse'
+  const targetAction = resolvedParams.action
+
   const token = (await cookies()).get('firebase-token')?.value
   if (!token) {
-    redirect('/login')
+    const redirectUrl = resolvedParams.tab 
+      ? `/dashboard?tab=${resolvedParams.tab}${targetAction ? `&action=${targetAction}` : ''}`
+      : '/dashboard'
+    redirect(`/login?redirect=${encodeURIComponent(redirectUrl)}`)
   }
 
   let decoded
   try {
     decoded = await authAdmin.verifyIdToken(token)
   } catch {
-    redirect('/login')
+    const redirectUrl = resolvedParams.tab 
+      ? `/dashboard?tab=${resolvedParams.tab}${targetAction ? `&action=${targetAction}` : ''}`
+      : '/dashboard'
+    redirect(`/login?redirect=${encodeURIComponent(redirectUrl)}`)
   }
 
   const supabase = getSupabaseAdmin()
@@ -212,6 +226,8 @@ export default async function StudentDashboardPage() {
           savedResources={savedResources}
           paperRequests={paperRequests}
           liveResources={liveResources || []}
+          initialTab={targetTab}
+          initialAction={targetAction}
         />
 
       </main>

@@ -18,10 +18,12 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import RequestPaperModal from '@/components/requests/RequestPaperModal'
 
 export default function UpcomingFeaturesRoadmap() {
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null)
   const [voted, setVoted] = useState(false)
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false)
 
   const upcomingDepartments = [
     { id: 'ECE', name: 'Electronics & Comm. (ECE)', icon: '⚡', progress: '80% Collected' },
@@ -122,11 +124,14 @@ export default function UpcomingFeaturesRoadmap() {
                   <span>Contribute Your Branch Papers</span>
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="text-xs sm:text-sm font-semibold border-purple-500/30 hover:border-purple-500 text-purple-300" asChild>
-                <Link href="/dashboard?tab=requests">
-                  <span>Request Missing Papers</span>
-                  <ArrowRight className="w-4 h-4 ml-1.5" />
-                </Link>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="text-xs sm:text-sm font-semibold border-purple-500/30 hover:border-purple-500 text-purple-300 cursor-pointer"
+                onClick={() => setIsRequestModalOpen(true)}
+              >
+                <span>Request Missing Papers</span>
+                <ArrowRight className="w-4 h-4 ml-1.5" />
               </Button>
             </div>
 
@@ -235,6 +240,13 @@ export default function UpcomingFeaturesRoadmap() {
         </div>
 
       </div>
+
+      {/* Interactive Missing Paper Request Modal */}
+      <RequestPaperModal
+        isOpen={isRequestModalOpen}
+        onClose={() => setIsRequestModalOpen(false)}
+        initialBranch={selectedBranch}
+      />
     </section>
   )
 }

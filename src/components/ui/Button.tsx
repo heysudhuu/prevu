@@ -1,7 +1,4 @@
-'use client'
-
 import * as React from "react"
-import { motion, HTMLMotionProps } from "framer-motion"
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -13,7 +10,7 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className = "", variant = "default", size = "default", asChild = false, children, ...props }, ref) => {
     
-    const baseStyles = "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-prevu-accent focus-visible:ring-offset-2 focus-visible:ring-offset-prevu-bg disabled:pointer-events-none disabled:opacity-50 cursor-pointer [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 select-none"
+    const baseStyles = "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-prevu-accent focus-visible:ring-offset-2 focus-visible:ring-offset-prevu-bg disabled:pointer-events-none disabled:opacity-50 cursor-pointer [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 select-none"
     
     let variantStyles = ""
     switch (variant) {
@@ -69,19 +66,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       })
     }
 
-    const motionProps = props as HTMLMotionProps<"button">
-
     return (
-      <motion.button
+      <button
         className={combinedClassName}
         ref={ref}
-        whileHover={{ scale: 1.015 }}
-        whileTap={{ scale: 0.985 }}
-        transition={{ type: "spring", stiffness: 400, damping: 25 }}
-        {...motionProps}
+        {...props}
       >
         {children}
-      </motion.button>
+      </button>
     )
   }
 )

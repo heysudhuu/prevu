@@ -37,6 +37,9 @@ export function getFriendlyAuthErrorMessage(error: unknown): string {
   if (errorMessage.includes('auth/requires-recent-login')) {
     return 'Please log in again to perform this sensitive action.'
   }
+  if (errorMessage.includes('auth/unauthorized-domain')) {
+    return 'Unauthorized domain: This domain/IP (e.g. 127.0.0.1 or local network IP) is not in your Firebase Authorized Domains list. Please access via http://localhost:3000 or add your domain in Firebase Console.'
+  }
   
   const match = errorMessage.match(/\(auth\/([a-zA-Z0-9-]+)\)/)
   if (match) {

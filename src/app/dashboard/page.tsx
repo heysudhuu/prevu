@@ -78,17 +78,20 @@ export default async function StudentDashboardPage({
   const savedResources = await getBookmarkedResources()
   const paperRequests = await getPaperRequests()
 
-  // Fetch all approved live question papers for direct in-dashboard browsing
-  const { data: liveResources } = await supabase
+  // Fetch targeted recommended papers for this student's semester (capped at 12)
+  const userSem = userProfile?.current_semester || 1
+  const { data: recommendedPapers } = await supabase
     .from('resources')
     .select(`
       id, exam_year, file_path, status, created_at,
-      subjects ( name, code, semester, year ),
+      subjects!inner ( name, code, semester, year ),
       exam_types ( name ),
       users ( name, cu_verified, username, role )
     `)
     .eq('status', 'approved')
+    .eq('subjects.semester', userSem)
     .order('created_at', { ascending: false })
+    .limit(12)
 
   return (
     <div className="min-h-screen bg-prevu-bg text-prevu-text flex flex-col pb-16">
@@ -225,7 +228,7 @@ export default async function StudentDashboardPage({
           myResources={myResources || []}
           savedResources={savedResources}
           paperRequests={paperRequests}
-          liveResources={liveResources || []}
+          liveResources={recommendedPapers || []}
           initialTab={targetTab}
           initialAction={targetAction}
         />

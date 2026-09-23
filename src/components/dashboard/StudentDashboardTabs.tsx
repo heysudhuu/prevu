@@ -13,8 +13,10 @@ import {
   X,
   FileQuestion,
   MessageSquarePlus,
-  Sparkles,
-  ArrowRight
+  ArrowRight,
+  Target,
+  GraduationCap,
+  Sparkles
 } from 'lucide-react'
 import Link from 'next/link'
 import { ResourceCard } from '@/components/ResourceCard'
@@ -110,10 +112,10 @@ export default function StudentDashboardTabs({
           }`}
         >
           <BookOpen className="w-4 h-4" />
-          <span>Live Question Papers & Browse</span>
+          <span>Study Hub & Recommendations</span>
           {liveResources.length > 0 && (
             <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 text-white font-mono">
-              {liveResources.length}
+              Sem {userSem} ({liveResources.length})
             </span>
           )}
         </button>
@@ -189,6 +191,16 @@ export default function StudentDashboardTabs({
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              <Button size="sm" variant="outline" asChild className="h-8 text-xs border-prevu-surface-light hover:border-cyan-500/40 text-cyan-300">
+                <Link href="/exam-prep">
+                  <Target className="w-3.5 h-3.5 mr-1 text-cyan-400" /> Exam Prep
+                </Link>
+              </Button>
+              <Button size="sm" variant="outline" asChild className="h-8 text-xs border-prevu-surface-light hover:border-prevu-accent/40 text-prevu-accent">
+                <Link href="/subjects">
+                  <GraduationCap className="w-3.5 h-3.5 mr-1" /> Subject Catalog
+                </Link>
+              </Button>
               <AcademicCalendarModal semester={userSem} />
               <ExamBlueprintModal semester={userSem} />
             </div>

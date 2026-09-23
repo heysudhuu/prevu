@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { getFormDataOptions, checkHashExists, uploadResource } from './actions'
-import { Upload, AlertCircle, Sparkles, BookOpen, Layers } from 'lucide-react'
+import { Upload, AlertCircle, Sparkles, BookOpen, Layers, Eye } from 'lucide-react'
 import UploadCelebrationMascot from '@/components/animations/UploadCelebrationMascot'
 
 type Subject = { id: number, name: string, code: string, year: number, semester: number, branch_id: number }
@@ -21,7 +21,9 @@ export default function UploadPage() {
 
   const [file, setFile] = useState<File | null>(null)
   const [fileHash, setFileHash] = useState<string>('')
-  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [duplicateData, setDuplicateData] = useState<any | null>(null)
+  const [duplicateAcknowledged, setDuplicateAcknowledged] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -43,7 +45,8 @@ export default function UploadPage() {
   // Compute SHA-256 hash using native Web Crypto API
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0]
-    setDuplicateWarning(null)
+    setDuplicateData(null)
+    setDuplicateAcknowledged(false)
     setFile(null)
     setFileHash('')
     
@@ -62,7 +65,8 @@ export default function UploadPage() {
         // Check for duplicates
         const duplicate = await checkHashExists(hashHex)
         if (duplicate) {
-          setDuplicateWarning(`Notice: A similar document (${duplicate.original_filename}) already exists. Your submission will be reviewed by an admin.`)
+          setDuplicateData(duplicate)
+          setDuplicateAcknowledged(false)
         }
       } else {
         setFileHash(`fallback-hash-${Date.now()}-${Math.random()}`)
@@ -125,7 +129,8 @@ export default function UploadPage() {
             setFileHash('')
             setSubjectName('')
             setSubjectCode('')
-            setDuplicateWarning(null)
+            setDuplicateData(null)
+            setDuplicateAcknowledged(false)
             setIsAdminUpload(false)
           }}
         />
@@ -295,10 +300,66 @@ export default function UploadPage() {
                 </div>
               </div>
               
-              {duplicateWarning && (
-                <div className="p-3 bg-amber-500/10 border border-amber-500/25 rounded-xl flex items-start gap-2.5 text-xs text-amber-300">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>{duplicateWarning}</span>
+              {duplicateData && !duplicateAcknowledged && (
+                <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>Possible Duplicate Question Paper Detected</span>
+                  </div>
+                  
+                  <div className="text-xs text-prevu-text-muted space-y-1 bg-prevu-bg/80 p-3 rounded-xl border border-prevu-surface-light">
+                    <p className="text-white font-semibold">
+                      {duplicateData.subjects?.name || 'Question Paper'} {duplicateData.subjects?.code ? `(${duplicateData.subjects.code})` : ''} — {duplicateData.exam_year} {duplicateData.exam_types?.name || 'Exam'}
+                    </p>
+                    <p className="text-[11px] font-mono text-prevu-text-muted truncate">
+                      File: {duplicateData.original_filename}
+                    </p>
+                  </div>
+
+                  <p className="text-[11px] text-prevu-text-muted leading-relaxed">
+                    A paper with the identical file fingerprint is already verified in the vault. If this is an alternate question set, clearer scan, or revised version, click <strong>Upload Anyway</strong> to proceed.
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <Button size="sm" variant="outline" asChild className="h-8 text-xs border-amber-500/40 text-amber-300 hover:bg-amber-500/15">
+                      <a href={`/paper/${duplicateData.id}`} target="_blank" rel="noopener noreferrer">
+                        <Eye className="w-3.5 h-3.5 mr-1" /> View Existing Paper
+                      </a>
+                    </Button>
+                    <Button 
+                      type="button" 
+                      size="sm" 
+                      onClick={() => setDuplicateAcknowledged(true)} 
+                      className="h-8 text-xs bg-amber-500 text-black font-bold hover:bg-amber-400"
+                    >
+                      Upload Anyway
+                    </Button>
+                    <Button 
+                      type="button" 
+                      size="sm" 
+                      variant="ghost" 
+                      onClick={() => {
+                        setFile(null)
+                        setFileHash('')
+                        setDuplicateData(null)
+                        setDuplicateAcknowledged(false)
+                        const el = document.getElementById('file-upload') as HTMLInputElement
+                        if (el) el.value = ''
+                      }} 
+                      className="h-8 text-xs text-prevu-text-muted hover:text-white"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {duplicateData && duplicateAcknowledged && (
+                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-between text-xs text-amber-300">
+                  <span className="flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>Duplicate acknowledged. Your upload will be submitted for moderation review.</span>
+                  </span>
                 </div>
               )}
               
@@ -316,7 +377,7 @@ export default function UploadPage() {
               type="submit" 
               form="upload-form" 
               className="w-full py-3 text-sm flex items-center justify-center gap-2 shadow-lg shadow-prevu-accent/25 font-bold"
-              disabled={isUploading || !file || !fileHash || !subjectName.trim()}
+              disabled={isUploading || !file || !fileHash || !subjectName.trim() || (!!duplicateData && !duplicateAcknowledged)}
             >
               <Upload className="w-4 h-4" />
               {isUploading ? 'Uploading & Hashing Document...' : 'Submit Resource'}

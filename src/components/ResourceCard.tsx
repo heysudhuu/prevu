@@ -50,7 +50,7 @@ export function ResourceCard({ resource, isBookmarked = false }: { resource: any
         </div>
 
         <CardTitle className="text-base sm:text-lg font-bold line-clamp-2 text-white group-hover:text-prevu-accent transition-colors">
-          <Link href={subjectUrl} className="hover:underline">
+          <Link href={`/paper/${resource.id}`} className="hover:underline">
             {resource.subjects?.name}
           </Link>
         </CardTitle>

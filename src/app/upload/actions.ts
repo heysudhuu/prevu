@@ -12,7 +12,13 @@ export async function checkHashExists(hash: string) {
   
   const { data } = await supabase
     .from('resources')
-    .select('id, original_filename')
+    .select(`
+      id,
+      original_filename,
+      exam_year,
+      subjects ( name, code, semester ),
+      exam_types ( name )
+    `)
     .eq('file_hash', hash)
     .eq('status', 'approved')
     .limit(1)

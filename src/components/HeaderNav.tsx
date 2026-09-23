@@ -14,8 +14,11 @@ import {
   X, 
   BookOpen, 
   Sparkles,
-  LogIn,
-  Trophy
+  LogIn, 
+  Trophy,
+  GraduationCap,
+  Target,
+  MessageSquare
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -31,6 +34,9 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
 
   const navLinks = [
     { href: '/browse', label: 'Browse', icon: <BookOpen className="w-4 h-4" /> },
+    { href: '/subjects', label: 'Subjects', icon: <GraduationCap className="w-4 h-4" /> },
+    { href: '/exam-prep', label: 'Exam Prep', icon: <Target className="w-4 h-4 text-cyan-400" /> },
+    { href: '/requests', label: 'Requests', icon: <MessageSquare className="w-4 h-4" /> },
     { href: '/leaderboard', label: 'Leaderboard', icon: <Trophy className="w-4 h-4 text-amber-400" /> },
     ...(user && !isAdmin
       ? [{ href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> }]
@@ -160,6 +166,58 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                   <span>Browse Exam Archive</span>
                 </span>
                 <Sparkles className="w-3.5 h-3.5 opacity-70" />
+              </Link>
+
+              <Link
+                href="/subjects"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`p-3 rounded-xl text-sm font-semibold flex items-center justify-between transition-colors ${
+                  pathname.startsWith('/subject') ? 'bg-prevu-accent text-white' : 'text-prevu-text hover:bg-prevu-surface-light'
+                }`}
+              >
+                <span className="flex items-center gap-2.5">
+                  <GraduationCap className="w-4 h-4" />
+                  <span>Subject Hubs (Sem 1-8)</span>
+                </span>
+              </Link>
+
+              <Link
+                href="/exam-prep"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`p-3 rounded-xl text-sm font-semibold flex items-center justify-between transition-colors ${
+                  pathname === '/exam-prep' ? 'bg-prevu-accent text-white' : 'text-prevu-text hover:bg-prevu-surface-light'
+                }`}
+              >
+                <span className="flex items-center gap-2.5">
+                  <Target className="w-4 h-4 text-cyan-400" />
+                  <span>Exam Prep Hub</span>
+                </span>
+              </Link>
+
+              <Link
+                href="/requests"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`p-3 rounded-xl text-sm font-semibold flex items-center justify-between transition-colors ${
+                  pathname === '/requests' ? 'bg-prevu-accent text-white' : 'text-prevu-text hover:bg-prevu-surface-light'
+                }`}
+              >
+                <span className="flex items-center gap-2.5">
+                  <MessageSquare className="w-4 h-4" />
+                  <span>Community Requests</span>
+                </span>
+              </Link>
+
+              <Link
+                href="/leaderboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`p-3 rounded-xl text-sm font-semibold flex items-center justify-between transition-colors ${
+                  pathname === '/leaderboard' ? 'bg-prevu-accent text-white' : 'text-prevu-text hover:bg-prevu-surface-light'
+                }`}
+              >
+                <span className="flex items-center gap-2.5">
+                  <Trophy className="w-4 h-4 text-amber-400" />
+                  <span>Contributor Leaderboard</span>
+                </span>
               </Link>
 
               {user && (

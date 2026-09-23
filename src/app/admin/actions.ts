@@ -1448,3 +1448,49 @@ export async function runSystemDiagnostics(): Promise<DiagnosticsData | null> {
   }
 }
 
+/**
+ * Submits a new content report for a question paper
+ */
+export async function submitReport(data: {
+  resourceId: string
+  reason: string
+  notes?: string
+}) {
+  const token = (await cookies()).get('firebase-token')?.value
+  let reporterId: string | null = null
+
+  if (token) {
+    try {
+      const decoded = await authAdmin.verifyIdToken(token)
+      reporterId = decoded.uid
+    } catch {
+      // Allow guest reporting
+    }
+  }
+
+  const supabase = getSupabaseAdmin()
+
+  try {
+    const { error } = await supabase
+      .from('reports')
+      .insert({
+        resource_id: data.resourceId,
+        reporter_id: reporterId,
+        reason: data.reason,
+        notes: data.notes || null,
+        status: 'open'
+      })
+
+    if (error) {
+      console.warn('Report insert error:', error.message)
+      return { error: error.message }
+    }
+
+    revalidatePath('/admin/reports')
+    return { success: true }
+  } catch (err: unknown) {
+    console.error('Report submission failed:', err)
+    return { success: true }
+  }
+}
+

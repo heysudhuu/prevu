@@ -217,25 +217,25 @@ export function getSubjectStudyKit(code: string, fallbackName?: string): Subject
     units: [
       {
         unitNumber: 1,
-        title: 'Unit 1: Foundations & Core Concepts',
+        title: 'Foundations & Core Concepts',
         topics: ['Foundational definitions, historical evolution & scope', 'Core theoretical frameworks and architectural models', 'Fundamental equations and classification taxonomies'],
         weightage: '25% (MST-1 Primary Focus)'
       },
       {
         unitNumber: 2,
-        title: 'Unit 2: Modeling, Processes & Design',
+        title: 'Modeling, Processes & Design',
         topics: ['Detailed process state transitions and workflows', 'Comparative paradigms and algorithmic strategies', 'Mid-level numericals and implementation criteria'],
         weightage: '25% (MST-1 & MST-2)'
       },
       {
         unitNumber: 3,
-        title: 'Unit 3: Advanced Architectures & Optimization',
+        title: 'Advanced Architectures & Optimization',
         topics: ['Complex algorithms and system-level trade-offs', 'Resource allocation, synchronization and fault tolerance', 'Performance tuning and bottleneck mitigation'],
         weightage: '25% (MST-2 Primary Focus)'
       },
       {
         unitNumber: 4,
-        title: 'Unit 4: Modern Trends, Protocols & Applications',
+        title: 'Modern Trends, Protocols & Applications',
         topics: ['Industry use-cases and contemporary frameworks', 'Security, scalability, and deployment considerations', 'Comprehensive integration of Units 1-4'],
         weightage: '25% (EST Comprehensive)'
       }

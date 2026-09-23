@@ -100,17 +100,46 @@ export default function ExamPrepClient({
     }))
   }, [subjectPapers])
 
+  // Check for custom syllabus units saved for this subject via useSyncExternalStore
+  const customSyllabusRaw = React.useSyncExternalStore(
+    (callback) => {
+      window.addEventListener('storage', callback)
+      return () => window.removeEventListener('storage', callback)
+    },
+    () => {
+      if (!activeSubject) return null
+      try {
+        return localStorage.getItem(`prevu_custom_syllabus_${activeSubject.code}`)
+      } catch {
+        return null
+      }
+    },
+    () => null
+  )
+
+  const customUnits = useMemo<{ unitNumber: number; title: string; topics: string[]; weightage: string }[] | null>(() => {
+    if (!customSyllabusRaw) return null
+    try {
+      const parsed = JSON.parse(customSyllabusRaw)
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed
+    } catch {
+      // Ignore
+    }
+    return null
+  }, [customSyllabusRaw])
+
   // Relevant blueprint units for this exam type
   const relevantUnits = useMemo(() => {
-    if (!studyKit?.units) return []
+    const units = customUnits || studyKit?.units
+    if (!units) return []
     if (selectedExamType === 'MST1') {
-      return studyKit.units.slice(0, 2)
+      return units.slice(0, 2)
     } else if (selectedExamType === 'MST2') {
-      return studyKit.units.slice(1, 3)
+      return units.slice(1, 3)
     } else {
-      return studyKit.units
+      return units
     }
-  }, [studyKit, selectedExamType])
+  }, [customUnits, studyKit, selectedExamType])
 
   return (
     <div className="space-y-8">
@@ -300,16 +329,18 @@ export default function ExamPrepClient({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {relevantUnits.map(u => (
-            <div key={u.unitNumber} className="p-4 sm:p-5 rounded-2xl bg-prevu-surface border border-prevu-surface-light space-y-3 shadow-lg">
-              <div className="flex items-center justify-between gap-2 border-b border-prevu-surface-light pb-2">
-                <h4 className="text-sm font-bold text-white">
-                  Unit {u.unitNumber}: {u.title}
-                </h4>
-                <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20 shrink-0">
-                  {u.weightage}
-                </span>
-              </div>
+          {relevantUnits.map(u => {
+            const cleanTitle = u.title.replace(/^Unit\s*[0-9]+[:.\s]*/i, '')
+            return (
+              <div key={u.unitNumber} className="p-4 sm:p-5 rounded-2xl bg-prevu-surface border border-prevu-surface-light space-y-3 shadow-lg">
+                <div className="flex items-center justify-between gap-2 border-b border-prevu-surface-light pb-2">
+                  <h4 className="text-sm font-bold text-white">
+                    Unit {u.unitNumber}: {cleanTitle}
+                  </h4>
+                  <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20 shrink-0">
+                    {u.weightage}
+                  </span>
+                </div>
 
               <ul className="space-y-1.5 text-xs text-prevu-text-muted">
                 {u.topics.map((t, idx) => (
@@ -320,7 +351,8 @@ export default function ExamPrepClient({
                 ))}
               </ul>
             </div>
-          ))}
+          )
+        })}
         </div>
 
         {/* Scoring Advice */}

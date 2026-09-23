@@ -14,12 +14,15 @@ import {
   ExternalLink,
   Target,
   BookOpen,
-  CalendarCheck
+  CalendarCheck,
+  SlidersHorizontal,
+  RotateCcw
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { ResourceCard } from '@/components/ResourceCard'
 import { CoverageMatrix, CoveragePaperRecord } from '@/components/ui/CoverageMatrix'
 import { SubjectStudyKit } from '@/lib/data/subject-guides'
+import { CustomSyllabusModal, CustomUnit } from '@/components/subject/CustomSyllabusModal'
 
 interface SubjectHubClientProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,6 +43,54 @@ export default function SubjectHubClient({
 }: SubjectHubClientProps) {
   const [activeTab, setActiveTab] = useState<HubTab>('papers')
   const [paperFilter, setPaperFilter] = useState<string>('ALL')
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false)
+
+  // Subscribe to localStorage using React's useSyncExternalStore
+  const customSyllabusRaw = React.useSyncExternalStore(
+    (callback) => {
+      window.addEventListener('storage', callback)
+      return () => window.removeEventListener('storage', callback)
+    },
+    () => {
+      try {
+        return localStorage.getItem(`prevu_custom_syllabus_${subject.code}`)
+      } catch {
+        return null
+      }
+    },
+    () => null
+  )
+
+  const customUnits: CustomUnit[] | null = React.useMemo(() => {
+    if (!customSyllabusRaw) return null
+    try {
+      const parsed = JSON.parse(customSyllabusRaw)
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed
+    } catch {
+      // Ignore
+    }
+    return null
+  }, [customSyllabusRaw])
+
+  const handleSaveCustomUnits = (units: CustomUnit[]) => {
+    try {
+      localStorage.setItem(`prevu_custom_syllabus_${subject.code}`, JSON.stringify(units))
+      window.dispatchEvent(new Event('storage'))
+    } catch {
+      // Ignore
+    }
+  }
+
+  const handleResetCustomUnits = () => {
+    try {
+      localStorage.removeItem(`prevu_custom_syllabus_${subject.code}`)
+      window.dispatchEvent(new Event('storage'))
+    } catch {
+      // Ignore
+    }
+  }
+
+  const displayUnits = customUnits || studyKit.units
 
   // Prepare coverage records
   const coveragePapers: CoveragePaperRecord[] = resources.map(r => ({
@@ -245,29 +296,77 @@ export default function SubjectHubClient({
 
       {/* Tab 3: Syllabus Blueprint & Important Topics */}
       {activeTab === 'blueprint' && (
-        <section className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {studyKit.units.map(u => (
-              <div key={u.unitNumber} className="p-5 rounded-2xl bg-prevu-surface border border-prevu-surface-light space-y-3 shadow-lg">
-                <div className="flex items-center justify-between gap-2 border-b border-prevu-surface-light pb-2.5">
-                  <h3 className="text-sm font-bold text-white">
-                    Unit {u.unitNumber}: {u.title}
-                  </h3>
-                  <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20 shrink-0">
-                    {u.weightage}
+        <section className="space-y-5">
+          {/* Custom Syllabus Toolbar Banner */}
+          <div className="p-4 rounded-2xl bg-prevu-surface/80 border border-prevu-surface-light flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+            <div className="flex items-center gap-2.5">
+              <span className={`w-2.5 h-2.5 rounded-full ${customUnits ? 'bg-purple-400 animate-pulse' : 'bg-emerald-400'}`} />
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-white">
+                    {customUnits ? 'Custom Syllabus Active (Your Batch)' : 'Official University Blueprint'}
                   </span>
+                  {customUnits && (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                      Modified
+                    </span>
+                  )}
                 </div>
-
-                <ul className="space-y-1.5 text-xs text-prevu-text-muted">
-                  {u.topics.map((t, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-1.5 shrink-0" />
-                      <span>{t}</span>
-                    </li>
-                  ))}
-                </ul>
+                <p className="text-[11px] text-prevu-text-muted mt-0.5">
+                  {customUnits
+                    ? 'Displaying your customized units and topics for this subject.'
+                    : 'If your current batch syllabus differs, click to customize or upload your units.'}
+                </p>
               </div>
-            ))}
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {customUnits && (
+                <button
+                  onClick={handleResetCustomUnits}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-rose-500/20 transition-all"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Reset to Official</span>
+                </button>
+              )}
+
+              <Button
+                size="sm"
+                onClick={() => setIsCustomModalOpen(true)}
+                className="bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs h-8 px-3.5 rounded-xl shadow-sm flex items-center gap-1.5"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>{customUnits ? 'Edit Custom Syllabus' : 'Syllabus doesn\'t match? Customize Units'}</span>
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {displayUnits.map(u => {
+              const cleanTitle = u.title.replace(/^Unit\s*[0-9]+[:.\s]*/i, '')
+              return (
+                <div key={u.unitNumber} className="p-5 rounded-2xl bg-prevu-surface border border-prevu-surface-light space-y-3 shadow-lg">
+                  <div className="flex items-center justify-between gap-2 border-b border-prevu-surface-light pb-2.5">
+                    <h3 className="text-sm font-bold text-white">
+                      Unit {u.unitNumber}: {cleanTitle}
+                    </h3>
+                    <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20 shrink-0">
+                      {u.weightage}
+                    </span>
+                  </div>
+
+                  <ul className="space-y-1.5 text-xs text-prevu-text-muted">
+                    {u.topics.map((t, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-1.5 shrink-0" />
+                        <span>{t}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            })}
           </div>
 
           {/* Exam Scoring Tips Card */}
@@ -343,6 +442,19 @@ export default function SubjectHubClient({
           </div>
         </section>
       )}
+
+      {/* Custom Syllabus Modal */}
+      <CustomSyllabusModal
+        isOpen={isCustomModalOpen}
+        subjectCode={subject.code}
+        subjectName={subject.name}
+        defaultUnits={studyKit.units}
+        currentUnits={displayUnits}
+        isCustom={!!customUnits}
+        onClose={() => setIsCustomModalOpen(false)}
+        onSave={handleSaveCustomUnits}
+        onReset={handleResetCustomUnits}
+      />
     </div>
   )
 }

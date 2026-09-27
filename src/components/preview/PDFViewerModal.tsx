@@ -153,6 +153,19 @@ export default function PDFViewerModal({ isOpen, onClose, resource }: PDFViewerM
   if (!isOpen || !isClient) return null
 
   const examName = resource.exam_types?.name || 'MST'
+  const normalizedType = (examName || '').toLowerCase().replace(/[\s_-]/g, '')
+  const badgeVariant = 
+    examName === 'MST1' ? 'mst1' : 
+    examName === 'MST2' ? 'mst2' : 
+    examName === 'EST' ? 'est' : 
+    normalizedType.includes('note') ? 'notes' :
+    normalizedType.includes('syllab') ? 'syllabus' :
+    normalizedType.includes('assign') ? 'assignment' :
+    normalizedType.includes('lab') ? 'lab-manual' :
+    normalizedType.includes('question') ? 'question-bank' :
+    normalizedType.includes('book') ? 'book' :
+    normalizedType.includes('cheat') ? 'cheatsheet' :
+    normalizedType.includes('material') ? 'study-material' : 'stamp'
 
   return createPortal(
     <div 
@@ -170,7 +183,7 @@ export default function PDFViewerModal({ isOpen, onClose, resource }: PDFViewerM
         {/* Top Header Bar */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-5 py-3.5 border-b border-prevu-surface-light bg-prevu-bg/90 gap-3 shrink-0">
           <div className="flex items-center gap-2.5 truncate">
-            <Badge variant={examName === 'EST' ? 'est' : 'mst1'}>
+            <Badge variant={badgeVariant}>
               {examName}
             </Badge>
 

@@ -97,6 +97,26 @@ export async function addPaperComment({
   }
 
   const supabase = getSupabaseAdmin()
+  const email = decoded.email?.toLowerCase() || ''
+
+  // Ensure user exists in users table to prevent foreign key errors
+  const { data: userRecord } = await supabase
+    .from('users')
+    .select('id')
+    .eq('id', decoded.uid)
+    .maybeSingle()
+
+  if (!userRecord) {
+    const fallbackUsername = email ? email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '').toLowerCase() : `user_${decoded.uid.slice(0, 5)}`
+    await supabase.from('users').insert({
+      id: decoded.uid,
+      name: decoded.name || email.split('@')[0] || 'Student',
+      username: fallbackUsername,
+      email: decoded.email,
+      cu_verified: email.endsWith('@cuchd.in'),
+      role: isSuperAdminEmail(email) ? 'admin' : 'student'
+    })
+  }
 
   const { data, error } = await supabase
     .from('paper_comments')
@@ -118,7 +138,12 @@ export async function addPaperComment({
     .single()
 
   if (error || !data) {
-    return { error: `Failed to post comment: ${error?.message}` }
+    if (error?.message?.includes('paper_comments') || error?.message?.includes('schema cache')) {
+      return { 
+        error: 'Discussion table is being initialized. Please run migration 00009_paper_comments.sql in your Supabase SQL Editor.' 
+      }
+    }
+    return { error: `Failed to post comment: ${error?.message || 'Unknown error'}` }
   }
 
   revalidatePath('/browse')

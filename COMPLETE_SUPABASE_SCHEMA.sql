@@ -195,3 +195,33 @@ USING (bucket_id = 'resources');
 CREATE POLICY "Allow All Uploads" 
 ON storage.objects FOR INSERT 
 WITH CHECK (bucket_id = 'resources');
+
+-- 11. Resource Upvotes & Peer Recommendations
+CREATE TABLE IF NOT EXISTS resource_upvotes (
+    id SERIAL PRIMARY KEY,
+    resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    UNIQUE(resource_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_resource_upvotes_resource_id ON resource_upvotes (resource_id);
+CREATE INDEX IF NOT EXISTS idx_resource_upvotes_user_id ON resource_upvotes (user_id);
+ALTER TABLE IF EXISTS resource_upvotes DISABLE ROW LEVEL SECURITY;
+GRANT ALL ON TABLE resource_upvotes TO anon, authenticated, service_role;
+GRANT ALL ON SEQUENCE resource_upvotes_id_seq TO anon, authenticated, service_role;
+
+-- 12. Paper Comments & Doubt Threads
+CREATE TABLE IF NOT EXISTS paper_comments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    comment TEXT NOT NULL,
+    parent_id UUID REFERENCES paper_comments(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_paper_comments_resource_id ON paper_comments (resource_id, created_at ASC);
+CREATE INDEX IF NOT EXISTS idx_paper_comments_user_id ON paper_comments (user_id);
+CREATE INDEX IF NOT EXISTS idx_paper_comments_parent_id ON paper_comments (parent_id);
+ALTER TABLE IF EXISTS paper_comments DISABLE ROW LEVEL SECURITY;
+GRANT ALL ON TABLE paper_comments TO anon, authenticated, service_role;
+

@@ -1,7 +1,25 @@
 import * as React from "react"
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: "default" | "stamp" | "status-pending" | "status-approved" | "mst1" | "mst2" | "est" | "outline" | "cyan" | "purple"
+  variant?: 
+    | "default" 
+    | "stamp" 
+    | "status-pending" 
+    | "status-approved" 
+    | "mst1" 
+    | "mst2" 
+    | "est" 
+    | "notes" 
+    | "syllabus" 
+    | "assignment" 
+    | "lab-manual" 
+    | "question-bank" 
+    | "book" 
+    | "cheatsheet" 
+    | "study-material"
+    | "outline" 
+    | "cyan" 
+    | "purple"
 }
 
 function Badge({ className = "", variant = "default", children, ...props }: BadgeProps) {
@@ -22,6 +40,30 @@ function Badge({ className = "", variant = "default", children, ...props }: Badg
       break
     case "est":
       variantStyles = "font-mono font-bold text-xs bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-lg"
+      break
+    case "notes":
+      variantStyles = "font-mono font-bold text-xs bg-violet-500/15 text-violet-300 border border-violet-500/30 px-2.5 py-0.5 rounded-lg"
+      break
+    case "syllabus":
+      variantStyles = "font-mono font-bold text-xs bg-sky-500/15 text-sky-300 border border-sky-500/30 px-2.5 py-0.5 rounded-lg"
+      break
+    case "assignment":
+      variantStyles = "font-mono font-bold text-xs bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-lg"
+      break
+    case "lab-manual":
+      variantStyles = "font-mono font-bold text-xs bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2.5 py-0.5 rounded-lg"
+      break
+    case "question-bank":
+      variantStyles = "font-mono font-bold text-xs bg-pink-500/15 text-pink-300 border border-pink-500/30 px-2.5 py-0.5 rounded-lg"
+      break
+    case "book":
+      variantStyles = "font-mono font-bold text-xs bg-rose-500/15 text-rose-300 border border-rose-500/30 px-2.5 py-0.5 rounded-lg"
+      break
+    case "cheatsheet":
+      variantStyles = "font-mono font-bold text-xs bg-teal-500/15 text-teal-300 border border-teal-500/30 px-2.5 py-0.5 rounded-lg"
+      break
+    case "study-material":
+      variantStyles = "font-mono font-bold text-xs bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 px-2.5 py-0.5 rounded-lg"
       break
     case "cyan":
       variantStyles = "font-mono font-bold text-xs bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 px-2.5 py-0.5 rounded-lg"

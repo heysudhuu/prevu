@@ -12,11 +12,20 @@ export function ResourceCard({ resource, isBookmarked = false }: { resource: any
   const isVerified = resource.users?.cu_verified
   const isAdmin = resource.users?.role === 'admin'
   const examName = resource.exam_types?.name || 'MST'
+  const normalizedType = (examName || '').toLowerCase().replace(/[\s_-]/g, '')
 
   const examBadgeVariant = 
     examName === 'MST1' ? 'mst1' : 
     examName === 'MST2' ? 'mst2' : 
-    examName === 'EST' ? 'est' : 'stamp'
+    examName === 'EST' ? 'est' : 
+    normalizedType.includes('note') ? 'notes' :
+    normalizedType.includes('syllab') ? 'syllabus' :
+    normalizedType.includes('assign') ? 'assignment' :
+    normalizedType.includes('lab') ? 'lab-manual' :
+    normalizedType.includes('question') ? 'question-bank' :
+    normalizedType.includes('book') ? 'book' :
+    normalizedType.includes('cheat') ? 'cheatsheet' :
+    normalizedType.includes('material') ? 'study-material' : 'stamp'
   
   const subjectCode = resource.subjects?.code || resource.subject_id
   const subjectUrl = `/subject/${encodeURIComponent(subjectCode)}`

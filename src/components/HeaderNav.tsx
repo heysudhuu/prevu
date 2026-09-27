@@ -18,7 +18,8 @@ import {
   Trophy,
   GraduationCap,
   Target,
-  MessageSquare
+  MessageSquare,
+  FileText
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -33,7 +34,8 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const navLinks = [
-    { href: '/browse', label: 'Browse', icon: <BookOpen className="w-4 h-4" /> },
+    { href: '/browse', label: 'Papers', icon: <FileText className="w-4 h-4" /> },
+    { href: '/study-material', label: 'Study Material', icon: <BookOpen className="w-4 h-4 text-emerald-400" /> },
     { href: '/subjects', label: 'Subjects', icon: <GraduationCap className="w-4 h-4" /> },
     { href: '/exam-prep', label: 'Exam Prep', icon: <Target className="w-4 h-4 text-cyan-400" /> },
     { href: '/requests', label: 'Requests', icon: <MessageSquare className="w-4 h-4" /> },
@@ -162,10 +164,26 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                 }`}
               >
                 <span className="flex items-center gap-2.5">
-                  <BookOpen className="w-4 h-4" />
-                  <span>Browse Exam Archive</span>
+                  <FileText className="w-4 h-4" />
+                  <span>Browse Exam Papers (PYQs)</span>
                 </span>
                 <Sparkles className="w-3.5 h-3.5 opacity-70" />
+              </Link>
+
+              <Link
+                href="/study-material"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`p-3 rounded-xl text-sm font-semibold flex items-center justify-between transition-colors ${
+                  pathname.startsWith('/study-material') ? 'bg-emerald-600 text-white' : 'text-prevu-text hover:bg-prevu-surface-light'
+                }`}
+              >
+                <span className="flex items-center gap-2.5">
+                  <BookOpen className="w-4 h-4 text-emerald-400" />
+                  <span>Study Material Vault (All Years)</span>
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                  Notes
+                </span>
               </Link>
 
               <Link

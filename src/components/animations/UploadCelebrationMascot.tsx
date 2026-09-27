@@ -12,6 +12,7 @@ interface CelebrationProps {
   examYear: number
   fileName?: string
   isAdminUpload?: boolean
+  isStudyMaterial?: boolean
   onUploadAnother: () => void
 }
 
@@ -22,6 +23,7 @@ export default function UploadCelebrationMascot({
   examYear,
   fileName,
   isAdminUpload,
+  isStudyMaterial = false,
   onUploadAnother
 }: CelebrationProps) {
   // Confetti particles
@@ -196,8 +198,12 @@ export default function UploadCelebrationMascot({
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-prevu-text-muted">Exam Type:</span>
-            <span className="font-mono font-bold text-prevu-accent px-2 py-0.5 bg-prevu-accent/15 rounded-md">
+            <span className="text-prevu-text-muted">{isStudyMaterial ? 'Material Type:' : 'Exam Type:'}</span>
+            <span className={`font-mono font-bold px-2 py-0.5 rounded-md ${
+              isStudyMaterial 
+                ? 'bg-emerald-500/15 text-emerald-300' 
+                : 'bg-prevu-accent/15 text-prevu-accent'
+            }`}>
               {examType} • {examYear}
             </span>
           </div>
@@ -225,15 +231,17 @@ export default function UploadCelebrationMascot({
             className="flex-1 py-3 text-sm flex items-center justify-center gap-2 bg-prevu-surface hover:bg-prevu-surface-light"
           >
             <UploadCloud className="w-4 h-4" />
-            Upload Another Paper
+            {isStudyMaterial ? 'Upload More Material' : 'Upload Another Paper'}
           </Button>
 
           <Button 
             asChild
-            className="flex-1 py-3 text-sm flex items-center justify-center gap-2 shadow-lg shadow-prevu-accent/25"
+            className={`flex-1 py-3 text-sm flex items-center justify-center gap-2 shadow-lg ${
+              isStudyMaterial ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/25' : 'shadow-prevu-accent/25'
+            }`}
           >
-            <Link href="/browse">
-              Browse Archive <ArrowRight className="w-4 h-4" />
+            <Link href={isStudyMaterial ? "/study-material" : "/browse"}>
+              {isStudyMaterial ? 'Browse Study Material' : 'Browse Archive'} <ArrowRight className="w-4 h-4" />
             </Link>
           </Button>
         </div>

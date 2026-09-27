@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
-import { ArrowRight, Upload, Search, Sparkles, X } from 'lucide-react'
+import { ArrowRight, Upload, Search, Sparkles, X, BookOpen } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -89,8 +89,8 @@ export default function LandingPageContent() {
               </button>
             )}
             <Button 
-              type="submit"
-              size="sm"
+              type="submit" 
+              size="sm" 
               className="absolute right-2 top-1/2 -translate-y-1/2 h-9 px-4 text-xs font-bold rounded-xl"
             >
               Search
@@ -101,14 +101,20 @@ export default function LandingPageContent() {
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mb-8 animate-fade-in">
             <Button size="lg" className="text-sm px-6 py-3.5 h-auto font-bold shadow-lg shadow-prevu-accent/25" asChild>
               <Link href="/browse">
-                <span>Browse Full Archive</span>
+                <span>Browse Papers</span>
                 <ArrowRight className="w-4 h-4" />
+              </Link>
+            </Button>
+            <Button size="lg" variant="outline" className="text-sm px-6 py-3.5 h-auto font-semibold border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 hover:text-white" asChild>
+              <Link href="/study-material">
+                <BookOpen className="w-4 h-4 text-emerald-400" />
+                <span>Study Material (All Years)</span>
               </Link>
             </Button>
             <Button size="lg" variant="outline" className="text-sm px-6 py-3.5 h-auto font-semibold border-prevu-surface-light hover:border-prevu-accent/50" asChild>
               <Link href="/upload">
                 <Upload className="w-4 h-4 text-prevu-accent" />
-                <span>Contribute Paper</span>
+                <span>Upload Resource</span>
               </Link>
             </Button>
           </div>
@@ -185,25 +191,33 @@ export default function LandingPageContent() {
                 title: "Past Year Papers", 
                 desc: "Access verified MST 1, MST 2, and EST question papers mapped to exact CU course codes.", 
                 icon: <AnimatedPapersIcon />,
-                badge: "MST & EST"
+                badge: "MST & EST",
+                link: "/browse",
+                linkText: "Browse Papers"
               },
               { 
                 title: "Curated Notes", 
                 desc: "High-yield, easy-to-understand notes and revision cheatsheets shared by top seniors and peers.", 
                 icon: <AnimatedNotesIcon />,
-                badge: "High Yield"
+                badge: "All Years",
+                link: "/study-material",
+                linkText: "Explore Study Material"
               },
               { 
                 title: "Peer Verified", 
                 desc: "Every submission is checked for legibility, accurate subject code, and correct semester.", 
                 icon: <AnimatedVerifiedIcon />,
-                badge: "Admin Checked"
+                badge: "Admin Checked",
+                link: "/subjects",
+                linkText: "Explore Subjects"
               },
               { 
                 title: "Free Forever", 
                 desc: "Knowledge should be open. Prevu has zero paywalls, subscriptions, coin locks, or annoying ads.", 
                 icon: <AnimatedCommunityIcon />,
-                badge: "No Paywalls"
+                badge: "No Paywalls",
+                link: "/upload",
+                linkText: "Contribute Notes"
               }
             ].map((feature, i) => (
               <div 
@@ -224,9 +238,19 @@ export default function LandingPageContent() {
                     {feature.title}
                   </h3>
                   
-                  <p className="text-prevu-text-muted text-xs sm:text-sm leading-relaxed">
+                  <p className="text-prevu-text-muted text-xs sm:text-sm leading-relaxed mb-4">
                     {feature.desc}
                   </p>
+                </div>
+
+                <div className="pt-2 border-t border-prevu-surface-light/50">
+                  <Link 
+                    href={feature.link}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-prevu-accent hover:text-white transition-colors"
+                  >
+                    <span>{feature.linkText}</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                  </Link>
                 </div>
               </div>
             ))}

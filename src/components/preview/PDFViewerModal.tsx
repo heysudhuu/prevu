@@ -21,12 +21,14 @@ import {
   Loader2,
   BookOpen,
   Lightbulb,
-  FileCode2
+  FileCode2,
+  Clock
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { getPaperComments, addPaperComment, deletePaperComment, CommentItem } from '@/app/api/comments/actions'
 import { generateExamAssistantInsights, ExamInsightsResult } from '@/app/api/ai/actions'
+import MockExamModal from '@/components/mock-exam/MockExamModal'
 
 interface PDFViewerModalProps {
   isOpen: boolean
@@ -68,6 +70,7 @@ export default function PDFViewerModal({ isOpen, onClose, resource }: PDFViewerM
   const [commentsLoading, setCommentsLoading] = useState(false)
   const [submittingComment, setSubmittingComment] = useState(false)
   const [commentError, setCommentError] = useState<string | null>(null)
+  const [isMockExamOpen, setIsMockExamOpen] = useState(false)
 
   // Portal mount check for SSR using React 19 recommended useSyncExternalStore
   const isClient = useSyncExternalStore(
@@ -257,6 +260,17 @@ export default function PDFViewerModal({ isOpen, onClose, resource }: PDFViewerM
                 </button>
               </div>
             )}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsMockExamOpen(true)}
+              className="h-8 px-2.5 text-xs border-purple-500/40 text-purple-300 hover:bg-purple-600/20"
+              title="Practice Mock Exam with Timer"
+            >
+              <Clock className="w-3.5 h-3.5 sm:mr-1" />
+              <span className="hidden sm:inline">Mock Exam</span>
+            </Button>
 
             <Button
               variant="outline"
@@ -497,6 +511,15 @@ export default function PDFViewerModal({ isOpen, onClose, resource }: PDFViewerM
 
         </div>
       </div>
+
+      {/* Mock Exam Simulation Modal */}
+      {isMockExamOpen && (
+        <MockExamModal
+          isOpen={isMockExamOpen}
+          onClose={() => setIsMockExamOpen(false)}
+          resource={resource as any}
+        />
+      )}
     </div>,
     document.body
   )

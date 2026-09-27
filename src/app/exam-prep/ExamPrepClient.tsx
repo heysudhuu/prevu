@@ -18,6 +18,8 @@ import { Button } from '@/components/ui/Button'
 import { ResourceCard } from '@/components/ResourceCard'
 import { CoverageMatrix, CoveragePaperRecord } from '@/components/ui/CoverageMatrix'
 import { getSubjectStudyKit } from '@/lib/data/subject-guides'
+import PersonalDateSheetPlanner from '@/components/dashboard/PersonalDateSheetPlanner'
+import ExamHallFlashcardsModal from '@/components/flashcards/ExamHallFlashcardsModal'
 
 export interface ExamPrepSubject {
   id: number
@@ -63,6 +65,7 @@ export default function ExamPrepClient({
   })
 
   const [selectedExamType, setSelectedExamType] = useState<string>(initialExamType)
+  const [flashcardSubject, setFlashcardSubject] = useState<{ code: string; name: string } | null>(null)
 
   // Keep selected subject in sync when semester switches
   const activeSubject = useMemo(() => {
@@ -151,6 +154,13 @@ export default function ExamPrepClient({
         badge={{ text: 'Exam Readiness Hub', variant: 'cyan' }}
         title="Targeted Exam Preparation"
         description="Select your semester, course, and exam format to access verified past papers, university blueprint units, and high-yield scoring advice."
+      />
+
+      {/* Personal Date Sheet & Exam Timeline Planner */}
+      <PersonalDateSheetPlanner
+        subjects={subjects}
+        defaultSemester={selectedSem}
+        onOpenFlashcards={(code, name) => setFlashcardSubject({ code, name })}
       />
 
       {/* Selector Control Panel */}
@@ -417,6 +427,16 @@ export default function ExamPrepClient({
             ))}
           </div>
         </section>
+      )}
+
+      {/* 5-Min Exam Hall Flashcards Modal */}
+      {flashcardSubject && (
+        <ExamHallFlashcardsModal
+          isOpen={!!flashcardSubject}
+          onClose={() => setFlashcardSubject(null)}
+          subjectCode={flashcardSubject.code}
+          subjectName={flashcardSubject.name}
+        />
       )}
     </div>
   )

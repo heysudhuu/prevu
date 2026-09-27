@@ -26,6 +26,9 @@ import { toggleBookmark } from '@/app/dashboard/actions'
 import { submitReport } from '@/app/admin/actions'
 import AIPaperSolverModal from '@/components/paper/AIPaperSolverModal'
 import ResourceUpvoteButton from '@/components/ResourceUpvoteButton'
+import MockExamModal from '@/components/mock-exam/MockExamModal'
+import ExamHallFlashcardsModal from '@/components/flashcards/ExamHallFlashcardsModal'
+import { Flame } from 'lucide-react'
 
 interface PaperDetailClientProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -52,6 +55,8 @@ export default function PaperDetailClient({
   const [reportNote, setReportNote] = useState('')
   const [reportStatus, setReportStatus] = useState<'idle' | 'submitting' | 'submitted' | 'error'>('idle')
   const [aiModalOpen, setAiModalOpen] = useState(false)
+  const [mockExamOpen, setMockExamOpen] = useState(false)
+  const [flashcardsOpen, setFlashcardsOpen] = useState(false)
 
   const subject = paper.subjects
   const examType = paper.exam_types?.name || 'MST'
@@ -226,6 +231,23 @@ export default function PaperDetailClient({
             >
               <Sparkles className="w-4 h-4 mr-2 text-purple-200" /> AI Paper Solver & Blueprint
             </Button>
+
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                size="sm"
+                onClick={() => setMockExamOpen(true)}
+                className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-md"
+              >
+                <Clock className="w-3.5 h-3.5 mr-1.5" /> Mock Exam
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => setFlashcardsOpen(true)}
+                className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-md"
+              >
+                <Flame className="w-3.5 h-3.5 mr-1.5" /> Flashcards
+              </Button>
+            </div>
 
             <Button
               size="lg"
@@ -529,6 +551,21 @@ export default function PaperDetailClient({
         examType={examType}
         examYear={paper.exam_year}
         resourceId={paper.id}
+      />
+
+      {/* Mock Exam Timer Modal */}
+      <MockExamModal
+        isOpen={mockExamOpen}
+        onClose={() => setMockExamOpen(false)}
+        resource={paper}
+      />
+
+      {/* 5-Min Exam Hall Flashcards Modal */}
+      <ExamHallFlashcardsModal
+        isOpen={flashcardsOpen}
+        onClose={() => setFlashcardsOpen(false)}
+        subjectCode={subject?.code || 'CSE'}
+        subjectName={subject?.name || 'Subject'}
       />
     </div>
   )

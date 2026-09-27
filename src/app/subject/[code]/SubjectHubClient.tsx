@@ -19,7 +19,9 @@ import {
   RotateCcw,
   CheckSquare,
   Square,
-  Package
+  Package,
+  Moon,
+  Flame
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { ResourceCard } from '@/components/ResourceCard'
@@ -27,6 +29,8 @@ import { CoverageMatrix, CoveragePaperRecord } from '@/components/ui/CoverageMat
 import { SubjectStudyKit } from '@/lib/data/subject-guides'
 import { CustomSyllabusModal, CustomUnit } from '@/components/subject/CustomSyllabusModal'
 import SubjectBundleDownloadButton from '@/components/subject/SubjectBundleDownloadButton'
+import NightBeforeExamLounge from '@/components/lounge/NightBeforeExamLounge'
+import ExamHallFlashcardsModal from '@/components/flashcards/ExamHallFlashcardsModal'
 
 interface SubjectHubClientProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -37,7 +41,7 @@ interface SubjectHubClientProps {
   studyKit: SubjectStudyKit
 }
 
-type HubTab = 'papers' | 'coverage' | 'blueprint' | 'kit'
+type HubTab = 'papers' | 'coverage' | 'blueprint' | 'kit' | 'lounge'
 
 export default function SubjectHubClient({
   subject,
@@ -48,6 +52,7 @@ export default function SubjectHubClient({
   const [activeTab, setActiveTab] = useState<HubTab>('papers')
   const [paperFilter, setPaperFilter] = useState<string>('ALL')
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false)
+  const [isFlashcardsOpen, setIsFlashcardsOpen] = useState(false)
 
   // Subscribe to localStorage using React's useSyncExternalStore
   const customSyllabusRaw = React.useSyncExternalStore(
@@ -205,6 +210,15 @@ export default function SubjectHubClient({
               />
             )}
 
+            {/* 5-Min Exam Hall Flashcards */}
+            <Button
+              size="sm"
+              onClick={() => setIsFlashcardsOpen(true)}
+              className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold text-xs py-2 h-auto shadow-md"
+            >
+              <Flame className="w-3.5 h-3.5 mr-1.5" /> 5-Min Exam Hall Flashcards
+            </Button>
+
             <div className="grid grid-cols-3 gap-2 p-2.5 rounded-2xl bg-prevu-bg/80 border border-prevu-surface-light text-center font-mono">
               <div className="px-2">
                 <span className="text-[10px] text-prevu-text-muted uppercase block">MST-1</span>
@@ -235,6 +249,18 @@ export default function SubjectHubClient({
         >
           <FileText className="w-3.5 h-3.5" />
           <span>Question Papers ({resources.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('lounge')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+            activeTab === 'lounge'
+              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+              : 'text-indigo-400 hover:text-white hover:bg-indigo-500/10'
+          }`}
+        >
+          <Moon className="w-3.5 h-3.5" />
+          <span>Night Before Exam Lounge 🌙</span>
         </button>
 
         <button
@@ -566,6 +592,18 @@ export default function SubjectHubClient({
         </section>
       )}
 
+      {/* Tab 5: Night Before Exam Lounge */}
+      {activeTab === 'lounge' && (
+        <section className="space-y-6">
+          <NightBeforeExamLounge
+            subjectCode={subject.code}
+            subjectName={subject.name}
+            semester={subject.semester}
+            onOpenFlashcards={() => setIsFlashcardsOpen(true)}
+          />
+        </section>
+      )}
+
       {/* Custom Syllabus Modal */}
       <CustomSyllabusModal
         isOpen={isCustomModalOpen}
@@ -577,6 +615,14 @@ export default function SubjectHubClient({
         onClose={() => setIsCustomModalOpen(false)}
         onSave={handleSaveCustomUnits}
         onReset={handleResetCustomUnits}
+      />
+
+      {/* 5-Min Exam Hall Flashcards Modal */}
+      <ExamHallFlashcardsModal
+        isOpen={isFlashcardsOpen}
+        onClose={() => setIsFlashcardsOpen(false)}
+        subjectCode={subject.code}
+        subjectName={subject.name}
       />
     </div>
   )

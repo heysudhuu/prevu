@@ -104,6 +104,15 @@ CREATE TABLE IF NOT EXISTS bookmarks (
     UNIQUE(user_id, resource_id)
 );
 
+-- 8b. Resource Upvotes Table (Student Recommendations)
+CREATE TABLE IF NOT EXISTS resource_upvotes (
+    id SERIAL PRIMARY KEY,
+    resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    UNIQUE(resource_id, user_id)
+);
+
 -- 9. Paper Requests Table (Bounty Board)
 CREATE TABLE IF NOT EXISTS paper_requests (
     id SERIAL PRIMARY KEY,

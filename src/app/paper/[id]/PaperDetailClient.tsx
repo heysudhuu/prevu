@@ -16,13 +16,16 @@ import {
   Check, 
   Clock, 
   Layers,
-  ArrowRight
+  ArrowRight,
+  Sparkles
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { ResourceCard } from '@/components/ResourceCard'
 import { toggleBookmark } from '@/app/dashboard/actions'
 import { submitReport } from '@/app/admin/actions'
+import AIPaperSolverModal from '@/components/paper/AIPaperSolverModal'
+import ResourceUpvoteButton from '@/components/ResourceUpvoteButton'
 
 interface PaperDetailClientProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -48,6 +51,7 @@ export default function PaperDetailClient({
   const [reportReason, setReportReason] = useState('wrong_subject')
   const [reportNote, setReportNote] = useState('')
   const [reportStatus, setReportStatus] = useState<'idle' | 'submitting' | 'submitted' | 'error'>('idle')
+  const [aiModalOpen, setAiModalOpen] = useState(false)
 
   const subject = paper.subjects
   const examType = paper.exam_types?.name || 'MST'
@@ -217,8 +221,16 @@ export default function PaperDetailClient({
           <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 shrink-0 w-full sm:w-auto">
             <Button
               size="lg"
+              onClick={() => setAiModalOpen(true)}
+              className="bg-gradient-to-r from-purple-600 via-prevu-accent to-indigo-600 hover:from-purple-500 hover:to-prevu-accent-light text-white font-bold shadow-lg shadow-purple-600/30"
+            >
+              <Sparkles className="w-4 h-4 mr-2 text-purple-200" /> AI Paper Solver & Blueprint
+            </Button>
+
+            <Button
+              size="lg"
               onClick={() => setPreviewOpen(true)}
-              className="bg-prevu-accent text-white font-bold shadow-lg shadow-prevu-accent/25 hover:bg-prevu-accent-hover"
+              className="bg-prevu-surface hover:bg-prevu-surface-light border border-prevu-surface-light text-white font-bold shadow-md"
             >
               <Eye className="w-4 h-4 mr-2" /> Preview Paper
             </Button>
@@ -234,7 +246,9 @@ export default function PaperDetailClient({
               </a>
             </Button>
 
-            <div className="grid grid-cols-3 gap-2 pt-1">
+            <div className="grid grid-cols-4 gap-2 pt-1">
+              <ResourceUpvoteButton resourceId={paper.id} showCount={false} className="justify-center h-8" />
+
               <Button
                 variant="ghost"
                 size="sm"
@@ -505,6 +519,17 @@ export default function PaperDetailClient({
           </div>
         </div>
       )}
+
+      {/* AI Paper Solver & Blueprint Modal */}
+      <AIPaperSolverModal
+        isOpen={aiModalOpen}
+        onClose={() => setAiModalOpen(false)}
+        subjectName={subject?.name || 'Subject'}
+        subjectCode={subject?.code || 'CSE'}
+        examType={examType}
+        examYear={paper.exam_year}
+        resourceId={paper.id}
+      />
     </div>
   )
 }

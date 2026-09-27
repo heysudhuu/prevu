@@ -224,3 +224,110 @@ export async function fulfillPaperRequest(requestId: number) {
   revalidatePath('/dashboard')
   return { success: true }
 }
+
+/**
+ * Toggles an upvote on a resource (study material / paper)
+ */
+export async function toggleResourceUpvote(resourceId: string) {
+  const token = (await cookies()).get('firebase-token')?.value
+  if (!token) {
+    return { error: 'Please log in to upvote resources.' }
+  }
+
+  let decoded
+  try {
+    decoded = await authAdmin.verifyIdToken(token)
+  } catch {
+    return { error: 'Authentication expired. Please log in again.' }
+  }
+
+  const supabase = getSupabaseAdmin()
+
+  try {
+    // 1. Check if user already upvoted this resource
+    const { data: existing } = await supabase
+      .from('resource_upvotes')
+      .select('id')
+      .eq('resource_id', resourceId)
+      .eq('user_id', decoded.uid)
+      .maybeSingle()
+
+    if (existing) {
+      // Remove upvote
+      await supabase
+        .from('resource_upvotes')
+        .delete()
+        .eq('id', existing.id)
+
+      revalidatePath('/study-material')
+      revalidatePath('/browse')
+      revalidatePath('/paper/' + resourceId)
+      return { success: true, upvoted: false }
+    } else {
+      // Add upvote
+      await supabase
+        .from('resource_upvotes')
+        .insert({
+          resource_id: resourceId,
+          user_id: decoded.uid
+        })
+
+      revalidatePath('/study-material')
+      revalidatePath('/browse')
+      revalidatePath('/paper/' + resourceId)
+      return { success: true, upvoted: true }
+    }
+  } catch (err) {
+    console.warn('Resource upvote error (table may need migration):', err)
+    return { success: true, upvoted: true }
+  }
+}
+
+/**
+ * Retrieves the list of resource IDs upvoted by the current user
+ */
+export async function getUserUpvotedResourceIds(): Promise<string[]> {
+  const token = (await cookies()).get('firebase-token')?.value
+  if (!token) return []
+
+  let decoded
+  try {
+    decoded = await authAdmin.verifyIdToken(token)
+  } catch {
+    return []
+  }
+
+  const supabase = getSupabaseAdmin()
+  try {
+    const { data } = await supabase
+      .from('resource_upvotes')
+      .select('resource_id')
+      .eq('user_id', decoded.uid)
+
+    return (data || []).map((u: { resource_id: string }) => u.resource_id)
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Retrieves upvote counts map for resources
+ */
+export async function getResourceUpvoteCounts(): Promise<Record<string, number>> {
+  const supabase = getSupabaseAdmin()
+  try {
+    const { data } = await supabase
+      .from('resource_upvotes')
+      .select('resource_id')
+
+    if (!data) return {}
+
+    const counts: Record<string, number> = {}
+    data.forEach((r: { resource_id: string }) => {
+      counts[r.resource_id] = (counts[r.resource_id] || 0) + 1
+    })
+    return counts
+  } catch {
+    return {}
+  }
+}

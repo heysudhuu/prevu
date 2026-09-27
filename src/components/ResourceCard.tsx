@@ -5,10 +5,11 @@ import { ShieldCheck, CheckCircle, Download, FileText } from 'lucide-react'
 import BookmarkButton from '@/components/BookmarkButton'
 import PreviewButton from '@/components/PreviewButton'
 import SharePaperButton from '@/components/SharePaperButton'
+import ResourceUpvoteButton from '@/components/ResourceUpvoteButton'
 import Link from 'next/link'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function ResourceCard({ resource, isBookmarked = false }: { resource: any; isBookmarked?: boolean }) {
+export function ResourceCard({ resource, isBookmarked = false, initialUpvoted = false, upvoteCount = 0 }: { resource: any; isBookmarked?: boolean; initialUpvoted?: boolean; upvoteCount?: number }) {
   const isVerified = resource.users?.cu_verified
   const isAdmin = resource.users?.role === 'admin'
   const examName = resource.exam_types?.name || 'MST'
@@ -29,6 +30,7 @@ export function ResourceCard({ resource, isBookmarked = false }: { resource: any
   
   const subjectCode = resource.subjects?.code || resource.subject_id
   const subjectUrl = `/subject/${encodeURIComponent(subjectCode)}`
+  const isSeniorRecommended = upvoteCount >= 3 || (isVerified && normalizedType.includes('note'))
 
   return (
     <Card className={`w-full flex flex-col h-full group transition-all duration-300 ${
@@ -47,12 +49,18 @@ export function ResourceCard({ resource, isBookmarked = false }: { resource: any
                 <ShieldCheck className="w-3 h-3" /> Official
               </span>
             )}
+            {isSeniorRecommended && !isAdmin && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 uppercase tracking-wider">
+                ⭐ Senior Recommended
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-mono font-medium text-prevu-text-muted bg-prevu-bg/90 px-2 py-0.5 rounded-md border border-prevu-surface-light">
               {resource.exam_year}
             </span>
+            <ResourceUpvoteButton resourceId={resource.id} initialUpvoted={initialUpvoted} initialCount={upvoteCount} />
             <SharePaperButton resource={resource} />
             <BookmarkButton resourceId={resource.id} initialBookmarked={isBookmarked} />
           </div>

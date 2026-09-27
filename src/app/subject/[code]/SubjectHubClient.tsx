@@ -16,13 +16,17 @@ import {
   BookOpen,
   CalendarCheck,
   SlidersHorizontal,
-  RotateCcw
+  RotateCcw,
+  CheckSquare,
+  Square,
+  Package
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { ResourceCard } from '@/components/ResourceCard'
 import { CoverageMatrix, CoveragePaperRecord } from '@/components/ui/CoverageMatrix'
 import { SubjectStudyKit } from '@/lib/data/subject-guides'
 import { CustomSyllabusModal, CustomUnit } from '@/components/subject/CustomSyllabusModal'
+import SubjectBundleDownloadButton from '@/components/subject/SubjectBundleDownloadButton'
 
 interface SubjectHubClientProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -92,6 +96,42 @@ export default function SubjectHubClient({
 
   const displayUnits = customUnits || studyKit.units
 
+  // Persistent Readiness Checklist State
+  const [checkedTopics, setCheckedTopics] = useState<Record<string, boolean>>({})
+
+  // Initialize from localStorage on mount
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`prevu_prep_readiness_${subject.code}`)
+      if (saved) setCheckedTopics(JSON.parse(saved))
+    } catch {
+      // Ignore
+    }
+  }, [subject.code])
+
+  const toggleTopicCheck = (topicKey: string) => {
+    setCheckedTopics(prev => {
+      const next = { ...prev, [topicKey]: !prev[topicKey] }
+      try {
+        localStorage.setItem(`prevu_prep_readiness_${subject.code}`, JSON.stringify(next))
+      } catch {
+        // Ignore
+      }
+      return next
+    })
+  }
+
+  // Calculate readiness percentage
+  const totalTopics = React.useMemo(() => {
+    return displayUnits.reduce((acc, u) => acc + (u.topics?.length || 0), 0)
+  }, [displayUnits])
+
+  const completedTopicsCount = React.useMemo(() => {
+    return Object.values(checkedTopics).filter(Boolean).length
+  }, [checkedTopics])
+
+  const readinessPercent = totalTopics > 0 ? Math.round((completedTopicsCount / totalTopics) * 100) : 0
+
   // Prepare coverage records
   const coveragePapers: CoveragePaperRecord[] = resources.map(r => ({
     id: r.id,
@@ -154,6 +194,16 @@ export default function SubjectHubClient({
                 </Link>
               </Button>
             </div>
+
+            {/* 1-Click Prep Bundle ZIP Downloader */}
+            {resources.length > 0 && (
+              <SubjectBundleDownloadButton
+                subjectName={subject.name}
+                subjectCode={subject.code}
+                resources={resources}
+                className="w-full text-xs py-2 h-auto"
+              />
+            )}
 
             <div className="grid grid-cols-3 gap-2 p-2.5 rounded-2xl bg-prevu-bg/80 border border-prevu-surface-light text-center font-mono">
               <div className="px-2">
@@ -342,28 +392,101 @@ export default function SubjectHubClient({
             </div>
           </div>
 
+          {/* Interactive Readiness Progress Meter */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-prevu-surface to-teal-950/40 border border-emerald-500/30 shadow-xl space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <span className="text-xl">🎯</span>
+                <div>
+                  <h4 className="text-sm font-bold text-white">Interactive Exam Readiness Checklist</h4>
+                  <p className="text-xs text-prevu-text-muted">
+                    Check off syllabus topics as you study for MST-1, MST-2 & EST. Progress is saved automatically.
+                  </p>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <span className="text-xs font-mono font-bold text-emerald-400">
+                  {readinessPercent}% Ready ({completedTopicsCount}/{totalTopics} topics)
+                </span>
+              </div>
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="w-full h-2.5 bg-prevu-bg rounded-full overflow-hidden border border-prevu-surface-light">
+              <div 
+                className="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 rounded-full transition-all duration-500"
+                style={{ width: `${readinessPercent}%` }}
+              />
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {displayUnits.map(u => {
               const cleanTitle = u.title.replace(/^Unit\s*[0-9]+[:.\s]*/i, '')
+              // Filter relevant papers for this unit (MST1 covers Unit 1/2, MST2 covers Unit 2/3, EST covers Unit 4/All)
+              const unitPattern = u.unitNumber <= 2 ? 'MST1' : u.unitNumber === 3 ? 'MST2' : 'EST'
+              const unitResources = resources.filter(r => (r.exam_types?.name || '').toUpperCase().includes(unitPattern)).slice(0, 2)
+
               return (
-                <div key={u.unitNumber} className="p-5 rounded-2xl bg-prevu-surface border border-prevu-surface-light space-y-3 shadow-lg">
-                  <div className="flex items-center justify-between gap-2 border-b border-prevu-surface-light pb-2.5">
-                    <h3 className="text-sm font-bold text-white">
-                      Unit {u.unitNumber}: {cleanTitle}
-                    </h3>
-                    <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20 shrink-0">
-                      {u.weightage}
-                    </span>
+                <div key={u.unitNumber} className="p-5 rounded-2xl bg-prevu-surface border border-prevu-surface-light space-y-4 shadow-lg flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-2 border-b border-prevu-surface-light pb-2.5">
+                      <h3 className="text-sm font-bold text-white">
+                        Unit {u.unitNumber}: {cleanTitle}
+                      </h3>
+                      <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20 shrink-0">
+                        {u.weightage}
+                      </span>
+                    </div>
+
+                    <ul className="space-y-2 text-xs">
+                      {u.topics.map((t, idx) => {
+                        const key = `${subject.code}_u${u.unitNumber}_t${idx}`
+                        const isChecked = !!checkedTopics[key]
+                        return (
+                          <li 
+                            key={idx} 
+                            onClick={() => toggleTopicCheck(key)}
+                            className={`flex items-start gap-2.5 p-2 rounded-xl border transition-all cursor-pointer select-none ${
+                              isChecked 
+                                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200' 
+                                : 'bg-prevu-bg/60 border-prevu-surface-light text-prevu-text hover:border-prevu-accent/40'
+                            }`}
+                          >
+                            <span className="mt-0.5 text-emerald-400 shrink-0">
+                              {isChecked ? <CheckSquare className="w-4 h-4 fill-emerald-500/20" /> : <Square className="w-4 h-4 text-prevu-text-muted" />}
+                            </span>
+                            <span className={`leading-relaxed ${isChecked ? 'line-through opacity-75' : ''}`}>{t}</span>
+                          </li>
+                        )
+                      })}
+                    </ul>
                   </div>
 
-                  <ul className="space-y-1.5 text-xs text-prevu-text-muted">
-                    {u.topics.map((t, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-1.5 shrink-0" />
-                        <span>{t}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {/* Linked Materials for this Unit */}
+                  {unitResources.length > 0 && (
+                    <div className="pt-3 border-t border-prevu-surface-light/60 space-y-2">
+                      <span className="text-[10px] font-mono uppercase font-bold text-cyan-400 tracking-wider block">
+                        Linked Exam Papers & Notes:
+                      </span>
+                      <div className="space-y-1.5">
+                        {unitResources.map(r => (
+                          <div key={r.id} className="flex items-center justify-between p-2 rounded-lg bg-prevu-bg/80 border border-prevu-surface-light text-xs">
+                            <span className="text-prevu-text truncate max-w-[200px] text-[11px]">
+                              {r.exam_types?.name} ({r.exam_year})
+                            </span>
+                            <Link 
+                              href={`/paper/${r.id}`}
+                              className="text-[10px] font-semibold text-prevu-accent hover:underline flex items-center gap-1"
+                            >
+                              <span>View Paper</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </Link>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )
             })}

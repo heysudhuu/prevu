@@ -3,7 +3,7 @@ import { ResourceCard } from '@/components/ResourceCard'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 import Header from '@/components/Header'
-import { getUserBookmarkIds } from '@/app/dashboard/actions'
+import { getUserBookmarkIds, getUserUpvotedResourceIds, getResourceUpvoteCounts } from '@/app/dashboard/actions'
 import BrowseFilterBar from '@/components/browse/BrowseFilterBar'
 import { Sparkles, MessageSquarePlus, FileQuestion, ChevronLeft, ChevronRight } from 'lucide-react'
 
@@ -25,7 +25,11 @@ export default async function BrowsePage({
   }>
 }) {
   const supabase = await createClient()
-  const bookmarkIds = await getUserBookmarkIds()
+  const [bookmarkIds, userUpvotedIds, upvoteCounts] = await Promise.all([
+    getUserBookmarkIds(),
+    getUserUpvotedResourceIds(),
+    getResourceUpvoteCounts()
+  ])
 
   // Parse filters
   const params = await searchParams
@@ -183,6 +187,8 @@ export default async function BrowsePage({
                       key={resource.id} 
                       resource={resource} 
                       isBookmarked={bookmarkIds.includes(resource.id)}
+                      initialUpvoted={userUpvotedIds.includes(resource.id)}
+                      upvoteCount={upvoteCounts[resource.id] || 0}
                     />
                   ))}
                 </div>

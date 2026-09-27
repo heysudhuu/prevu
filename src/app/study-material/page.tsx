@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import Header from '@/components/Header'
-import { getUserBookmarkIds } from '@/app/dashboard/actions'
+import { getUserBookmarkIds, getUserUpvotedResourceIds, getResourceUpvoteCounts } from '@/app/dashboard/actions'
 import StudyMaterialClient from './StudyMaterialClient'
 import { Metadata } from 'next'
 
@@ -23,8 +23,17 @@ export default async function StudyMaterialPage({
   }>
 }) {
   const supabase = await createClient()
-  const bookmarkIds = await getUserBookmarkIds()
   const params = await searchParams
+
+  const [
+    bookmarkIds,
+    userUpvotedIds,
+    upvoteCounts
+  ] = await Promise.all([
+    getUserBookmarkIds(),
+    getUserUpvotedResourceIds(),
+    getResourceUpvoteCounts()
+  ])
 
   const [
     { data: branchesData },
@@ -79,6 +88,8 @@ export default async function StudyMaterialPage({
           subjects={subjects}
           branches={branches}
           bookmarkIds={bookmarkIds}
+          userUpvotedIds={userUpvotedIds}
+          upvoteCounts={upvoteCounts}
           initialYear={params.year ? parseInt(params.year) : undefined}
           initialSem={params.sem ? parseInt(params.sem) : undefined}
           initialCategory={params.category}

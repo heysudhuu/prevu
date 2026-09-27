@@ -79,6 +79,8 @@ interface StudyMaterialClientProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   branches: any[]
   bookmarkIds: string[]
+  userUpvotedIds?: string[]
+  upvoteCounts?: Record<string, number>
   initialYear?: number
   initialSem?: number
   initialCategory?: string
@@ -92,6 +94,8 @@ export default function StudyMaterialClient({
   subjects,
   branches,
   bookmarkIds,
+  userUpvotedIds = [],
+  upvoteCounts = {},
   initialYear,
   initialSem,
   initialCategory = 'ALL',
@@ -469,6 +473,8 @@ export default function StudyMaterialClient({
                 key={resource.id} 
                 resource={resource} 
                 isBookmarked={bookmarkIds.includes(resource.id)}
+                initialUpvoted={userUpvotedIds.includes(resource.id)}
+                upvoteCount={upvoteCounts[resource.id] || 0}
               />
             ))}
           </div>

@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import { getAdminSession, getAdminStats } from './actions'
 import { getSupabaseAdmin } from '@/utils/supabase/admin'
 import { AdminLayoutShell } from '@/components/admin/layout/AdminLayoutShell'
@@ -17,7 +18,11 @@ export default async function AdminLayout({
 }) {
   const session = await getAdminSession()
   if (!session) {
-    redirect('/')
+    const token = (await cookies()).get('firebase-token')?.value
+    if (!token) {
+      redirect('/login?redirect=%2Fadmin%2Fdashboard')
+    }
+    redirect('/dashboard')
   }
 
   // Fetch real-time badge counts

@@ -1,3 +1,7 @@
+const DEFAULT_SUPER_ADMIN_EMAILS = [
+  'py7716496@gmail.com',
+]
+
 /**
  * Checks whether an email belongs to a designated super-admin.
  * Configurable via the ADMIN_EMAILS environment variable (comma-separated).
@@ -11,15 +15,12 @@ export function isSuperAdminEmail(email?: string | null): boolean {
 
   const configuredAdmins = (process.env.ADMIN_EMAILS || '')
     .split(',')
-    .map(e => e.trim().toLowerCase())
+    .map(e => e.trim().replace(/\r/g, '').toLowerCase())
     .filter(Boolean)
 
-  if (configuredAdmins.length === 0) {
-    console.warn('[admin-check] ADMIN_EMAILS env var is not set. No super-admins configured.')
-    return false
-  }
+  const allAdmins = Array.from(new Set([...DEFAULT_SUPER_ADMIN_EMAILS, ...configuredAdmins]))
 
-  return configuredAdmins.includes(cleanEmail)
+  return allAdmins.includes(cleanEmail)
 }
 
 /**
@@ -33,15 +34,16 @@ export async function isUserAdmin(email?: string | null, uid?: string | null): P
   try {
     const { getSupabaseAdmin } = await import('@/utils/supabase/admin')
     const supabase = getSupabaseAdmin()
-    const { data: userData } = await supabase
+    const { data: userData, error } = await supabase
       .from('users')
-      .select('role, status')
+      .select('role')
       .eq('id', uid)
       .maybeSingle()
 
-    if (userData?.status === 'suspended') return false
+    if (error || !userData) return false
     return ['admin', 'super_admin', 'moderator'].includes(userData?.role || '')
   } catch {
     return false
   }
 }
+

@@ -230,7 +230,7 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
             asChild 
             className="h-8 px-3 text-xs border-purple-500/40 bg-purple-500/10 text-purple-200 hover:bg-purple-500/20 hover:text-white shadow-sm shadow-purple-500/20 font-bold shrink-0 hidden sm:inline-flex"
           >
-            <Link href="/admin" className="flex items-center gap-1.5">
+            <Link href="/admin/dashboard" className="flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
               <span>Admin</span>
             </Link>
@@ -298,7 +298,7 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
 
                   {isAdmin && (
                     <Link
-                      href="/admin"
+                      href="/admin/dashboard"
                       onClick={() => setUserMenuOpen(false)}
                       className="p-2 rounded-xl text-purple-300 hover:text-white hover:bg-purple-500/20 flex items-center gap-2 font-medium transition-colors sm:hidden"
                     >

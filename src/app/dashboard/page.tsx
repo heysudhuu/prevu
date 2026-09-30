@@ -14,6 +14,7 @@ import {
   GraduationCap
 } from 'lucide-react'
 import { getBookmarkedResources, getPaperRequests } from './actions'
+import { isSuperAdminEmail } from '@/lib/auth/admin-check'
 import StudentDashboardTabs from '@/components/dashboard/StudentDashboardTabs'
 
 export const dynamic = 'force-dynamic'
@@ -59,7 +60,7 @@ export default async function StudentDashboardPage({
     .eq('id', decoded.uid)
     .maybeSingle()
 
-  const isAdmin = userProfile?.role === 'admin' || decoded.email?.toLowerCase() === 'py7716496@gmail.com'
+  const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'super_admin' || isSuperAdminEmail(decoded.email)
 
   // Fetch resources uploaded by this student
   const { data: myResources } = await supabase
@@ -184,7 +185,7 @@ export default async function StudentDashboardPage({
 
               {isAdmin && (
                 <Button variant="secondary" asChild className="py-2.5 px-4 bg-purple-600/20 text-purple-300 hover:bg-purple-600/30 border border-purple-500/30 font-bold">
-                  <Link href="/admin" className="flex items-center gap-1.5 text-xs">
+                  <Link href="/admin/dashboard" className="flex items-center gap-1.5 text-xs">
                     <ShieldCheck className="w-4 h-4" /> Admin Portal
                   </Link>
                 </Button>

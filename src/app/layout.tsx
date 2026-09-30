@@ -22,6 +22,7 @@ export const metadata: Metadata = {
 };
 
 import { Analytics } from "@vercel/analytics/next";
+import { SiteAnalyticsTracker } from "@/components/analytics/SiteAnalyticsTracker";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="min-h-full flex flex-col font-sans bg-prevu-bg text-prevu-text">
         {children}
+        <SiteAnalyticsTracker />
         <PrevuMascot />
         <AuthListener />
         <Analytics />

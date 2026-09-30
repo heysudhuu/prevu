@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -9,7 +9,8 @@ import {
   Upload,
   ChevronRight,
   ShieldCheck,
-  Command
+  Command,
+  Activity
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
@@ -42,6 +43,31 @@ export function AdminHeader({
   const segments = pathname.split('/').filter(Boolean)
   const currentModule = segments[1] || 'dashboard'
   const moduleTitle = ROUTE_TITLES[currentModule] || 'Admin Console'
+  const [liveCount, setLiveCount] = useState<number | null>(null)
+
+  useEffect(() => {
+    let isMounted = true
+    const fetchLiveCount = async () => {
+      try {
+        const res = await fetch('/api/admin/analytics/live')
+        if (res.ok) {
+          const data = await res.json()
+          if (isMounted && typeof data.liveVisitorsCount === 'number') {
+            setLiveCount(data.liveVisitorsCount)
+          }
+        }
+      } catch {
+        // silent fail
+      }
+    }
+
+    fetchLiveCount()
+    const interval = setInterval(fetchLiveCount, 10000)
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+    }
+  }, [])
 
   return (
     <header className="sticky top-0 z-20 h-16 border-b border-prevu-surface-light bg-prevu-surface/80 backdrop-blur-xl flex items-center justify-between px-4 sm:px-6">
@@ -89,9 +115,19 @@ export function AdminHeader({
           </kbd>
         </button>
 
+        {/* Live Active Viewers Counter (Admin Only) */}
+        <Link
+          href="/admin/analytics"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-[11px] font-mono font-semibold text-emerald-400 hover:bg-emerald-500/20 transition-all cursor-pointer shadow-sm"
+          title="Live visitors watching website right now. Click for detailed analytics."
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+          <span>{liveCount !== null ? `${liveCount} Live` : 'Live'}</span>
+        </Link>
+
         {/* Operational Indicator */}
-        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-medium text-emerald-400">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-[11px] font-medium text-purple-300">
+          <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
           <span>Operational</span>
         </div>
 

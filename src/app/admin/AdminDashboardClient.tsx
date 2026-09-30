@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PendingResourceCard } from '@/components/admin/PendingResourceCard'
 import { deleteResource } from '@/app/admin/actions'
 import { Button } from '@/components/ui/Button'
@@ -16,7 +16,9 @@ import {
   Eye, 
   CheckCircle2,
   FileCheck,
-  Compass
+  Compass,
+  Activity,
+  ArrowRight
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -48,6 +50,32 @@ export default function AdminDashboardClient({
   const [searchQuery, setSearchQuery] = useState('')
   const [examTypeFilter, setExamTypeFilter] = useState<string>('ALL')
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [traffic, setTraffic] = useState<{
+    liveVisitorsCount?: number
+    todayTotalViews?: number
+    todayUniqueVisitors?: number
+  } | null>(null)
+
+  useEffect(() => {
+    let active = true
+    const fetchLive = async () => {
+      try {
+        const res = await fetch('/api/admin/analytics/live')
+        if (res.ok) {
+          const data = await res.json()
+          if (active) setTraffic(data)
+        }
+      } catch {
+        // silent fail
+      }
+    }
+    fetchLive()
+    const timer = setInterval(fetchLive, 10000)
+    return () => {
+      active = false
+      clearInterval(timer)
+    }
+  }, [])
 
   const pendingCount = stats?.pendingCount ?? pendingResources.length
   const approvedCount = stats?.approvedCount ?? approvedResources.length
@@ -210,6 +238,46 @@ export default function AdminDashboardClient({
       {/* ============================================================ */}
       <div className="container mx-auto px-4 max-w-7xl pt-8 space-y-6">
         
+        {/* Live Site Watchers Ribbon (Strict Admin Only) */}
+        <Link
+          href="/admin/analytics"
+          className="group block p-4 rounded-2xl bg-gradient-to-r from-emerald-950/25 via-prevu-surface to-purple-950/20 border border-emerald-500/25 hover:border-emerald-500/40 transition-all shadow-lg"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                <Activity className="w-5 h-5 animate-pulse" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 font-mono flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+                    Live Website Telemetry
+                  </span>
+                  <span className="text-[10px] font-mono text-purple-300 bg-purple-500/15 px-2 py-0.5 rounded-full border border-purple-500/30">
+                    Admin Eyes Only
+                  </span>
+                </div>
+                <div className="text-sm font-extrabold text-prevu-text flex flex-wrap items-center gap-2 mt-0.5">
+                  <span className="text-emerald-400 font-mono text-base font-bold">
+                    {traffic?.liveVisitorsCount ?? 0}
+                  </span>
+                  <span>{traffic?.liveVisitorsCount === 1 ? 'person watching now' : 'people watching now'}</span>
+                  <span className="text-prevu-text-muted hidden sm:inline">•</span>
+                  <span className="text-xs font-normal text-prevu-text-muted">
+                    <strong className="text-prevu-text font-mono font-bold">{traffic?.todayTotalViews ?? 0}</strong> views today ({traffic?.todayUniqueVisitors ?? 0} unique students)
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-purple-400 group-hover:text-purple-300 transition-colors shrink-0 self-end sm:self-auto">
+              <span>View Detailed Traffic Breakdown</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </div>
+        </Link>
+
         {/* ============================================================ */}
         {/* 4 EXECUTIVE KPI METRICS TILES */}
         {/* ============================================================ */}

@@ -7,6 +7,7 @@ import { authAdmin } from '@/lib/firebase/server'
 import { isSuperAdminEmail } from '@/lib/auth/admin-check'
 import { logAdminAction } from '@/lib/admin/audit'
 import { OFFICIAL_CU_CALENDAR_2026 } from '@/lib/data/academicCalendar'
+import { getLiveTrafficAnalyticsData } from '@/lib/analytics/tracker'
 
 async function getAdminDb() {
   return getSupabaseAdmin()
@@ -175,13 +176,25 @@ export async function getAdminDashboardData() {
     }
   })
 
+  const traffic = await getLiveTrafficAnalyticsData()
+
   return {
     stats,
     recentUploads: recentUploads || [],
     recentAudit,
     semesterDistribution,
-    adminUser: session
+    adminUser: session,
+    traffic
   }
+}
+
+/**
+ * Fetch real-time live traffic & daily view analytics (Strict Admin Only)
+ */
+export async function getLiveTrafficAnalytics() {
+  const session = await getAdminSession()
+  if (!session) return null
+  return getLiveTrafficAnalyticsData()
 }
 
 /**

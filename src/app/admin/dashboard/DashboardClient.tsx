@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   Users,
@@ -15,7 +15,10 @@ import {
   KeyRound,
   Server,
   Layers,
-  Sparkles
+  Sparkles,
+  Activity,
+  Eye,
+  Globe
 } from 'lucide-react'
 import { StatCard } from '@/components/admin/ui/StatCard'
 import { StatusBadge } from '@/components/admin/ui/StatusBadge'
@@ -33,6 +36,26 @@ export default function DashboardClient({ initialData, systemHealth }: Dashboard
   const recentUploads = initialData?.recentUploads || []
   const recentAudit = initialData?.recentAudit || []
   const semesterDistribution = initialData?.semesterDistribution || {}
+  const [traffic, setTraffic] = useState(initialData?.traffic || null)
+
+  useEffect(() => {
+    let active = true
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch('/api/admin/analytics/live')
+        if (res.ok) {
+          const data = await res.json()
+          if (active) setTraffic(data)
+        }
+      } catch {
+        // silent fail
+      }
+    }, 10000)
+    return () => {
+      active = false
+      clearInterval(interval)
+    }
+  }, [])
 
   const pendingCount = stats.pendingCount ?? 0
   const approvedCount = stats.approvedCount ?? 0
@@ -103,6 +126,94 @@ export default function DashboardClient({ initialData, systemHealth }: Dashboard
 
         {/* Subtle decorative glow */}
         <div className="absolute top-0 right-1/4 w-72 h-72 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+      </div>
+
+      {/* Real-time Website Traffic & Live Watchers (Strict Admin Only) */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wider font-mono text-prevu-text-muted flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+              <span>Live Website Traffic & Watch Count (Today)</span>
+            </h2>
+          </div>
+          <Link
+            href="/admin/analytics"
+            className="text-xs font-semibold text-purple-400 hover:text-purple-300 flex items-center gap-1 transition-colors"
+          >
+            <span>View Full Traffic Trends</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          <Link
+            href="/admin/analytics"
+            className="p-4 rounded-2xl bg-gradient-to-br from-emerald-950/20 via-prevu-surface to-prevu-surface border border-emerald-500/30 hover:border-emerald-500/50 transition-all shadow-lg group cursor-pointer"
+          >
+            <div className="flex items-center justify-between text-xs text-emerald-400 mb-1">
+              <span className="font-semibold uppercase tracking-wider text-[10px]">Live Visitors</span>
+              <Activity className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+            </div>
+            <div className="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-400 flex items-baseline gap-1.5">
+              <span>{traffic?.liveVisitorsCount ?? 0}</span>
+              <span className="text-[11px] font-sans font-medium text-emerald-400/80">watching now</span>
+            </div>
+            <p className="text-[10px] text-prevu-text-muted mt-1 truncate">
+              Active in last 2 mins
+            </p>
+          </Link>
+
+          <Link
+            href="/admin/analytics"
+            className="p-4 rounded-2xl bg-prevu-surface border border-prevu-surface-light hover:border-purple-500/30 transition-all shadow-lg group cursor-pointer"
+          >
+            <div className="flex items-center justify-between text-xs text-prevu-text-muted mb-1">
+              <span className="font-semibold uppercase tracking-wider text-[10px]">Today&apos;s Views</span>
+              <Eye className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform" />
+            </div>
+            <div className="text-2xl sm:text-3xl font-extrabold font-mono text-prevu-text flex items-baseline gap-1.5">
+              <span>{traffic?.todayTotalViews ?? 0}</span>
+              <span className="text-[11px] font-sans font-medium text-purple-300">screens</span>
+            </div>
+            <p className="text-[10px] text-prevu-text-muted mt-1 truncate">
+              Total page hits today
+            </p>
+          </Link>
+
+          <Link
+            href="/admin/analytics"
+            className="p-4 rounded-2xl bg-prevu-surface border border-prevu-surface-light hover:border-cyan-500/30 transition-all shadow-lg group cursor-pointer"
+          >
+            <div className="flex items-center justify-between text-xs text-prevu-text-muted mb-1">
+              <span className="font-semibold uppercase tracking-wider text-[10px]">Unique Visitors</span>
+              <Users className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" />
+            </div>
+            <div className="text-2xl sm:text-3xl font-extrabold font-mono text-prevu-text flex items-baseline gap-1.5">
+              <span>{traffic?.todayUniqueVisitors ?? 0}</span>
+              <span className="text-[11px] font-sans font-medium text-cyan-300">students</span>
+            </div>
+            <p className="text-[10px] text-prevu-text-muted mt-1 truncate">
+              Unique devices today
+            </p>
+          </Link>
+
+          <Link
+            href="/admin/analytics"
+            className="p-4 rounded-2xl bg-prevu-surface border border-prevu-surface-light hover:border-amber-500/30 transition-all shadow-lg group cursor-pointer"
+          >
+            <div className="flex items-center justify-between text-xs text-prevu-text-muted mb-1">
+              <span className="font-semibold uppercase tracking-wider text-[10px]">Top Route Today</span>
+              <Globe className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+            </div>
+            <div className="text-lg font-bold font-mono text-prevu-text truncate mt-1">
+              {traffic?.topPagesToday?.[0]?.path || '/'}
+            </div>
+            <p className="text-[10px] text-prevu-text-muted mt-1 truncate">
+              {traffic?.topPagesToday?.[0]?.views || 0} views today
+            </p>
+          </Link>
+        </div>
       </div>
 
       {/* 8 Primary KPI Tiles */}

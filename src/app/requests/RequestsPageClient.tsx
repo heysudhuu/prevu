@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { 
   Plus, 
@@ -10,13 +10,18 @@ import {
   CheckCircle, 
   Clock, 
   Sparkles, 
-  HelpCircle
+  HelpCircle,
+  Users,
+  Zap,
+  Award,
+  Flame
 } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { toggleRequestUpvote } from './actions'
 import { createPaperRequest } from '@/app/dashboard/actions'
+import StudyBuddyModal from '@/components/community/StudyBuddyModal'
 
 export interface CommunityRequestItem {
   id: number
@@ -57,10 +62,29 @@ export default function RequestsPageClient({
   const [statusFilter, setStatusFilter] = useState<string>('open')
   const [upvotingId, setUpvotingId] = useState<number | null>(null)
 
-  // New Request Modal state
   const [modalOpen, setModalOpen] = useState(openNewModal)
+  const [buddyModalOpen, setBuddyModalOpen] = useState(false)
+  const [pledges, setPledges] = useState<Record<number, number>>({})
   const [submitting, setSubmitting] = useState(false)
   const [modalError, setModalError] = useState<string | null>(null)
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('prevu_bounty_pledges')
+      if (saved) setPledges(JSON.parse(saved))
+    } catch {}
+  }, [])
+
+  const handlePledgeBounty = (requestId: number) => {
+    setPledges(prev => {
+      const current = prev[requestId] || 0
+      const updated = { ...prev, [requestId]: current + 15 }
+      try {
+        localStorage.setItem('prevu_bounty_pledges', JSON.stringify(updated))
+      } catch {}
+      return updated
+    })
+  }
 
   const [formSubject, setFormSubject] = useState(prefillSubject)
   const [formExamType, setFormExamType] = useState(prefillExamType)
@@ -152,15 +176,52 @@ export default function RequestsPageClient({
         title="Community Question Paper Requests"
         description="Can't find a paper in the vault? Post a request or upvote missing papers. When an uploader contributes the paper, it becomes instantly available."
         actions={
-          <Button
-            size="sm"
-            onClick={() => setModalOpen(true)}
-            className="bg-prevu-accent text-white font-bold shadow-lg shadow-prevu-accent/25"
-          >
-            <Plus className="w-3.5 h-3.5 mr-1.5" /> Request a Paper
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setBuddyModalOpen(true)}
+              className="border-sky-500/40 text-sky-300 hover:bg-sky-500/10 font-bold"
+            >
+              <Users className="w-3.5 h-3.5 mr-1.5" /> Find Study Buddy
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setModalOpen(true)}
+              className="bg-prevu-accent text-white font-bold shadow-lg shadow-prevu-accent/25"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1.5" /> Request a Paper
+            </Button>
+          </div>
         }
       />
+
+      {/* Missing PYQ Bounty Hunter Banner (#3 & #20) */}
+      <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-950/40 via-prevu-surface to-purple-950/40 border border-amber-500/30 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 shrink-0">
+            <Award className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-white">Missing PYQ Bounty Hunter Program</h3>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                Active Bounties
+              </span>
+            </div>
+            <p className="text-xs text-prevu-text-muted mt-0.5">
+              Upload any requested question paper below to claim between 50 and 200 XP Karma and unlock the exclusive <strong className="text-amber-300">Bounty Hunter</strong> badge!
+            </p>
+          </div>
+        </div>
+
+        <Link
+          href="/upload"
+          className="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-black shadow-lg shadow-amber-500/20 shrink-0 inline-flex items-center gap-1.5 transition-all"
+        >
+          <Zap className="w-3.5 h-3.5 fill-current" /> Claim a Bounty
+        </Link>
+      </div>
 
       {/* Control & Filter Bar */}
       <div className="p-4 sm:p-5 rounded-2xl bg-prevu-surface border border-prevu-surface-light shadow-xl space-y-4">
@@ -269,9 +330,14 @@ export default function RequestsPageClient({
                           <CheckCircle className="w-3 h-3" /> Fulfilled
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 uppercase">
-                          <Clock className="w-3 h-3" /> Open
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                            <Zap className="w-3 h-3 text-amber-400 fill-current" /> {50 + (req.upvotes || 0) * 15 + (pledges[req.id] || 0)} XP
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 uppercase">
+                            <Clock className="w-3 h-3" /> Open
+                          </span>
+                        </div>
                       )}
                     </div>
 
@@ -292,30 +358,41 @@ export default function RequestsPageClient({
                   </div>
 
                   <div className="pt-3 border-t border-prevu-surface-light/60 flex items-center justify-between gap-2">
-                    {/* Upvote button */}
-                    <button
-                      onClick={() => handleUpvote(req.id)}
-                      disabled={upvotingId === req.id || isFulfilled}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                        req.hasUpvoted
-                          ? 'bg-prevu-accent text-white shadow-md shadow-prevu-accent/30'
-                          : 'bg-prevu-bg hover:bg-prevu-surface-light text-prevu-text-muted hover:text-white border border-prevu-surface-light'
-                      } ${isFulfilled ? 'opacity-60 cursor-not-allowed' : ''}`}
-                    >
-                      <ThumbsUp className={`w-3.5 h-3.5 ${req.hasUpvoted ? 'fill-current' : ''}`} />
-                      <span>{req.upvotes || 0}</span>
-                      <span className="text-[11px] font-normal hidden sm:inline">
-                        {req.hasUpvoted ? 'Need this' : 'I Need This Too'}
-                      </span>
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      {/* Upvote button */}
+                      <button
+                        onClick={() => handleUpvote(req.id)}
+                        disabled={upvotingId === req.id || isFulfilled}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                          req.hasUpvoted
+                            ? 'bg-prevu-accent text-white shadow-md shadow-prevu-accent/30'
+                            : 'bg-prevu-bg hover:bg-prevu-surface-light text-prevu-text-muted hover:text-white border border-prevu-surface-light'
+                        } ${isFulfilled ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      >
+                        <ThumbsUp className={`w-3.5 h-3.5 ${req.hasUpvoted ? 'fill-current' : ''}`} />
+                        <span>{req.upvotes || 0}</span>
+                      </button>
 
-                    {/* Upload fulfillment action */}
+                      {/* Pledge Extra Bounty */}
+                      {!isFulfilled && (
+                        <button
+                          onClick={() => handlePledgeBounty(req.id)}
+                          title="Pledge +15 XP bounty to incentivize quick upload"
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 transition-all cursor-pointer"
+                        >
+                          <Flame className="w-3 h-3 text-amber-400" />
+                          <span>+15 XP</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Upload fulfillment action with bounty param */}
                     {!isFulfilled && (
                       <Link
-                        href={`/upload?subject_name=${encodeURIComponent(req.subject_name)}&exam_type=${req.exam_type}&exam_year=${req.exam_year}&semester=${req.semester}`}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-prevu-accent/15 hover:bg-prevu-accent/25 text-prevu-accent border border-prevu-accent/30 transition-colors"
+                        href={`/upload?subject_name=${encodeURIComponent(req.subject_name)}&exam_type=${req.exam_type}&exam_year=${req.exam_year}&semester=${req.semester}&bounty=${50 + (req.upvotes || 0) * 15 + (pledges[req.id] || 0)}`}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition-colors"
                       >
-                        <Upload className="w-3.5 h-3.5" /> Upload It
+                        <Upload className="w-3.5 h-3.5" /> Claim Bounty
                       </Link>
                     )}
                   </div>
@@ -464,6 +541,12 @@ export default function RequestsPageClient({
           </div>
         </div>
       )}
+
+      {/* Study Buddy Matchmaker Modal (#13) */}
+      <StudyBuddyModal
+        isOpen={buddyModalOpen}
+        onClose={() => setBuddyModalOpen(false)}
+      />
     </div>
   )
 }

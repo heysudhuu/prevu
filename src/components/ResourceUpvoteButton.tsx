@@ -2,7 +2,10 @@
 
 import React, { useState } from 'react'
 import { ThumbsUp } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { toggleResourceUpvote } from '@/app/dashboard/actions'
+
+
 
 interface ResourceUpvoteButtonProps {
   resourceId: string
@@ -66,18 +69,26 @@ export default function ResourceUpvoteButton({
   }
 
   return (
-    <button
+    <motion.button
       type="button"
+      whileTap={{ scale: 0.84 }}
+      whileHover={{ scale: 1.05 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 17 }}
       onClick={handleToggle}
-      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-semibold transition-all ${
+      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors ${
         upvoted
           ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm'
           : 'text-prevu-text-muted hover:text-white hover:bg-prevu-surface-light/60 border border-prevu-surface-light'
       } ${className}`}
       title={upvoted ? 'Remove Helpful Upvote' : 'Mark as Helpful / Upvote'}
     >
-      <ThumbsUp className={`w-3.5 h-3.5 transition-transform ${upvoted ? 'fill-current scale-110' : ''}`} />
+      <motion.div
+        animate={upvoted ? { scale: [1, 1.35, 1], rotate: [0, -12, 0] } : { scale: 1, rotate: 0 }}
+        transition={{ duration: 0.28 }}
+      >
+        <ThumbsUp className={`w-3.5 h-3.5 ${upvoted ? 'fill-current' : ''}`} />
+      </motion.div>
       {showCount && <span className="font-mono text-[11px]">{count > 0 ? count : ''}</span>}
-    </button>
+    </motion.button>
   )
 }

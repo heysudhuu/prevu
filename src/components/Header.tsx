@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { authAdmin } from '@/lib/firebase/server'
-import { checkAdmin } from '@/app/admin/actions'
+import { isUserAdmin } from '@/lib/auth/admin-check'
 import HeaderNav from '@/components/HeaderNav'
 import { Sparkles } from 'lucide-react'
 
@@ -15,7 +15,7 @@ export default async function Header() {
     try {
       const decoded = await authAdmin.verifyIdToken(token)
       user = decoded
-      isAdmin = await checkAdmin()
+      isAdmin = await isUserAdmin(decoded.email, decoded.uid)
     } catch {
       user = null
     }
@@ -26,18 +26,18 @@ export default async function Header() {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         
         {/* Brand Logo & Tagline */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           <Link 
             href="/" 
-            className="group font-sans text-2xl font-extrabold tracking-tight text-white flex items-center gap-2 hover:drop-shadow-[0_0_16px_rgba(139,92,246,0.6)] transition-all duration-300"
+            className="group font-sans text-2xl font-extrabold tracking-tight text-white flex items-center gap-2 hover:drop-shadow-[0_0_16px_rgba(139,92,246,0.6)] transition-all duration-300 shrink-0"
           >
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-prevu-accent flex items-center justify-center text-white shadow-md shadow-purple-600/30 group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-prevu-accent flex items-center justify-center text-white shadow-md shadow-purple-600/30 group-hover:scale-105 transition-transform shrink-0">
               <Sparkles className="w-4 h-4 text-white" />
             </div>
             <span className="font-extrabold tracking-tight">Prevu</span>
           </Link>
 
-          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-prevu-accent bg-prevu-accent/15 border border-prevu-accent/30 px-2.5 py-0.5 rounded-full hidden sm:inline-flex items-center gap-1">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-prevu-accent bg-prevu-accent/15 border border-prevu-accent/30 px-2.5 py-0.5 rounded-full hidden xl:inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-prevu-accent animate-pulse" />
             <span>BE-CSE Vault</span>
           </span>

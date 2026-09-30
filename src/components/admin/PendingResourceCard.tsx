@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import Link from 'next/link'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { approveResource, rejectResource } from '@/app/admin/actions'
@@ -12,12 +13,37 @@ import {
   User, 
   BookOpen, 
   AlertTriangle,
-  Loader2
+  Loader2,
+  ShieldAlert
 } from 'lucide-react'
+import { checkDuplicatePaper } from '@/lib/admin/duplicateDetection'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function PendingResourceCard({ resource }: { resource: any; subjects?: any[] }) {
+export function PendingResourceCard({ resource, existingPapers = [] }: { resource: any; subjects?: any[]; existingPapers?: any[] }) {
   const [isEditing, setIsEditing] = useState(false)
+  
+  // Intelligent Duplicate Check (#16)
+  const dupCheck = useMemo(() => {
+    return checkDuplicatePaper(
+      {
+        subjectName: resource.subjects?.name || '',
+        subjectCode: resource.subjects?.code || '',
+        examType: resource.exam_types?.name || 'MST1',
+        examYear: resource.exam_year || 2024,
+        fileName: resource.original_filename,
+        fileSize: resource.file_size
+      },
+      existingPapers.map(e => ({
+        id: e.id,
+        subject_name: e.subjects?.name,
+        subject_code: e.subjects?.code,
+        exam_type: e.exam_types?.name,
+        exam_year: e.exam_year,
+        file_name: e.original_filename || e.file_path,
+        file_size: e.file_size
+      }))
+    )
+  }, [resource, existingPapers])
   
   // Editable fields
   const [subjectName, setSubjectName] = useState(resource.subjects?.name || '')
@@ -118,10 +144,40 @@ export function PendingResourceCard({ resource }: { resource: any; subjects?: an
         </div>
       </CardHeader>
 
-      <CardContent className="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Left Column: Live Document Previewer */}
-        <div className="lg:col-span-7 flex flex-col space-y-2">
+      <CardContent className="p-4 sm:p-6 space-y-4">
+        {/* Intelligent Duplicate Warning Banner (#16) */}
+        {dupCheck.isDuplicate && (
+          <div className="p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-lg">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-300 shrink-0">
+                <ShieldAlert className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5 font-bold">
+                  <span>Intelligent Duplicate Radar</span>
+                  <span className="px-2 py-0.2 rounded-full text-[10px] font-mono font-bold bg-rose-500/30 text-rose-200">
+                    {dupCheck.confidence}% Match
+                  </span>
+                </div>
+                <p className="text-[11px] text-rose-200/90 mt-0.5">
+                  {dupCheck.reason}
+                </p>
+              </div>
+            </div>
+
+            {dupCheck.matchedPaperId && (
+              <Button size="sm" variant="outline" asChild className="text-xs h-7 border-rose-500/40 text-rose-300 hover:bg-rose-500/20 shrink-0">
+                <Link href={`/paper/${dupCheck.matchedPaperId}`} target="_blank">
+                  Compare Live Paper <ExternalLink className="w-3 h-3 ml-1" />
+                </Link>
+              </Button>
+            )}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Column: Live Document Previewer */}
+          <div className="lg:col-span-7 flex flex-col space-y-2">
           <div className="text-xs font-semibold text-prevu-text-muted flex items-center justify-between">
             <span className="truncate max-w-[300px]">File: {resource.original_filename}</span>
             <span className="font-mono uppercase">{resource.file_type?.split('/')[1] || 'DOC'}</span>
@@ -330,6 +386,7 @@ export function PendingResourceCard({ resource }: { resource: any; subjects?: an
             </div>
           )}
 
+        </div>
         </div>
 
       </CardContent>

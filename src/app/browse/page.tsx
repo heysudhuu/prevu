@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Header from '@/components/Header'
 import { getUserBookmarkIds, getUserUpvotedResourceIds, getResourceUpvoteCounts } from '@/app/dashboard/actions'
 import BrowseFilterBar from '@/components/browse/BrowseFilterBar'
+import SmartTopicSearch from '@/components/browse/SmartTopicSearch'
 import { Sparkles, MessageSquarePlus, FileQuestion, ChevronLeft, ChevronRight } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -87,23 +88,26 @@ export default async function BrowsePage({
   if (subjectFilter) query = query.eq('subject_id', subjectFilter)
   if (typeFilter) query = query.eq('exam_type_id', typeFilter)
 
-  // Server-side keyword search
+  // Server-side keyword search (sanitized against PostgREST injection)
   if (searchFilter) {
-    const { data: matchingSubjects } = await supabase
-      .from('subjects')
-      .select('id')
-      .or(`name.ilike.%${searchFilter}%,code.ilike.%${searchFilter}%`)
+    const sanitizedSearch = searchFilter.replace(/[,()]/g, '').trim()
+    if (sanitizedSearch) {
+      const { data: matchingSubjects } = await supabase
+        .from('subjects')
+        .select('id')
+        .or(`name.ilike.%${sanitizedSearch}%,code.ilike.%${sanitizedSearch}%`)
 
-    const subjectIds = (matchingSubjects || []).map(s => s.id)
+      const subjectIds = (matchingSubjects || []).map(s => s.id)
 
-    if (subjectIds.length > 0) {
-      query = query.in('subject_id', subjectIds)
-    } else {
-      const isYear = !isNaN(parseInt(searchFilter)) && parseInt(searchFilter) > 2000
-      if (isYear) {
-        query = query.eq('exam_year', parseInt(searchFilter))
+      if (subjectIds.length > 0) {
+        query = query.in('subject_id', subjectIds)
       } else {
-        query = query.ilike('original_filename', `%${searchFilter}%`)
+        const isYear = !isNaN(parseInt(sanitizedSearch)) && parseInt(sanitizedSearch) > 2000
+        if (isYear) {
+          query = query.eq('exam_year', parseInt(sanitizedSearch))
+        } else {
+          query = query.ilike('original_filename', `%${sanitizedSearch}%`)
+        }
       }
     }
   }
@@ -176,6 +180,11 @@ export default async function BrowsePage({
             currentType={typeFilter}
             currentSearch={searchFilter}
           />
+
+          {/* AI Auto-Tagged Syllabus Topic Search Bar */}
+          <div className="my-5">
+            <SmartTopicSearch />
+          </div>
 
           {/* Resources Grid */}
           <section>

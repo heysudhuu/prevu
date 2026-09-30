@@ -75,10 +75,12 @@ export async function getLeaderboard(): Promise<LeaderboardUser[]> {
       const karma = (uploads * 25) + (u.cu_verified ? 15 : 0)
 
       let badge = { title: 'Contributor', color: 'text-zinc-400 bg-zinc-800/60 border-zinc-700/60', icon: '🌱' }
-      if (karma >= 100) {
+      if (karma >= 150) {
         badge = { title: 'Campus Legend', color: 'text-amber-300 bg-amber-500/15 border-amber-500/30', icon: '👑' }
+      } else if (karma >= 90) {
+        badge = { title: 'Vault Guardian', color: 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30', icon: '🛡️' }
       } else if (karma >= 50) {
-        badge = { title: 'Vault Pioneer', color: 'text-purple-300 bg-purple-500/15 border-purple-500/30', icon: '⚡' }
+        badge = { title: 'Bounty Hunter', color: 'text-amber-400 bg-amber-500/15 border-amber-500/30', icon: '⚡' }
       } else if (karma >= 25) {
         badge = { title: 'Semester Hero', color: 'text-cyan-300 bg-cyan-500/15 border-cyan-500/30', icon: '⭐' }
       }

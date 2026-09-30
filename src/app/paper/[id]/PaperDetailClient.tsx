@@ -29,6 +29,10 @@ import ResourceUpvoteButton from '@/components/ResourceUpvoteButton'
 import MockExamModal from '@/components/mock-exam/MockExamModal'
 import ExamHallFlashcardsModal from '@/components/flashcards/ExamHallFlashcardsModal'
 import { Flame } from 'lucide-react'
+import SaveOfflineButton from '@/components/offline/SaveOfflineButton'
+import QuestionCheckpad from '@/components/tracker/QuestionCheckpad'
+import PaperVouchAndRatingCard from '@/components/community/PaperVouchAndRatingCard'
+import PaperDoubtBoard from '@/components/community/PaperDoubtBoard'
 
 interface PaperDetailClientProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -257,16 +261,22 @@ export default function PaperDetailClient({
               <Eye className="w-4 h-4 mr-2" /> Preview Paper
             </Button>
 
-            <Button
-              size="lg"
-              variant="outline"
-              asChild
-              className="border-prevu-surface-light hover:border-prevu-accent/50 font-bold"
-            >
-              <a href={`/api/download/${paper.id}`} download>
-                <Download className="w-4 h-4 mr-2 text-emerald-400" /> Download PDF
-              </a>
-            </Button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <Button
+                size="lg"
+                variant="outline"
+                asChild
+                className="border-prevu-surface-light hover:border-prevu-accent/50 font-bold"
+              >
+                <a href={`/api/download/${paper.id}`} download>
+                  <Download className="w-4 h-4 mr-2 text-emerald-400" /> Download PDF
+                </a>
+              </Button>
+
+              <div className="flex">
+                <SaveOfflineButton paper={paper} className="w-full justify-center h-full py-2.5" />
+              </div>
+            </div>
 
             <div className="grid grid-cols-4 gap-2 pt-1">
               <ResourceUpvoteButton resourceId={paper.id} showCount={false} className="justify-center h-8" />
@@ -339,6 +349,29 @@ export default function PaperDetailClient({
           </div>
         </div>
       )}
+
+      {/* Question Progress & Syllabus Mastery Checkpad */}
+      <QuestionCheckpad
+        paperId={paper.id}
+        subjectCode={subject?.code || ''}
+        subjectName={subject?.name || ''}
+        semester={subject?.semester || 1}
+        questionCount={8}
+      />
+
+      {/* Senior Vouching & Paper Quality Rating */}
+      <PaperVouchAndRatingCard
+        paperId={paper.id}
+        subjectName={subject?.name || 'Question Paper'}
+        examYear={paper.exam_year}
+      />
+
+      {/* Collaborative Doubt & Solution Board */}
+      <PaperDoubtBoard
+        paperId={paper.id}
+        subjectName={subject?.name || 'Question Paper'}
+        examYear={paper.exam_year}
+      />
 
       {/* Related Papers from Same Subject */}
       {sameSubjectPapers.length > 0 && (

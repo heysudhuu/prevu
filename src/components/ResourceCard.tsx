@@ -33,10 +33,10 @@ export function ResourceCard({ resource, isBookmarked = false, initialUpvoted = 
   const isSeniorRecommended = upvoteCount >= 3 || (isVerified && normalizedType.includes('note'))
 
   return (
-    <Card className={`w-full flex flex-col h-full group transition-all duration-300 ${
+    <Card className={`w-full flex flex-col h-full group transition-all duration-300 card-hover-lift ${
       isAdmin 
-        ? 'border-purple-500/30 hover:border-purple-500/60 bg-gradient-to-b from-purple-950/20 via-prevu-surface to-prevu-surface shadow-lg shadow-purple-950/20 hover:-translate-y-1' 
-        : 'hover:border-prevu-accent/40 hover:-translate-y-1'
+        ? 'border-purple-500/30 hover:border-purple-500/60 bg-gradient-to-b from-purple-950/20 via-prevu-surface to-prevu-surface shadow-lg shadow-purple-950/20 hover:shadow-2xl hover:shadow-purple-500/20 hover:-translate-y-1.5' 
+        : 'hover:border-prevu-accent/50 hover:shadow-xl hover:shadow-prevu-accent/10 hover:-translate-y-1.5'
     }`}>
       <CardHeader className="flex-none pb-3 border-b-0">
         <div className="flex items-center justify-between gap-2 mb-2.5">

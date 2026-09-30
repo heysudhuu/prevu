@@ -22,13 +22,19 @@ import {
   BookOpen,
   Lightbulb,
   FileCode2,
-  Clock
+  Clock,
+  Moon,
+  Sun,
+  PenTool
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { getPaperComments, addPaperComment, deletePaperComment, CommentItem } from '@/app/api/comments/actions'
 import { generateExamAssistantInsights, ExamInsightsResult } from '@/app/api/ai/actions'
 import MockExamModal from '@/components/mock-exam/MockExamModal'
+import SaveOfflineButton from '@/components/offline/SaveOfflineButton'
+import SharePaperButton from '@/components/SharePaperButton'
+import PaperAnnotatorOverlay from '@/components/annotator/PaperAnnotatorOverlay'
 
 interface PDFViewerModalProps {
   isOpen: boolean
@@ -59,6 +65,8 @@ export default function PDFViewerModal({ isOpen, onClose, resource }: PDFViewerM
   const [activeTab, setActiveTab] = useState<ModalTab>('viewer')
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [zoom, setZoom] = useState<number>(100)
+  const [pdfTheme, setPdfTheme] = useState<'default' | 'dark' | 'amoled'>('default')
+  const [isAnnotating, setIsAnnotating] = useState(false)
 
   // AI Assistant State
   const [aiLoading, setAiLoading] = useState(false)
@@ -242,24 +250,82 @@ export default function PDFViewerModal({ isOpen, onClose, resource }: PDFViewerM
           {/* Action Toolbar */}
           <div className="flex items-center gap-1.5 shrink-0">
             {activeTab === 'viewer' && (
-              <div className="hidden md:flex items-center bg-prevu-surface border border-prevu-surface-light rounded-xl px-1 py-0.5 text-xs mr-1">
-                <button 
-                  onClick={() => setZoom(prev => Math.max(75, prev - 15))}
-                  className="px-2 py-1 text-prevu-text-muted hover:text-white font-mono"
-                  title="Zoom Out"
-                >
-                  -
-                </button>
-                <span className="px-1 text-[11px] font-mono text-prevu-text-muted">{zoom}%</span>
-                <button 
-                  onClick={() => setZoom(prev => Math.min(150, prev + 15))}
-                  className="px-2 py-1 text-prevu-text-muted hover:text-white font-mono"
-                  title="Zoom In"
-                >
-                  +
-                </button>
-              </div>
+              <>
+                {/* PDF Dark / AMOLED Theme Selector */}
+                <div className="flex items-center bg-prevu-surface border border-prevu-surface-light rounded-xl p-0.5 text-xs mr-0.5">
+                  <button
+                    onClick={() => setPdfTheme('default')}
+                    className={`px-2 py-1 rounded-lg transition-colors cursor-pointer ${
+                      pdfTheme === 'default' ? 'bg-purple-600 text-white shadow' : 'text-prevu-text-muted hover:text-white'
+                    }`}
+                    title="Default light background"
+                  >
+                    <Sun className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setPdfTheme('dark')}
+                    className={`px-2 py-1 rounded-lg transition-colors cursor-pointer ${
+                      pdfTheme === 'dark' ? 'bg-purple-600 text-white shadow' : 'text-prevu-text-muted hover:text-white'
+                    }`}
+                    title="Night mode (inverted high contrast)"
+                  >
+                    <Moon className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setPdfTheme('amoled')}
+                    className={`px-1.5 py-0.5 rounded-lg text-[10px] font-mono font-bold transition-colors cursor-pointer ${
+                      pdfTheme === 'amoled' ? 'bg-black text-cyan-400 border border-cyan-500/50 shadow' : 'text-prevu-text-muted hover:text-white'
+                    }`}
+                    title="AMOLED pitch black"
+                  >
+                    AMOLED
+                  </button>
+                </div>
+
+                {/* Zoom Controls */}
+                <div className="hidden lg:flex items-center bg-prevu-surface border border-prevu-surface-light rounded-xl px-1 py-0.5 text-xs mr-1">
+                  <button 
+                    onClick={() => setZoom(prev => Math.max(75, prev - 15))}
+                    className="px-2 py-1 text-prevu-text-muted hover:text-white font-mono"
+                    title="Zoom Out"
+                  >
+                    -
+                  </button>
+                  <span className="px-1 text-[11px] font-mono text-prevu-text-muted">{zoom}%</span>
+                  <button 
+                    onClick={() => setZoom(prev => Math.min(150, prev + 15))}
+                    className="px-2 py-1 text-prevu-text-muted hover:text-white font-mono"
+                    title="Zoom In"
+                  >
+                    +
+                  </button>
+                </div>
+              </>
             )}
+
+            {/* In-App PDF Annotator Toggle */}
+            {activeTab === 'viewer' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsAnnotating(prev => !prev)}
+                className={`h-8 px-2.5 text-xs transition-all cursor-pointer ${
+                  isAnnotating 
+                    ? 'bg-purple-600 text-white border-purple-500 shadow-md shadow-purple-600/30' 
+                    : 'border-prevu-surface-light text-prevu-text-muted hover:text-white'
+                }`}
+                title="Annotate & Highlight Paper with Sticky Notes"
+              >
+                <PenTool className="w-3.5 h-3.5 sm:mr-1 text-cyan-400" />
+                <span className="hidden sm:inline">Annotate</span>
+              </Button>
+            )}
+
+            {/* Offline Vault Saver */}
+            <SaveOfflineButton paper={resource} variant="icon" />
+
+            {/* Class WhatsApp & Social Share */}
+            <SharePaperButton resource={resource} />
 
             <Button
               variant="outline"
@@ -321,15 +387,30 @@ export default function PDFViewerModal({ isOpen, onClose, resource }: PDFViewerM
           
           {/* TAB 1: EMBEDDED IN-APP VIEWER */}
           {activeTab === 'viewer' && (
-            <div className="w-full h-full flex flex-col items-center justify-center overflow-auto p-2 bg-[#0d0d12]">
+            <div className={`w-full h-full flex flex-col items-center justify-center overflow-auto p-2 transition-colors relative ${
+              pdfTheme === 'amoled' ? 'bg-black' : pdfTheme === 'dark' ? 'bg-[#0f0f15]' : 'bg-[#0d0d12]'
+            }`}>
               <iframe
                 src={`/api/preview/${resource.id}#toolbar=0`}
-                className="w-full h-full rounded-2xl border border-prevu-surface-light bg-prevu-surface shadow-2xl transition-all"
+                className="w-full h-full rounded-2xl border border-prevu-surface-light shadow-2xl transition-all duration-300"
                 style={{
                   transform: zoom !== 100 ? `scale(${zoom / 100})` : undefined,
-                  transformOrigin: 'top center'
+                  transformOrigin: 'top center',
+                  filter: 
+                    pdfTheme === 'amoled'
+                      ? 'invert(0.95) hue-rotate(180deg) contrast(1.2) brightness(0.95)'
+                      : pdfTheme === 'dark'
+                      ? 'invert(0.92) hue-rotate(180deg) contrast(1.1)'
+                      : 'none'
                 }}
                 title={resource.subjects?.name || 'Question Paper Preview'}
+              />
+
+              {/* In-App PDF Annotator & Sticky Notes Overlay */}
+              <PaperAnnotatorOverlay
+                paperId={resource.id}
+                isOpen={isAnnotating}
+                onClose={() => setIsAnnotating(false)}
               />
             </div>
           )}

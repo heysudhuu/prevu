@@ -213,6 +213,17 @@ export async function createPaperRequest(formData: FormData) {
  * Marks a paper request as fulfilled
  */
 export async function fulfillPaperRequest(requestId: number) {
+  const token = (await cookies()).get('firebase-token')?.value
+  if (!token) {
+    return { error: 'Please log in to fulfill requests.' }
+  }
+
+  try {
+    await authAdmin.verifyIdToken(token)
+  } catch {
+    return { error: 'Authentication expired. Please log in again.' }
+  }
+
   const supabase = getSupabaseAdmin()
   const { error } = await supabase
     .from('paper_requests')
@@ -311,20 +322,34 @@ export async function getUserUpvotedResourceIds(): Promise<string[]> {
 }
 
 /**
- * Retrieves upvote counts map for resources
+ * Retrieves upvote counts map for resources using SQL-level aggregation.
+ * Uses a grouped count query instead of fetching every row into JS memory.
  */
 export async function getResourceUpvoteCounts(): Promise<Record<string, number>> {
   const supabase = getSupabaseAdmin()
   try {
-    const { data } = await supabase
-      .from('resource_upvotes')
-      .select('resource_id')
+    // Use SQL aggregation — fetches one row per resource instead of one row per upvote
+    const { data, error } = await supabase
+      .rpc('get_resource_upvote_counts')
 
-    if (!data) return {}
+    // Fallback: if RPC doesn't exist yet, use the grouped select approach
+    if (error || !data) {
+      const { data: rawData } = await supabase
+        .from('resource_upvotes')
+        .select('resource_id')
+
+      if (!rawData) return {}
+
+      const counts: Record<string, number> = {}
+      rawData.forEach((r: { resource_id: string }) => {
+        counts[r.resource_id] = (counts[r.resource_id] || 0) + 1
+      })
+      return counts
+    }
 
     const counts: Record<string, number> = {}
-    data.forEach((r: { resource_id: string }) => {
-      counts[r.resource_id] = (counts[r.resource_id] || 0) + 1
+    data.forEach((r: { resource_id: string; upvote_count: number }) => {
+      counts[r.resource_id] = r.upvote_count
     })
     return counts
   } catch {

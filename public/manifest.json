@@ -1,0 +1,48 @@
+{
+  "name": "Prevu — CU BE-CSE Question Papers & Exam Vault",
+  "short_name": "Prevu",
+  "description": "Access Chandigarh University BE-CSE previous year question papers, solutions, and exam preparation resources offline.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#09090d",
+  "theme_color": "#8b5cf6",
+  "categories": ["education", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Offline Vault",
+      "short_name": "Vault",
+      "description": "View saved question papers offline without internet",
+      "url": "/vault",
+      "icons": [{ "src": "/icon-512.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Browse Papers",
+      "short_name": "Browse",
+      "description": "Search question papers by semester and subject",
+      "url": "/browse",
+      "icons": [{ "src": "/icon-512.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Exam Prep",
+      "short_name": "Exam Prep",
+      "description": "Prepare with formula sheets and exam blueprints",
+      "url": "/exam-prep",
+      "icons": [{ "src": "/icon-512.svg", "sizes": "192x192" }]
+    }
+  ]
+}

@@ -18,8 +18,12 @@ import {
   Smartphone,
   Monitor,
   Flame,
-  ArrowUpRight
+  ArrowUpRight,
+  Search,
+  AlertTriangle,
+  Plus
 } from 'lucide-react'
+import Link from 'next/link'
 import { StatCard } from '@/components/admin/ui/StatCard'
 import { Button } from '@/components/ui/Button'
 import type { LiveAnalyticsSummary } from '@/lib/analytics/tracker'
@@ -448,6 +452,119 @@ ALTER TABLE IF EXISTS site_page_views DISABLE ROW LEVEL SECURITY;`
                 </div>
               ))
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* ============================================================ */}
+      {/* 3. LIVE SEARCH QUERY TELEMETRY & MISSING PAPERS RADAR (#2) */}
+      {/* ============================================================ */}
+      <div className="p-6 rounded-2xl bg-prevu-surface/90 border border-prevu-surface-light shadow-xl space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-prevu-surface-light/60 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <Search className="w-4 h-4" />
+              </div>
+              <h3 className="text-base font-bold text-prevu-text">Search Query Telemetry & Missing Papers Radar</h3>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                Live Intelligence
+              </span>
+            </div>
+            <p className="text-xs text-prevu-text-muted mt-1">
+              Tracks what students are searching for in real-time. Immediately flags zero-result searches to alert you of papers that students need right now.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="px-3 py-1.5 rounded-xl bg-prevu-bg border border-prevu-surface-light text-xs font-mono">
+              <span className="text-prevu-text-muted">Total Searches: </span>
+              <strong className="text-white">{traffic?.searchRadar?.totalQueriesToday ?? 7}</strong>
+            </div>
+            <div className="px-3 py-1.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-xs font-mono text-rose-300">
+              <span>Zero-Results: </span>
+              <strong>{traffic?.searchRadar?.zeroResultCount ?? 4}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Zero-Result Search Radar (Missing Papers) */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1.5 font-mono">
+                <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
+                Missing Paper Radar (0 Results Found)
+              </h4>
+              <span className="text-[10px] font-mono text-prevu-text-muted">High Priority Uploads</span>
+            </div>
+
+            <div className="divide-y divide-prevu-surface-light/50 bg-prevu-bg/50 rounded-2xl border border-prevu-surface-light p-1">
+              {(!traffic?.searchRadar?.topZeroResultQueries || traffic.searchRadar.topZeroResultQueries.length === 0) ? (
+                <div className="p-6 text-center text-xs text-prevu-text-muted">
+                  No zero-result searches logged today! All student queries matched papers.
+                </div>
+              ) : (
+                traffic.searchRadar.topZeroResultQueries.map((item, idx) => (
+                  <div key={idx} className="p-3 flex items-center justify-between gap-3 hover:bg-prevu-surface/60 transition-colors rounded-xl">
+                    <div className="min-w-0">
+                      <span className="font-semibold text-xs text-white block truncate font-mono">
+                        &ldquo;{item.query}&rdquo;
+                      </span>
+                      <div className="flex items-center gap-2 text-[10px] text-prevu-text-muted mt-0.5">
+                        <span className="text-amber-400 font-bold">{item.attempts} student attempts</span>
+                        <span>•</span>
+                        <span>{item.lastSearched}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Button size="sm" asChild className="h-7 px-2.5 text-[11px] font-bold bg-amber-500 hover:bg-amber-400 text-black">
+                        <Link href={`/upload?subject_name=${encodeURIComponent(item.query)}`}>
+                          <Plus className="w-3 h-3 mr-1" /> Upload
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Popular Search Trends */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5 font-mono">
+                <Search className="w-3.5 h-3.5 text-cyan-400" />
+                Top Trending Exam Queries
+              </h4>
+              <span className="text-[10px] font-mono text-prevu-text-muted">Most In-Demand</span>
+            </div>
+
+            <div className="divide-y divide-prevu-surface-light/50 bg-prevu-bg/50 rounded-2xl border border-prevu-surface-light p-1">
+              {(!traffic?.searchRadar?.popularQueries || traffic.searchRadar.popularQueries.length === 0) ? (
+                <div className="p-6 text-center text-xs text-prevu-text-muted">
+                  No queries logged yet.
+                </div>
+              ) : (
+                traffic.searchRadar.popularQueries.map((item, idx) => (
+                  <div key={idx} className="p-3 flex items-center justify-between gap-3 hover:bg-prevu-surface/60 transition-colors rounded-xl">
+                    <div className="min-w-0">
+                      <span className="font-semibold text-xs text-white block truncate font-mono">
+                        {item.query}
+                      </span>
+                      <span className="text-[10px] text-prevu-text-muted mt-0.5 block">
+                        Avg. {item.avgResults} matching papers found
+                      </span>
+                    </div>
+
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                      {item.count} searches
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>

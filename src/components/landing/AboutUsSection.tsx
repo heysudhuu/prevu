@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { 
   ShieldCheck, 
   BookOpen, 
@@ -62,45 +63,73 @@ export default function AboutUsSection() {
         {/* 4 Core Guarantees & Pillars Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           
-          <div className="p-6 rounded-2xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-purple-500/40 transition-all space-y-3 shadow-lg hover:-translate-y-1">
-            <div className="w-12 h-12 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-300">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.45, delay: 0.05 }}
+            whileHover={{ y: -6, transition: { duration: 0.2 } }}
+            className="p-6 rounded-2xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-purple-500/40 transition-colors space-y-3 shadow-lg group"
+          >
+            <div className="w-12 h-12 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-300 group-hover:scale-110 transition-transform">
               <Zap className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-bold text-white">100% Free Forever</h3>
+            <h3 className="text-base font-bold text-white group-hover:text-purple-300 transition-colors">100% Free Forever</h3>
             <p className="text-xs text-prevu-text-muted leading-relaxed">
               No paywalls, subscriptions, or pay-to-unlock coin gates. Pure open academic knowledge for all.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="p-6 rounded-2xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-emerald-500/40 transition-all space-y-3 shadow-lg hover:-translate-y-1">
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.45, delay: 0.15 }}
+            whileHover={{ y: -6, transition: { duration: 0.2 } }}
+            className="p-6 rounded-2xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-emerald-500/40 transition-colors space-y-3 shadow-lg group"
+          >
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
               <ShieldCheck className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-bold text-white">Verified Quality</h3>
+            <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors">Verified Quality</h3>
             <p className="text-xs text-prevu-text-muted leading-relaxed">
               Every single paper and document is reviewed for clarity and correctness before going live on the archive.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="p-6 rounded-2xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-amber-500/40 transition-all space-y-3 shadow-lg hover:-translate-y-1">
-            <div className="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-300">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.45, delay: 0.25 }}
+            whileHover={{ y: -6, transition: { duration: 0.2 } }}
+            className="p-6 rounded-2xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-amber-500/40 transition-colors space-y-3 shadow-lg group"
+          >
+            <div className="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-300 group-hover:scale-110 transition-transform">
               <BookOpen className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-bold text-white">Exact CU Blueprint</h3>
+            <h3 className="text-base font-bold text-white group-hover:text-amber-300 transition-colors">Exact CU Blueprint</h3>
             <p className="text-xs text-prevu-text-muted leading-relaxed">
               Mapped directly to Chandigarh University’s official MST 1, MST 2, and EST question patterns.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="p-6 rounded-2xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-cyan-500/40 transition-all space-y-3 shadow-lg hover:-translate-y-1">
-            <div className="w-12 h-12 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-300">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.45, delay: 0.35 }}
+            whileHover={{ y: -6, transition: { duration: 0.2 } }}
+            className="p-6 rounded-2xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-cyan-500/40 transition-colors space-y-3 shadow-lg group"
+          >
+            <div className="w-12 h-12 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-300 group-hover:scale-110 transition-transform">
               <Users className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-bold text-white">Student Community</h3>
+            <h3 className="text-base font-bold text-white group-hover:text-cyan-300 transition-colors">Student Community</h3>
             <p className="text-xs text-prevu-text-muted leading-relaxed">
               Maintained and powered by peer contributions from every semester and engineering specialization.
             </p>
-          </div>
+          </motion.div>
 
         </div>
 
@@ -125,18 +154,24 @@ export default function AboutUsSection() {
                   className="w-full p-4 text-left flex items-center justify-between gap-3 text-sm font-semibold text-prevu-text hover:text-prevu-accent transition-colors"
                 >
                   <span>{faq.q}</span>
-                  {openFaq === idx ? (
-                    <ChevronUp className="w-4 h-4 text-prevu-accent shrink-0" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-prevu-text-muted shrink-0" />
-                  )}
+                  <ChevronDown className={`w-4 h-4 text-prevu-text-muted shrink-0 transition-transform duration-200 ${openFaq === idx ? 'rotate-180 text-prevu-accent' : ''}`} />
                 </button>
 
-                {openFaq === idx && (
-                  <div className="px-4 pb-4 pt-1 text-xs text-prevu-text-muted leading-relaxed border-t border-prevu-surface-light/40 animate-fade-in">
-                    {faq.a}
-                  </div>
-                )}
+                <AnimatePresence initial={false}>
+                  {openFaq === idx && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] as const }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-4 pb-4 pt-1 text-xs text-prevu-text-muted leading-relaxed border-t border-prevu-surface-light/40">
+                        {faq.a}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             ))}
           </div>

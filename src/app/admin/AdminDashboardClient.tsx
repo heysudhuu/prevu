@@ -18,9 +18,12 @@ import {
   FileCheck,
   Compass,
   Activity,
-  ArrowRight
+  ArrowRight,
+  Archive,
+  GraduationCap
 } from 'lucide-react'
 import Link from 'next/link'
+import BulkPaperImportModal from '@/components/admin/BulkPaperImportModal'
 
 interface AdminDashboardClientProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -50,6 +53,7 @@ export default function AdminDashboardClient({
   const [searchQuery, setSearchQuery] = useState('')
   const [examTypeFilter, setExamTypeFilter] = useState<string>('ALL')
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [bulkImportOpen, setBulkImportOpen] = useState(false)
   const [traffic, setTraffic] = useState<{
     liveVisitorsCount?: number
     todayTotalViews?: number
@@ -153,17 +157,33 @@ export default function AdminDashboardClient({
 
             {/* Quick Action Buttons */}
             <div className="flex items-center gap-2.5">
-              <Button size="sm" className="h-9 px-4 text-xs font-bold bg-purple-600 hover:bg-purple-500 text-white rounded-xl shadow-md shadow-purple-600/20 flex items-center gap-1.5" asChild>
+              <Button
+                size="sm"
+                onClick={() => setBulkImportOpen(true)}
+                className="h-9 px-3.5 text-xs font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl shadow-md shadow-purple-600/30 flex items-center gap-1.5 cursor-pointer"
+              >
+                <Archive className="w-3.5 h-3.5 text-white" />
+                <span>Bulk ZIP Import</span>
+              </Button>
+
+              <Button size="sm" variant="outline" className="h-9 px-4 text-xs font-bold border-prevu-surface-light text-prevu-text hover:text-white rounded-xl shadow-sm flex items-center gap-1.5" asChild>
                 <Link href="/upload">
-                  <Upload className="w-3.5 h-3.5" />
-                  <span>Upload Paper as Prevu</span>
+                  <Upload className="w-3.5 h-3.5 text-prevu-accent" />
+                  <span>Upload Single</span>
                 </Link>
               </Button>
 
               <Button size="sm" variant="outline" className="h-9 px-3.5 text-xs font-semibold border-prevu-surface-light text-prevu-text hover:text-white rounded-xl flex items-center gap-1.5 bg-prevu-surface" asChild>
                 <Link href="/dashboard">
                   <Compass className="w-3.5 h-3.5 text-prevu-accent" />
-                  <span>Switch to Student View</span>
+                  <span>Student View</span>
+                </Link>
+              </Button>
+
+              <Button size="sm" variant="outline" className="h-9 px-3.5 text-xs font-semibold border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 rounded-xl flex items-center gap-1.5 bg-prevu-surface" asChild>
+                <Link href="/faculty">
+                  <GraduationCap className="w-3.5 h-3.5" />
+                  <span>Faculty Portal</span>
                 </Link>
               </Button>
             </div>
@@ -459,7 +479,7 @@ export default function AdminDashboardClient({
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {pendingResources.map((resource) => (
-                  <PendingResourceCard key={resource.id} resource={resource} />
+                  <PendingResourceCard key={resource.id} resource={resource} existingPapers={approvedResources} />
                 ))}
               </div>
             )}
@@ -712,7 +732,21 @@ export default function AdminDashboardClient({
           </div>
         )}
 
-      </div>
+      {/* Bulk Paper Import Studio & Duplicate Radar Modal (#15 & #16) */}
+      <BulkPaperImportModal
+        isOpen={bulkImportOpen}
+        onClose={() => setBulkImportOpen(false)}
+        existingPapers={approvedResources?.map(r => ({
+          id: r.id,
+          subject_name: r.subjects?.name,
+          subject_code: r.subjects?.code,
+          exam_type: r.exam_types?.name,
+          exam_year: r.exam_year,
+          file_name: r.file_path,
+          file_size: r.file_size
+        }))}
+      />
     </div>
+  </div>
   )
 }

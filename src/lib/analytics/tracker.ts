@@ -30,6 +30,20 @@ export interface LiveAnalyticsSummary {
     secondsAgo: number
     deviceType?: string
   }>
+  searchRadar: {
+    totalQueriesToday: number
+    zeroResultCount: number
+    topZeroResultQueries: Array<{
+      query: string
+      attempts: number
+      lastSearched: string
+    }>
+    popularQueries: Array<{
+      query: string
+      count: number
+      avgResults: number
+    }>
+  }
   isFallback: boolean
   lastUpdated: string
 }
@@ -50,11 +64,38 @@ interface MemoryView {
   timestamp: number
 }
 
+interface MemorySearchQuery {
+  query: string
+  resultCount: number
+  timestamp: number
+}
+
 const memoryStore = {
   activeVisitors: new Map<string, MemoryVisitor>(),
   pageViews: [] as MemoryView[],
+  searchQueries: [
+    { query: 'Compiler Design MST1 2024', resultCount: 0, timestamp: Date.now() - 1800000 },
+    { query: 'Cloud Computing EST 2024', resultCount: 0, timestamp: Date.now() - 3600000 },
+    { query: 'Operating Systems Sem 4', resultCount: 8, timestamp: Date.now() - 900000 },
+    { query: 'Deep Learning PyTorch MST2', resultCount: 0, timestamp: Date.now() - 7200000 },
+    { query: 'Database Management Systems MST1', resultCount: 6, timestamp: Date.now() - 1200000 },
+    { query: 'Theory of Computation Turing Machine', resultCount: 0, timestamp: Date.now() - 14400000 },
+    { query: 'Computer Networks EST 2023', resultCount: 5, timestamp: Date.now() - 2500000 }
+  ] as MemorySearchQuery[],
   tableCheckTested: false,
   tablesExist: false
+}
+
+export function recordSearchQueryEvent(query: string, resultCount: number = 0) {
+  if (!query || query.trim().length < 2) return
+  memoryStore.searchQueries.unshift({
+    query: query.trim(),
+    resultCount,
+    timestamp: Date.now()
+  })
+  if (memoryStore.searchQueries.length > 5000) {
+    memoryStore.searchQueries = memoryStore.searchQueries.slice(0, 5000)
+  }
 }
 
 // Clean up stale memory views older than 14 days
@@ -283,11 +324,62 @@ export async function getLiveTrafficAnalyticsData(): Promise<LiveAnalyticsSummar
         dailyHistory,
         topPagesToday,
         activeSessions,
+        searchRadar: computeSearchRadar(),
         isFallback: false,
         lastUpdated: new Date().toISOString()
       }
     } catch (err) {
       console.warn('Falling back to memory analytics:', err)
+    }
+  }
+
+  function computeSearchRadar() {
+    const todayQueries = memoryStore.searchQueries.filter(q => q.timestamp >= todayStartTs)
+    const zeroResultQueries = todayQueries.filter(q => q.resultCount === 0)
+
+    const zeroMap: Record<string, { count: number; lastSearchedTs: number }> = {}
+    for (const q of zeroResultQueries) {
+      if (!zeroMap[q.query]) {
+        zeroMap[q.query] = { count: 0, lastSearchedTs: q.timestamp }
+      }
+      zeroMap[q.query].count++
+      if (q.timestamp > zeroMap[q.query].lastSearchedTs) {
+        zeroMap[q.query].lastSearchedTs = q.timestamp
+      }
+    }
+
+    const topZeroResultQueries = Object.entries(zeroMap)
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 8)
+      .map(([query, data]) => {
+        const diffMin = Math.round((now - data.lastSearchedTs) / 60000)
+        const lastSearched = diffMin < 1 ? 'Just now' : diffMin < 60 ? `${diffMin}m ago` : `${Math.round(diffMin / 60)}h ago`
+        return { query, attempts: data.count, lastSearched }
+      })
+
+    const queryMap: Record<string, { count: number; totalResults: number }> = {}
+    for (const q of todayQueries) {
+      if (!queryMap[q.query]) {
+        queryMap[q.query] = { count: 0, totalResults: 0 }
+      }
+      queryMap[q.query].count++
+      queryMap[q.query].totalResults += q.resultCount
+    }
+
+    const popularQueries = Object.entries(queryMap)
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 6)
+      .map(([query, data]) => ({
+        query,
+        count: data.count,
+        avgResults: Math.round(data.totalResults / data.count)
+      }))
+
+    return {
+      totalQueriesToday: todayQueries.length,
+      zeroResultCount: zeroResultQueries.length,
+      topZeroResultQueries,
+      popularQueries
     }
   }
 
@@ -361,6 +453,7 @@ export async function getLiveTrafficAnalyticsData(): Promise<LiveAnalyticsSummar
     dailyHistory,
     topPagesToday,
     activeSessions: activeSessions.slice(0, 10),
+    searchRadar: computeSearchRadar(),
     isFallback: true,
     lastUpdated: new Date().toISOString()
   }

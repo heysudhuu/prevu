@@ -19,10 +19,16 @@ const ibmPlexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "Prevu | BE-CSE Exam Resources",
   description: "Student-run repository of Previous Year Questions (PYQs), notes, and exam-pattern references for BE-CSE at Chandigarh University.",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icon-512.svg",
+    apple: "/icon-512.svg",
+  },
 };
 
 import { Analytics } from "@vercel/analytics/next";
 import { SiteAnalyticsTracker } from "@/components/analytics/SiteAnalyticsTracker";
+import PWAProvider from "@/components/pwa/PWAProvider";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -32,6 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="min-h-full flex flex-col font-sans bg-prevu-bg text-prevu-text">
         {children}
+        <PWAProvider />
         <SiteAnalyticsTracker />
         <PrevuMascot />
         <AuthListener />

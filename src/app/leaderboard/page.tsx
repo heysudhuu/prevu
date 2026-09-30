@@ -165,6 +165,59 @@ export default async function LeaderboardPage() {
             )}
           </div>
 
+          {/* Contributor Badges Legend (#3 & #12) */}
+          <div className="p-5 sm:p-6 rounded-3xl bg-prevu-surface/90 border border-prevu-surface-light shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-prevu-surface-light pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  Prevu Contributor Tier Badges
+                </h3>
+                <p className="text-xs text-prevu-text-muted mt-0.5">
+                  Unlock prestigious badges on your student profile by uploading papers, fulfilling community bounties, and vouching for paper accuracy.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+              <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-1">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
+                  <span>👑</span> <span>Campus Legend</span>
+                </div>
+                <p className="text-[11px] text-prevu-text-muted leading-snug">
+                  150+ Karma. Top tier contributor recognized across university faculties.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 space-y-1">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-300">
+                  <span>🛡️</span> <span>Vault Guardian</span>
+                </div>
+                <p className="text-[11px] text-prevu-text-muted leading-snug">
+                  90+ Karma. Senior student vouching for syllabus accuracy & paper authentications.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/25 space-y-1">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-purple-300">
+                  <span>⚡</span> <span>Bounty Hunter</span>
+                </div>
+                <p className="text-[11px] text-prevu-text-muted leading-snug">
+                  50+ Karma. Earned by archiving missing PYQs requested on the Bounty Board.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/25 space-y-1">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-300">
+                  <span>⭐</span> <span>Semester Hero</span>
+                </div>
+                <p className="text-[11px] text-prevu-text-muted leading-snug">
+                  25+ Karma. Uploaded approved papers that saved batchmates during exam week.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Call to Action Banner */}
           <div className="p-6 rounded-3xl bg-gradient-to-r from-purple-950/40 via-prevu-surface to-indigo-950/40 border border-purple-500/40 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="space-y-1 text-center sm:text-left">
@@ -173,7 +226,7 @@ export default async function LeaderboardPage() {
                 Want to climb the ranks?
               </h3>
               <p className="text-xs text-prevu-text-muted">
-                Earn 25 karma points for every approved question paper or exam blueprint you share with the community.
+                Earn 25 karma points for every approved question paper, plus extra XP for fulfilling missing PYQ bounties.
               </p>
             </div>
 

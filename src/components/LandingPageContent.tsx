@@ -6,9 +6,9 @@ import { ArrowRight, Upload, Search, Sparkles, X, BookOpen } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { motion, Variants } from 'framer-motion'
 import { AnimatedPapersIcon, AnimatedNotesIcon, AnimatedVerifiedIcon, AnimatedCommunityIcon } from './animations/AnimatedIcons'
 import AboutUsSection from './landing/AboutUsSection'
-import UpcomingFeaturesRoadmap from './landing/UpcomingFeaturesRoadmap'
 import CommunityConnect from './landing/CommunityConnect'
 import StudentSuggestionBox from './landing/StudentSuggestionBox'
 
@@ -16,6 +16,28 @@ const Hero3DScene = dynamic(() => import('./animations/Hero3DScene'), {
   ssr: false,
   loading: () => null
 })
+
+// Stagger container and child variants
+const heroContainerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.05
+    }
+  }
+}
+
+const heroItemVariants: Variants = {
+  hidden: { opacity: 0, y: 18 },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] as const } 
+  }
+}
+
 
 export default function LandingPageContent() {
   const router = useRouter()
@@ -45,31 +67,46 @@ export default function LandingPageContent() {
         {/* 3D Scene */}
         <Hero3DScene />
 
-        <div className="container mx-auto px-4 relative z-10 flex flex-col items-center text-center max-w-5xl">
+        <motion.div 
+          className="container mx-auto px-4 relative z-10 flex flex-col items-center text-center max-w-5xl"
+          variants={heroContainerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           
           {/* Top Badge */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-prevu-accent/30 bg-prevu-surface/90 px-4 py-1.5 text-xs font-semibold text-prevu-text mb-6 shadow-lg shadow-prevu-accent/10 animate-fade-in">
+          <motion.div 
+            variants={heroItemVariants}
+            className="inline-flex items-center gap-2 rounded-full border border-prevu-accent/30 bg-prevu-surface/90 px-4 py-1.5 text-xs font-semibold text-prevu-text mb-6 shadow-lg shadow-prevu-accent/10"
+          >
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-prevu-text-muted">Chandigarh University</span>
             <span className="text-prevu-surface-light">•</span>
             <span className="text-prevu-accent font-bold">BE-CSE Digital Vault</span>
-          </div>
+          </motion.div>
           
           {/* Main Headline */}
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-sans font-extrabold tracking-tight text-white mb-6 max-w-4xl leading-[1.1] animate-fade-in">
+          <motion.h1 
+            variants={heroItemVariants}
+            className="text-4xl sm:text-6xl lg:text-7xl font-sans font-extrabold tracking-tight text-white mb-6 max-w-4xl leading-[1.1]"
+          >
             The Ultimate Archive for <br className="hidden sm:block" />
             <span className="text-gradient-purple">BE-CSE Question Papers.</span>
-          </h1>
+          </motion.h1>
           
           {/* Subtitle */}
-          <p className="text-base sm:text-lg text-prevu-text-muted max-w-2xl mb-8 leading-relaxed animate-fade-in">
+          <motion.p 
+            variants={heroItemVariants}
+            className="text-base sm:text-lg text-prevu-text-muted max-w-2xl mb-8 leading-relaxed"
+          >
             Stop endlessly searching chaotic WhatsApp groups. Prevu is your centralized, student-run vault for Previous Year Questions (MST-1, MST-2, EST), semester notes, and exam blueprints for Chandigarh University.
-          </p>
+          </motion.p>
           
           {/* Quick Hero Search Input */}
-          <form 
+          <motion.form 
+            variants={heroItemVariants}
             onSubmit={handleHeroSearch}
-            className="w-full max-w-xl mb-6 relative group animate-fade-in"
+            className="w-full max-w-xl mb-6 relative group"
           >
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-prevu-text-muted group-focus-within:text-prevu-accent transition-colors" />
             <input 
@@ -83,7 +120,7 @@ export default function LandingPageContent() {
               <button
                 type="button"
                 onClick={() => setHeroSearch('')}
-                className="absolute right-24 top-1/2 -translate-y-1/2 text-prevu-text-muted hover:text-prevu-text p-1"
+                className="absolute right-24 top-1/2 -translate-y-1/2 text-prevu-text-muted hover:text-prevu-text p-1 transition-transform active:scale-90"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -95,72 +132,83 @@ export default function LandingPageContent() {
             >
               Search
             </Button>
-          </form>
+          </motion.form>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mb-8 animate-fade-in">
-            <Button size="lg" className="text-sm px-6 py-3.5 h-auto font-bold shadow-lg shadow-prevu-accent/25" asChild>
+          <motion.div 
+            variants={heroItemVariants}
+            className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mb-8"
+          >
+            <Button size="lg" className="text-sm px-6 py-3.5 h-auto font-bold shadow-lg shadow-prevu-accent/25 hover:scale-[1.02] transition-transform" asChild>
               <Link href="/browse">
                 <span>Browse Papers</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="text-sm px-6 py-3.5 h-auto font-semibold border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 hover:text-white" asChild>
+            <Button size="lg" variant="outline" className="text-sm px-6 py-3.5 h-auto font-semibold border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 hover:text-white hover:scale-[1.02] transition-transform" asChild>
               <Link href="/study-material">
                 <BookOpen className="w-4 h-4 text-emerald-400" />
                 <span>Study Material (All Years)</span>
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="text-sm px-6 py-3.5 h-auto font-semibold border-prevu-surface-light hover:border-prevu-accent/50" asChild>
+            <Button size="lg" variant="outline" className="text-sm px-6 py-3.5 h-auto font-semibold border-prevu-surface-light hover:border-prevu-accent/50 hover:scale-[1.02] transition-transform" asChild>
               <Link href="/upload">
                 <Upload className="w-4 h-4 text-prevu-accent" />
                 <span>Upload Resource</span>
               </Link>
             </Button>
-          </div>
+          </motion.div>
 
           {/* 1-Click Semester Quick Jump Chips */}
-          <div className="flex flex-wrap items-center justify-center gap-2 max-w-xl animate-fade-in">
+          <motion.div 
+            variants={heroItemVariants}
+            className="flex flex-wrap items-center justify-center gap-2 max-w-xl"
+          >
             <span className="text-xs text-prevu-text-muted font-medium mr-1">Quick Jump:</span>
             {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
               <Link
                 key={sem}
                 href={`/browse?sem=${sem}`}
-                className="px-3 py-1.5 rounded-xl border border-prevu-surface-light bg-prevu-surface/70 hover:bg-prevu-surface hover:border-prevu-accent text-xs font-mono font-bold text-prevu-text-muted hover:text-prevu-accent transition-all shadow-sm hover:scale-105"
+                className="px-3 py-1.5 rounded-xl border border-prevu-surface-light bg-prevu-surface/70 hover:bg-prevu-surface hover:border-prevu-accent text-xs font-mono font-bold text-prevu-text-muted hover:text-prevu-accent transition-all shadow-sm hover:scale-105 active:scale-95"
               >
                 Sem {sem}
               </Link>
             ))}
-          </div>
+          </motion.div>
 
-        </div>
+        </motion.div>
 
         {/* Live Academic Feature Strip */}
-        <div className="container mx-auto px-4 mt-16 max-w-5xl">
+        <motion.div 
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.55, ease: [0.16, 1, 0.3, 1] as const }}
+          className="container mx-auto px-4 mt-16 max-w-5xl"
+        >
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 p-4 rounded-3xl bg-prevu-surface/60 border border-prevu-surface-light shadow-xl backdrop-blur-xl text-center">
             
-            <div className="p-3">
+            <div className="p-3 hover:scale-105 transition-transform duration-200">
               <div className="text-2xl sm:text-3xl font-extrabold font-mono text-purple-300">8</div>
               <div className="text-xs text-prevu-text-muted font-semibold mt-0.5">Semesters Vault</div>
             </div>
 
-            <div className="p-3">
+            <div className="p-3 hover:scale-105 transition-transform duration-200">
               <div className="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-400">100%</div>
               <div className="text-xs text-prevu-text-muted font-semibold mt-0.5">Free & Open</div>
             </div>
 
-            <div className="p-3">
+            <div className="p-3 hover:scale-105 transition-transform duration-200">
               <div className="text-2xl sm:text-3xl font-extrabold font-mono text-cyan-400">MST & EST</div>
               <div className="text-xs text-prevu-text-muted font-semibold mt-0.5">CU Exam Patterns</div>
             </div>
 
-            <div className="p-3">
+            <div className="p-3 hover:scale-105 transition-transform duration-200">
               <div className="text-2xl sm:text-3xl font-extrabold font-mono text-amber-400">Instant</div>
               <div className="text-xs text-prevu-text-muted font-semibold mt-0.5">PDF Previews</div>
             </div>
 
           </div>
-        </div>
+        </motion.div>
 
       </section>
 
@@ -220,9 +268,14 @@ export default function LandingPageContent() {
                 linkText: "Contribute Notes"
               }
             ].map((feature, i) => (
-              <div 
+              <motion.div 
                 key={i} 
-                className="bg-prevu-surface/85 backdrop-blur-xl border border-prevu-surface-light p-6 rounded-2xl transition-all duration-300 relative group overflow-hidden hover:border-prevu-accent/50 shadow-xl hover:-translate-y-1 flex flex-col justify-between"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.45, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] as const }}
+                whileHover={{ y: -6, transition: { duration: 0.2 } }}
+                className="bg-prevu-surface/85 backdrop-blur-xl border border-prevu-surface-light p-6 rounded-2xl relative group overflow-hidden hover:border-prevu-accent/50 shadow-xl flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-5">
@@ -249,10 +302,10 @@ export default function LandingPageContent() {
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-prevu-accent hover:text-white transition-colors"
                   >
                     <span>{feature.linkText}</span>
-                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1.5 transition-transform" />
                   </Link>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -275,35 +328,56 @@ export default function LandingPageContent() {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
-            <div className="p-6 rounded-3xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-purple-500/40 transition-all shadow-xl space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-lg font-mono font-bold text-purple-300 shadow-md">
+            <motion.div 
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.05 }}
+              whileHover={{ y: -6, transition: { duration: 0.2 } }}
+              className="p-6 rounded-3xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-purple-500/40 transition-colors shadow-xl space-y-4 group"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-lg font-mono font-bold text-purple-300 shadow-md group-hover:scale-110 transition-transform">
                 1
               </div>
-              <h3 className="text-lg font-bold text-white">Search & Filter</h3>
+              <h3 className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors">Search & Filter</h3>
               <p className="text-xs text-prevu-text-muted leading-relaxed">
                 Filter instantly by semester, course code (e.g. 23CST-201), exam pattern (MST 1, MST 2, EST), or academic year.
               </p>
-            </div>
+            </motion.div>
             
-            <div className="p-6 rounded-3xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-cyan-500/40 transition-all shadow-xl space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-lg font-mono font-bold text-cyan-300 shadow-md">
+            <motion.div 
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.15 }}
+              whileHover={{ y: -6, transition: { duration: 0.2 } }}
+              className="p-6 rounded-3xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-cyan-500/40 transition-colors shadow-xl space-y-4 group"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-lg font-mono font-bold text-cyan-300 shadow-md group-hover:scale-110 transition-transform">
                 2
               </div>
-              <h3 className="text-lg font-bold text-white">Preview, Solve & Share</h3>
+              <h3 className="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors">Preview, Solve & Share</h3>
               <p className="text-xs text-prevu-text-muted leading-relaxed">
                 Open in-browser PDF previews, download with 1-click, or share directly to your WhatsApp study groups.
               </p>
-            </div>
+            </motion.div>
             
-            <div className="p-6 rounded-3xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-emerald-500/40 transition-all shadow-xl space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-lg font-mono font-bold text-emerald-300 shadow-md">
+            <motion.div 
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.25 }}
+              whileHover={{ y: -6, transition: { duration: 0.2 } }}
+              className="p-6 rounded-3xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-emerald-500/40 transition-colors shadow-xl space-y-4 group"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-lg font-mono font-bold text-emerald-300 shadow-md group-hover:scale-110 transition-transform">
                 3
               </div>
-              <h3 className="text-lg font-bold text-white">Contribute & Help Peers</h3>
+              <h3 className="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors">Contribute & Help Peers</h3>
               <p className="text-xs text-prevu-text-muted leading-relaxed">
                 Upload your MST and EST question papers. Earn verified contributor credits and help your batchmates succeed.
               </p>
-            </div>
+            </motion.div>
 
           </div>
         </div>
@@ -313,11 +387,6 @@ export default function LandingPageContent() {
       {/* 4. ABOUT US & CAMPUS STORY */}
       {/* ============================================================ */}
       <AboutUsSection />
-
-      {/* ============================================================ */}
-      {/* 5. MULTI-DEPARTMENT EXPANSION & UPCOMING ROADMAP */}
-      {/* ============================================================ */}
-      <UpcomingFeaturesRoadmap />
 
       {/* ============================================================ */}
       {/* 5. OFFICIAL INSTAGRAM & WHATSAPP COMMUNITY */}

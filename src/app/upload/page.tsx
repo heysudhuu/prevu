@@ -38,7 +38,7 @@ function UploadFormContent() {
   const [materialType, setMaterialType] = useState('Notes')
   const [examYear, setExamYear] = useState<number>(new Date().getFullYear())
 
-  const [file, setFile] = useState<File | null>(null)
+  const [files, setFiles] = useState<File[]>([])
   const [fileHash, setFileHash] = useState<string>('')
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [duplicateData, setDuplicateData] = useState<any | null>(null)
@@ -69,45 +69,70 @@ function UploadFormContent() {
     s => s.year === selectedYear && s.semester === selectedSemester
   )
 
-  // Compute SHA-256 hash using native Web Crypto API
+  // Compute SHA-256 hash using native Web Crypto API for files
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0]
-    setDuplicateData(null)
-    setDuplicateAcknowledged(false)
-    setFile(null)
-    setFileHash('')
-    
-    if (!selected) return
-    setFile(selected)
-    
-    try {
-      const arrayBuffer = await selected.arrayBuffer()
-      if (window.crypto && window.crypto.subtle) {
-        const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer)
-        const hashArray = Array.from(new Uint8Array(hashBuffer))
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-        
-        setFileHash(hashHex)
-        
-        // Check for duplicates
-        const duplicate = await checkHashExists(hashHex)
-        if (duplicate) {
-          setDuplicateData(duplicate)
-          setDuplicateAcknowledged(false)
-        }
+    const incoming = Array.from(e.target.files || [])
+    if (incoming.length === 0) return
+
+    let updatedFiles: File[] = []
+    setFiles(prev => {
+      const combined = [...prev, ...incoming]
+      if (combined.length > 3) {
+        setError('You can upload a maximum of 3 files at one time. First 3 files have been selected.')
+        updatedFiles = combined.slice(0, 3)
       } else {
-        setFileHash(`fallback-hash-${Date.now()}-${Math.random()}`)
+        setError(null)
+        updatedFiles = combined
       }
-    } catch (err) {
-      console.error("Hash calculation failed", err)
-      setFileHash(`error-hash-${Date.now()}`)
+      return updatedFiles
+    })
+
+    const targetFile = incoming[0] || updatedFiles[0]
+    if (targetFile) {
+      try {
+        const arrayBuffer = await targetFile.arrayBuffer()
+        if (window.crypto && window.crypto.subtle) {
+          const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer)
+          const hashArray = Array.from(new Uint8Array(hashBuffer))
+          const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+          
+          setFileHash(hashHex)
+          
+          // Check for duplicates
+          const duplicate = await checkHashExists(hashHex)
+          if (duplicate) {
+            setDuplicateData(duplicate)
+            setDuplicateAcknowledged(false)
+          }
+        } else {
+          setFileHash(`fallback-hash-${Date.now()}-${Math.random()}`)
+        }
+      } catch (err) {
+        console.error("Hash calculation failed", err)
+        setFileHash(`error-hash-${Date.now()}`)
+      }
     }
+
+    // Reset input so user can add another file
+    e.target.value = ''
+  }
+
+  const handleRemoveFile = (index: number) => {
+    setFiles(prev => {
+      const updated = prev.filter((_, i) => i !== index)
+      if (updated.length === 0) {
+        setFileHash('')
+        setDuplicateData(null)
+        setDuplicateAcknowledged(false)
+      }
+      return updated
+    })
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!file) {
-      setError('Please select a file to upload.')
+    if (files.length === 0) {
+      setError('Please select at least 1 file (up to 3) to upload.')
       return
     }
 
@@ -121,8 +146,10 @@ function UploadFormContent() {
     
     try {
       const formData = new FormData(e.currentTarget)
-      formData.append('file', file)
-      formData.append('file_hash', fileHash)
+      // Append all selected files (1 to 3 files)
+      files.forEach(f => formData.append('files', f))
+      formData.append('file', files[0]) // compatibility
+      formData.append('file_hash', fileHash || `hash-${Date.now()}`)
       formData.append('year', String(selectedYear))
       formData.append('semester', String(selectedSemester))
       formData.append('subject_name', subjectName.trim())
@@ -164,12 +191,12 @@ function UploadFormContent() {
           subjectCode={subjectCode}
           examType={uploadCategory === 'study_material' ? materialType : examType}
           examYear={examYear}
-          fileName={file?.name}
+          fileName={files.length > 1 ? `${files.length} files: ${files.map(f => f.name).join(', ')}` : files[0]?.name}
           isAdminUpload={isAdminUpload}
           isStudyMaterial={uploadCategory === 'study_material'}
           onUploadAnother={() => {
             setSuccess(false)
-            setFile(null)
+            setFiles([])
             setFileHash('')
             setSubjectName('')
             setSubjectCode('')
@@ -400,24 +427,70 @@ function UploadFormContent() {
                 </div>
               </div>
 
-              {/* File Upload Box */}
-              <div className="space-y-1.5">
+              {/* File Upload Box (Supports 1 to 3 files at one time) */}
+              <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-prevu-text-muted" htmlFor="file">
-                    {isStudy ? 'Document / Notes File' : 'Document / Question Paper'}
-                  </label>
-                  <span className="text-[10px] text-prevu-text-muted font-mono">PDF, DOCX, PPT, JPG up to 50MB</span>
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-semibold text-prevu-text-muted" htmlFor="file">
+                      {isStudy ? 'Document / Notes Files' : 'Question Paper Files'}
+                    </label>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                      {files.length} / 3 Files Selected
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-prevu-text-muted font-mono">Upload 1 to 3 files (Max 50MB each)</span>
                 </div>
-                <div className="relative">
-                  <input 
-                    type="file" 
-                    id="file" 
-                    accept=".pdf, .jpg, .jpeg, .png, .doc, .docx, .xls, .xlsx, .ppt, .pptx"
-                    required
-                    onChange={handleFileChange}
-                    className="w-full text-xs text-prevu-text-muted file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-prevu-accent/15 file:text-prevu-accent hover:file:bg-prevu-accent/25 cursor-pointer border border-prevu-surface-light rounded-xl p-2 bg-prevu-bg"
-                  />
-                </div>
+
+                {/* Selected Files List */}
+                {files.length > 0 && (
+                  <div className="space-y-2 p-3 rounded-2xl bg-prevu-bg/90 border border-prevu-surface-light">
+                    {files.map((f, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between p-2.5 rounded-xl bg-prevu-surface/60 border border-purple-500/30 text-xs"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="w-6 h-6 rounded-lg bg-purple-600/30 text-purple-300 flex items-center justify-center text-[10px] font-mono font-bold shrink-0">
+                            #{idx + 1}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-white truncate max-w-[240px] sm:max-w-xs">{f.name}</p>
+                            <p className="text-[10px] font-mono text-prevu-text-muted">{(f.size / (1024 * 1024)).toFixed(2)} MB</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile(idx)}
+                          className="p-1 rounded-lg text-prevu-text-muted hover:text-red-400 hover:bg-red-500/10 transition-colors text-xs font-bold cursor-pointer"
+                          title="Remove file"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* File picker input (disabled if 3 files selected) */}
+                {files.length < 3 ? (
+                  <div className="relative">
+                    <input 
+                      type="file" 
+                      id="file" 
+                      multiple
+                      accept=".pdf, .jpg, .jpeg, .png, .doc, .docx, .xls, .xlsx, .ppt, .pptx"
+                      onChange={handleFileChange}
+                      className="w-full text-xs text-prevu-text-muted file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-prevu-accent/15 file:text-prevu-accent hover:file:bg-prevu-accent/25 cursor-pointer border border-prevu-surface-light rounded-xl p-2 bg-prevu-bg"
+                    />
+                    <p className="text-[11px] text-prevu-text-muted mt-1">
+                      💡 Tip: You can select 2 to 3 files together (e.g. Page 1, Page 2, Page 3 or Question Paper + Solution).
+                    </p>
+                  </div>
+                ) : (
+                  <div className="p-2.5 rounded-xl bg-purple-950/20 border border-purple-500/30 text-center text-xs text-purple-300">
+                    Maximum 3 files reached. Remove a file above to replace it.
+                  </div>
+                )}
               </div>
               
               {/* Duplicate Detection Alert */}
@@ -460,7 +533,7 @@ function UploadFormContent() {
                       size="sm" 
                       variant="ghost" 
                       onClick={() => {
-                        setFile(null)
+                        setFiles([])
                         setFileHash('')
                         setDuplicateData(null)
                         setDuplicateAcknowledged(false)
@@ -502,14 +575,14 @@ function UploadFormContent() {
                   ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-500/25' 
                   : 'shadow-prevu-accent/25'
               }`}
-              disabled={isUploading || !file || !fileHash || !subjectName.trim() || (!!duplicateData && !duplicateAcknowledged)}
+              disabled={isUploading || files.length === 0 || !subjectName.trim() || (!!duplicateData && !duplicateAcknowledged)}
             >
               <Upload className="w-4 h-4" />
               {isUploading 
-                ? 'Uploading & Hashing Document...' 
+                ? `Uploading ${files.length} Document${files.length > 1 ? 's' : ''}...` 
                 : isStudy 
-                  ? 'Submit Study Material' 
-                  : 'Submit Question Paper'}
+                  ? `Submit Study Material (${files.length} file${files.length === 1 ? '' : 's'})` 
+                  : `Submit Question Paper (${files.length} file${files.length === 1 ? '' : 's'})`}
             </Button>
           </CardFooter>
         </Card>

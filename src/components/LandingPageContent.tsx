@@ -2,15 +2,12 @@
 
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
-import { ArrowRight, Upload, Search, Sparkles, X, BookOpen } from 'lucide-react'
+import { ArrowRight, Upload, Search, Sparkles, X, BookOpen, Users } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, Variants } from 'framer-motion'
 import { AnimatedPapersIcon, AnimatedNotesIcon, AnimatedVerifiedIcon, AnimatedCommunityIcon } from './animations/AnimatedIcons'
-import AboutUsSection from './landing/AboutUsSection'
-import CommunityConnect from './landing/CommunityConnect'
-import StudentSuggestionBox from './landing/StudentSuggestionBox'
 
 const Hero3DScene = dynamic(() => import('./animations/Hero3DScene'), { 
   ssr: false,
@@ -88,10 +85,12 @@ export default function LandingPageContent() {
           {/* Main Headline */}
           <motion.h1 
             variants={heroItemVariants}
-            className="text-4xl sm:text-6xl lg:text-7xl font-sans font-extrabold tracking-tight text-white mb-6 max-w-4xl leading-[1.1]"
+            className="text-4xl sm:text-6xl lg:text-7xl font-sans font-extrabold tracking-tight text-white mb-5 max-w-4xl leading-[1.08]"
           >
-            The Ultimate Archive for <br className="hidden sm:block" />
-            <span className="text-gradient-purple">BE-CSE Question Papers.</span>
+            Study Smarter.{' '}
+            <span className="text-gradient-purple">Together.</span>
+            <br className="hidden sm:block" />
+            <span className="text-3xl sm:text-5xl lg:text-6xl text-prevu-text-muted font-bold">PYQs, Notes &amp; Peer Help — All in One Place.</span>
           </motion.h1>
           
           {/* Subtitle */}
@@ -99,7 +98,7 @@ export default function LandingPageContent() {
             variants={heroItemVariants}
             className="text-base sm:text-lg text-prevu-text-muted max-w-2xl mb-8 leading-relaxed"
           >
-            Stop endlessly searching chaotic WhatsApp groups. Prevu is your centralized, student-run vault for Previous Year Questions (MST-1, MST-2, EST), semester notes, and exam blueprints for Chandigarh University.
+            The only platform where CU students find verified PYQs, request missing papers from batchmates, and share study materials — all admin-moderated, always free.
           </motion.p>
           
           {/* Quick Hero Search Input */}
@@ -134,29 +133,40 @@ export default function LandingPageContent() {
             </Button>
           </motion.form>
 
-          {/* Action Buttons */}
+          {/* Action Buttons — Primary + Secondary Row */}
           <motion.div 
             variants={heroItemVariants}
-            className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mb-8"
+            className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mb-6"
           >
-            <Button size="lg" className="text-sm px-6 py-3.5 h-auto font-bold shadow-lg shadow-prevu-accent/25 hover:scale-[1.02] transition-transform" asChild>
+            {/* PRIMARY */}
+            <Button size="lg" className="text-sm px-7 py-3.5 h-auto font-bold shadow-xl shadow-prevu-accent/30 hover:scale-[1.02] transition-transform" asChild>
               <Link href="/browse">
-                <span>Browse Papers</span>
+                <span>Browse PYQs</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="text-sm px-6 py-3.5 h-auto font-semibold border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 hover:text-white hover:scale-[1.02] transition-transform" asChild>
-              <Link href="/study-material">
-                <BookOpen className="w-4 h-4 text-emerald-400" />
-                <span>Study Material (All Years)</span>
+            <Button size="lg" variant="outline" className="text-sm px-6 py-3.5 h-auto font-bold border-purple-500/50 bg-purple-500/10 text-purple-200 hover:bg-purple-500/25 hover:border-purple-400 hover:text-white hover:scale-[1.02] transition-all shadow-lg shadow-purple-500/10" asChild>
+              <Link href="/requests">
+                <Users className="w-4 h-4 text-purple-400" />
+                <span>Community Help Board</span>
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="text-sm px-6 py-3.5 h-auto font-semibold border-prevu-surface-light hover:border-prevu-accent/50 hover:scale-[1.02] transition-transform" asChild>
-              <Link href="/upload">
-                <Upload className="w-4 h-4 text-prevu-accent" />
-                <span>Upload Resource</span>
-              </Link>
-            </Button>
+          </motion.div>
+
+          {/* Secondary Row */}
+          <motion.div
+            variants={heroItemVariants}
+            className="flex flex-wrap items-center justify-center gap-2 mb-7"
+          >
+            <Link href="/study-material" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-emerald-500/30 bg-emerald-500/8 text-emerald-300 hover:bg-emerald-500/15 text-xs font-semibold transition-all hover:scale-105">
+              <BookOpen className="w-3.5 h-3.5" /> Study Notes
+            </Link>
+            <Link href="/upload" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-prevu-surface-light bg-prevu-surface/60 text-prevu-text-muted hover:text-white hover:border-prevu-accent/40 text-xs font-semibold transition-all hover:scale-105">
+              <Upload className="w-3.5 h-3.5" /> Upload & Contribute
+            </Link>
+            <Link href="/exam-prep" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-cyan-500/30 bg-cyan-500/8 text-cyan-300 hover:bg-cyan-500/15 text-xs font-semibold transition-all hover:scale-105">
+              <Sparkles className="w-3.5 h-3.5" /> AI Exam Prep
+            </Link>
           </motion.div>
 
           {/* 1-Click Semester Quick Jump Chips */}
@@ -178,35 +188,26 @@ export default function LandingPageContent() {
 
         </motion.div>
 
-        {/* Live Academic Feature Strip */}
+        {/* Trust badges */}
         <motion.div 
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.55, ease: [0.16, 1, 0.3, 1] as const }}
-          className="container mx-auto px-4 mt-16 max-w-5xl"
+          className="container mx-auto px-4 mt-10 max-w-5xl"
         >
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 p-4 rounded-3xl bg-prevu-surface/60 border border-prevu-surface-light shadow-xl backdrop-blur-xl text-center">
-            
-            <div className="p-3 hover:scale-105 transition-transform duration-200">
-              <div className="text-2xl sm:text-3xl font-extrabold font-mono text-purple-300">8</div>
-              <div className="text-xs text-prevu-text-muted font-semibold mt-0.5">Semesters Vault</div>
-            </div>
-
-            <div className="p-3 hover:scale-105 transition-transform duration-200">
-              <div className="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-400">100%</div>
-              <div className="text-xs text-prevu-text-muted font-semibold mt-0.5">Free & Open</div>
-            </div>
-
-            <div className="p-3 hover:scale-105 transition-transform duration-200">
-              <div className="text-2xl sm:text-3xl font-extrabold font-mono text-cyan-400">MST & EST</div>
-              <div className="text-xs text-prevu-text-muted font-semibold mt-0.5">CU Exam Patterns</div>
-            </div>
-
-            <div className="p-3 hover:scale-105 transition-transform duration-200">
-              <div className="text-2xl sm:text-3xl font-extrabold font-mono text-amber-400">Instant</div>
-              <div className="text-xs text-prevu-text-muted font-semibold mt-0.5">PDF Previews</div>
-            </div>
-
+          <div className="flex flex-wrap items-center justify-center gap-2.5">
+            {[
+              { emoji: '✅', text: 'Admin-verified only', color: 'border-emerald-500/25 bg-emerald-500/8 text-emerald-300' },
+              { emoji: '🔒', text: '100% Free, No Paywalls', color: 'border-cyan-500/25 bg-cyan-500/8 text-cyan-300' },
+              { emoji: '🎓', text: 'CU Students Only', color: 'border-purple-500/25 bg-purple-500/8 text-purple-300' },
+              { emoji: '⚡', text: 'Instant PDF Preview', color: 'border-amber-500/25 bg-amber-500/8 text-amber-300' },
+              { emoji: '🤝', text: 'Peer-to-Peer Help', color: 'border-pink-500/25 bg-pink-500/8 text-pink-300' },
+            ].map((b, i) => (
+              <div key={i} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold ${b.color}`}>
+                <span>{b.emoji}</span>
+                <span>{b.text}</span>
+              </div>
+            ))}
           </div>
         </motion.div>
 
@@ -215,21 +216,24 @@ export default function LandingPageContent() {
       {/* ============================================================ */}
       {/* 2. FEATURE BENTO GRID */}
       {/* ============================================================ */}
-      <section className="py-24 relative overflow-hidden bg-prevu-bg border-b border-prevu-surface-light">
-        <div className="container mx-auto px-4 max-w-6xl">
+      <section className="py-24 relative overflow-hidden section-gradient-alt border-b border-prevu-surface-light">
+        {/* Subtle dot pattern */}
+        <div className="absolute inset-0 opacity-[0.15]" style={{backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '28px 28px'}} />
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-prevu-accent/30 to-transparent" />
+        <div className="container mx-auto px-4 max-w-6xl relative z-10">
           
-          <div className="text-center mb-16 max-w-3xl mx-auto space-y-3">
+          <div className="text-center mb-14 max-w-3xl mx-auto space-y-3">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-prevu-accent/15 text-prevu-accent border border-prevu-accent/30 uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Smart Exam Preparation</span>
+              <span>What Prevu Offers</span>
             </div>
             
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-sans font-extrabold tracking-tight text-white">
-              Everything you need to ace your exams.
+              Everything to ace your exams.
             </h2>
             
             <p className="text-prevu-text-muted text-sm sm:text-base leading-relaxed">
-              Built by CU students, for CU students. We understand the panic right before MSTs and ESTs. Prevu crowdsources, verifies, and categorizes study materials by subject code and semester.
+              Built by CU students, for CU students. We know the panic before MSTs and ESTs — so we built the solution.
             </p>
           </div>
 
@@ -314,137 +318,53 @@ export default function LandingPageContent() {
       {/* ============================================================ */}
       {/* 3. HOW IT WORKS */}
       {/* ============================================================ */}
-      <section className="py-24 bg-prevu-surface/40 border-b border-prevu-surface-light relative">
+      <section className="py-24 bg-prevu-surface/40 border-b border-prevu-surface-light relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent" />
         <div className="container mx-auto px-4 max-w-5xl">
           
-          <div className="text-center mb-16 space-y-2">
+          <div className="text-center mb-14 space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-prevu-surface border border-prevu-surface-light text-prevu-text-muted uppercase tracking-wider">
+              Simple Process
+            </div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-sans font-extrabold tracking-tight text-white">
               How Prevu Works
             </h2>
             <p className="text-xs sm:text-sm text-prevu-text-muted max-w-md mx-auto">
-              Three seamless steps from finding questions to acing your semester exams.
+              From finding papers to helping batchmates — four simple steps.
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            <motion.div 
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.05 }}
-              whileHover={{ y: -6, transition: { duration: 0.2 } }}
-              className="p-6 rounded-3xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-purple-500/40 transition-colors shadow-xl space-y-4 group"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-lg font-mono font-bold text-purple-300 shadow-md group-hover:scale-110 transition-transform">
-                1
-              </div>
-              <h3 className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors">Search & Filter</h3>
-              <p className="text-xs text-prevu-text-muted leading-relaxed">
-                Filter instantly by semester, course code (e.g. 23CST-201), exam pattern (MST 1, MST 2, EST), or academic year.
-              </p>
-            </motion.div>
-            
-            <motion.div 
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.15 }}
-              whileHover={{ y: -6, transition: { duration: 0.2 } }}
-              className="p-6 rounded-3xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-cyan-500/40 transition-colors shadow-xl space-y-4 group"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-lg font-mono font-bold text-cyan-300 shadow-md group-hover:scale-110 transition-transform">
-                2
-              </div>
-              <h3 className="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors">Preview, Solve & Share</h3>
-              <p className="text-xs text-prevu-text-muted leading-relaxed">
-                Open in-browser PDF previews, download with 1-click, or share directly to your WhatsApp study groups.
-              </p>
-            </motion.div>
-            
-            <motion.div 
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.25 }}
-              whileHover={{ y: -6, transition: { duration: 0.2 } }}
-              className="p-6 rounded-3xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-emerald-500/40 transition-colors shadow-xl space-y-4 group"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-lg font-mono font-bold text-emerald-300 shadow-md group-hover:scale-110 transition-transform">
-                3
-              </div>
-              <h3 className="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors">Contribute & Help Peers</h3>
-              <p className="text-xs text-prevu-text-muted leading-relaxed">
-                Upload your MST and EST question papers. Earn verified contributor credits and help your batchmates succeed.
-              </p>
-            </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 relative">
+            {/* Connecting line */}
+            <div className="hidden md:block absolute top-10 left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-purple-500/40 via-cyan-500/40 to-emerald-500/40" />
 
+            {[
+              { n: '1', title: 'Search', desc: 'Filter by semester, course code, exam type (MST 1, MST 2, EST), or academic year.', color: 'bg-purple-500/15 border-purple-500/30 text-purple-300', emoji: '🔍' },
+              { n: '2', title: 'Preview & Download', desc: 'Open in-browser PDF previews, download instantly, or share to WhatsApp groups.', color: 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300', emoji: '📄' },
+              { n: '3', title: 'Request Missing Papers', desc: 'Can\'t find what you need? Post a request — batchmates will help you.', color: 'bg-amber-500/15 border-amber-500/30 text-amber-300', emoji: '🙋' },
+              { n: '4', title: 'Contribute & Earn Credit', desc: 'Upload PYQs and notes. Get verified contributor status and help your peers succeed.', color: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300', emoji: '🚀' },
+            ].map((step, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                whileHover={{ y: -6, transition: { duration: 0.2 } }}
+                className={`relative p-6 rounded-3xl border ${step.color} shadow-xl space-y-3 group text-center`}
+              >
+                <div className="text-2xl mb-2">{step.emoji}</div>
+                <div className={`inline-flex items-center justify-center w-8 h-8 rounded-xl text-sm font-mono font-black border ${step.color} mx-auto group-hover:scale-110 transition-transform`}>
+                  {step.n}
+                </div>
+                <h3 className="text-base font-bold text-white group-hover:text-prevu-accent transition-colors">{step.title}</h3>
+                <p className="text-xs text-prevu-text-muted leading-relaxed">{step.desc}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
-
-      {/* ============================================================ */}
-      {/* 4. ABOUT US & CAMPUS STORY */}
-      {/* ============================================================ */}
-      <AboutUsSection />
-
-      {/* ============================================================ */}
-      {/* 5. OFFICIAL INSTAGRAM & WHATSAPP COMMUNITY */}
-      {/* ============================================================ */}
-      <CommunityConnect />
-
-      {/* ============================================================ */}
-      {/* 6. STUDENT IDEA & SUGGESTION BOX */}
-      {/* ============================================================ */}
-      <StudentSuggestionBox />
-
-      {/* ============================================================ */}
-      {/* 7. FOOTER */}
-      {/* ============================================================ */}
-      <footer className="py-12 border-t border-prevu-surface-light bg-prevu-surface/80 text-xs text-prevu-text-muted space-y-4">
-        <div className="container mx-auto px-4 max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5 font-semibold text-prevu-text">
-            <div className="w-6 h-6 rounded-lg bg-prevu-accent flex items-center justify-center text-white text-xs font-bold">
-              P
-            </div>
-            <span>Prevu</span>
-            <span>•</span>
-            <span className="text-prevu-accent">Chandigarh University BE-CSE Vault</span>
-          </div>
-
-          {/* Social Quick Links */}
-          <div className="flex items-center gap-3 flex-wrap justify-center">
-            <a 
-              href="https://www.instagram.com/cu.exclusive?igsi=ZDNlZDc0MzIxNw==" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-500/10 text-pink-300 border border-pink-500/25 hover:bg-pink-500/20 transition-colors text-xs font-medium"
-            >
-              <span>📸 @cu.exclusive</span>
-            </a>
-
-            <a 
-              href="https://www.instagram.com/cuupdates1?igsi=MTltajU5cGM2YXBwag==" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/25 hover:bg-indigo-500/20 transition-colors text-xs font-medium"
-            >
-              <span>🤝 @cuupdates1</span>
-            </a>
-
-            <a 
-              href="https://chat.whatsapp.com/BpwkcISe9Cz327ud2T4IkF?s=cl&p=a&ilr=1&utm_source=ig&utm_medium=social&utm_content=link_in_bio" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/25 hover:bg-emerald-500/20 transition-colors text-xs font-medium"
-            >
-              <span>💬 WhatsApp Community</span>
-            </a>
-          </div>
-
-          <p>© 2026 Prevu. Student-run academic archive.</p>
-        </div>
-      </footer>
 
     </main>
   )

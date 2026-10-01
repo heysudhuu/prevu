@@ -153,16 +153,17 @@ export async function getPaperRequests() {
  * Submits a new paper request (supports both logged-in students and guest requests)
  */
 export async function createPaperRequest(formData: FormData) {
-  let userId: string | null = null
   const token = (await cookies()).get('firebase-token')?.value
+  if (!token) {
+    return { error: 'Registration required: Please create your Prevu account or log in to submit requests.' }
+  }
 
-  if (token) {
-    try {
-      const decoded = await authAdmin.verifyIdToken(token)
-      userId = decoded.uid
-    } catch {
-      // Allow guest submission if token expired
-    }
+  let userId: string | null = null
+  try {
+    const decoded = await authAdmin.verifyIdToken(token)
+    userId = decoded.uid
+  } catch {
+    return { error: 'Session expired. Please log in again to post your request.' }
   }
 
   const subjectName = (formData.get('subject_name') as string)?.trim()

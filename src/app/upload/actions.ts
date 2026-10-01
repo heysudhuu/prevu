@@ -90,7 +90,12 @@ export async function uploadResource(formData: FormData) {
       }
     }
 
-    const file = formData.get('file') as File
+    // Support 1 to 3 files uploaded at one time
+    const filesList = formData.getAll('files') as File[]
+    const singleFile = formData.get('file') as File | null
+    const rawFiles = filesList && filesList.length > 0 ? filesList : (singleFile ? [singleFile] : [])
+    const validFiles = rawFiles.filter(f => f && f.size > 0).slice(0, 3)
+
     const rawSubjectName = (formData.get('subject_name') as string)?.trim()
     const rawSubjectId = formData.get('subject_id') as string
     const subjectCode = (formData.get('subject_code') as string)?.trim() || 'CSE'
@@ -105,13 +110,13 @@ export async function uploadResource(formData: FormData) {
 
     const rawExamYear = formData.get('exam_year') as string || formData.get('material_year') as string
     const examYear = parseInt(rawExamYear || String(new Date().getFullYear()))
-    const fileHash = formData.get('file_hash') as string
+    const fileHash = (formData.get('file_hash') as string) || `hash-${Date.now()}`
 
-    if (!file || (!rawSubjectName && !rawSubjectId) || !rawExamType || !examYear || !fileHash) {
+    if (validFiles.length === 0 || (!rawSubjectName && !rawSubjectId) || !rawExamType || !examYear) {
       return { 
         error: resourceCategory === 'study_material'
-          ? 'Please fill in Subject Name, Material Type, Academic Year, and select a file.'
-          : 'All fields are required. Please fill in Subject Name, Exam Type, Year, and select a file.' 
+          ? 'Please fill in Subject Name, Material Type, Academic Year, and select at least one file (up to 3).'
+          : 'All fields are required. Please fill in Subject Name, Exam Type, Year, and select at least one file (up to 3).' 
       }
     }
 
@@ -208,20 +213,7 @@ export async function uploadResource(formData: FormData) {
       'application/vnd.ms-powerpoint', 
       'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     ]
-    const extension = (file.name.split('.').pop() || '').toLowerCase()
-    const allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']
-
-    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(extension)) {
-      return { error: 'Invalid file type. Accepted: PDF, JPG, PNG, DOC/DOCX, XLS/XLSX, PPT/PPTX' }
-    }
-
-    const filePath = `${uuidv4()}.${extension}`
-
-    // 5. Convert file to Buffer for reliable server-side upload
-    const arrayBuffer = await file.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
-
-    // Ensure 'resources' storage bucket exists
+    // 5. Ensure 'resources' storage bucket exists
     try {
       const { data: buckets } = await supabase.storage.listBuckets()
       const bucketExists = buckets?.some(b => b.name === 'resources')
@@ -235,43 +227,60 @@ export async function uploadResource(formData: FormData) {
       console.warn("Could not check/create bucket:", bucketCheckErr)
     }
 
-    // Upload to Supabase Storage
-    const mimeType = file.type || (
-      extension === 'pdf' ? 'application/pdf' :
-      ['jpg', 'jpeg'].includes(extension) ? 'image/jpeg' :
-      extension === 'png' ? 'image/png' : 'application/octet-stream'
-    )
-
-    const { error: uploadError } = await supabase.storage
-      .from('resources')
-      .upload(filePath, buffer, {
-        contentType: mimeType,
-        upsert: false
-      })
-
-    if (uploadError) {
-      return { error: `Failed to upload file to storage: ${uploadError.message}` }
-    }
-
-    // 6. If uploaded by Admin, auto-approve immediately!
     const status = isAdmin ? 'approved' : 'pending'
+    const allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']
+    
+    // Process and upload each file (supports 1 to 3 files uploaded at one time)
+    for (let i = 0; i < validFiles.length; i++) {
+      const currentFile = validFiles[i]
+      const extension = (currentFile.name.split('.').pop() || '').toLowerCase()
 
-    const { error: dbError } = await supabase
-      .from('resources')
-      .insert({
-        subject_id: resolvedSubjectId,
-        exam_type_id: resolvedExamTypeId,
-        exam_year: examYear,
-        file_path: filePath,
-        file_type: mimeType,
-        original_filename: file.name,
-        file_hash: fileHash,
-        uploaded_by: decoded.uid,
-        status: status
-      })
+      if (!allowedExtensions.includes(extension)) {
+        return { error: `Invalid format for "${currentFile.name}". Accepted: PDF, JPG, PNG, DOC/DOCX, XLS/XLSX, PPT/PPTX` }
+      }
 
-    if (dbError) {
-      return { error: `Database error: ${dbError.message}` }
+      const filePath = `${uuidv4()}.${extension}`
+      const arrayBuffer = await currentFile.arrayBuffer()
+      const buffer = Buffer.from(arrayBuffer)
+
+      const mimeType = currentFile.type || (
+        extension === 'pdf' ? 'application/pdf' :
+        ['jpg', 'jpeg'].includes(extension) ? 'image/jpeg' :
+        extension === 'png' ? 'image/png' : 'application/octet-stream'
+      )
+
+      const { error: uploadError } = await supabase.storage
+        .from('resources')
+        .upload(filePath, buffer, {
+          contentType: mimeType,
+          upsert: false
+        })
+
+      if (uploadError) {
+        return { error: `Failed to upload "${currentFile.name}": ${uploadError.message}` }
+      }
+
+      const displayName = validFiles.length > 1
+        ? `${currentFile.name} (Part ${i + 1} of ${validFiles.length})`
+        : currentFile.name
+
+      const { error: dbError } = await supabase
+        .from('resources')
+        .insert({
+          subject_id: resolvedSubjectId,
+          exam_type_id: resolvedExamTypeId,
+          exam_year: examYear,
+          file_path: filePath,
+          file_type: mimeType,
+          original_filename: displayName,
+          file_hash: `${fileHash}-${i}`,
+          uploaded_by: decoded.uid,
+          status: status
+        })
+
+      if (dbError) {
+        return { error: `Database error: ${dbError.message}` }
+      }
     }
 
     revalidatePath('/study-material')
@@ -279,7 +288,7 @@ export async function uploadResource(formData: FormData) {
     revalidatePath('/admin')
     revalidatePath('/')
 
-    return { success: true, isAdminUpload: isAdmin }
+    return { success: true, count: validFiles.length, isAdminUpload: isAdmin }
   } catch (err: unknown) {
     console.error('Unhandled uploadResource error:', err)
     const message = err instanceof Error ? err.message : 'An unexpected error occurred during upload.'

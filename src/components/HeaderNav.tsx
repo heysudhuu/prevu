@@ -79,6 +79,7 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
   // Core primary links
   const primaryLinks = [
     { href: '/browse', label: 'Papers', icon: <FileText className="w-3.5 h-3.5 text-prevu-accent" /> },
+    { href: '/requests', label: 'Community', icon: <MessageSquare className="w-3.5 h-3.5 text-purple-400" /> },
     { href: '/vault', label: 'Vault', icon: <WifiOff className="w-3.5 h-3.5 text-cyan-400" /> },
     { href: '/study-planner', label: 'Planner', icon: <Brain className="w-3.5 h-3.5 text-purple-400" /> },
     { href: '/exam-prep', label: 'Exam Prep', icon: <Target className="w-3.5 h-3.5 text-amber-400" /> },
@@ -100,8 +101,8 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
     },
     { 
       href: '/requests', 
-      label: 'Bounty Requests', 
-      desc: 'Ask for missing papers & claim XP',
+      label: 'Community Board', 
+      desc: 'Request PYQs, notes & batchmate help',
       icon: <MessageSquare className="w-4 h-4 text-purple-400" /> 
     },
     { 

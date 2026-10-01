@@ -185,3 +185,16 @@
   transform: translateY(-4px);
 }
 
+/* Hide scrollbar but allow scrolling */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Section divider gradient */
+.section-gradient-alt {
+  background: linear-gradient(180deg, #09090d 0%, #0e0e16 50%, #09090d 100%);
+}

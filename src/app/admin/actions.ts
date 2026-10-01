@@ -8,6 +8,7 @@ import { isSuperAdminEmail } from '@/lib/auth/admin-check'
 import { logAdminAction } from '@/lib/admin/audit'
 import { OFFICIAL_CU_CALENDAR_2026 } from '@/lib/data/academicCalendar'
 import { getLiveTrafficAnalyticsData } from '@/lib/analytics/tracker'
+import { sendStudentNotification } from '@/lib/notifications'
 
 async function getAdminDb() {
   return getSupabaseAdmin()
@@ -885,6 +886,433 @@ export async function updatePaperRequestStatus(requestId: number, newStatus: str
   revalidatePath('/admin/requests')
   revalidatePath('/dashboard')
   return { success: true }
+}
+
+export interface UpdatePaperRequestInput {
+  requestId: number
+  subject_name: string
+  semester: number
+  exam_type: string
+  exam_year: number
+  request_type?: string
+  note?: string
+  status?: string
+}
+
+export async function updatePaperRequestDetails(input: UpdatePaperRequestInput) {
+  const session = await getAdminSession()
+  if (!session) return { error: 'Unauthorized' }
+
+  if (!input.subject_name?.trim()) {
+    return { error: 'Subject name cannot be empty' }
+  }
+
+  const supabase = await getAdminDb()
+  const { error } = await supabase
+    .from('paper_requests')
+    .update({
+      subject_name: input.subject_name.trim(),
+      semester: Number(input.semester),
+      exam_type: input.exam_type.trim(),
+      exam_year: Number(input.exam_year),
+      request_type: input.request_type || 'pyq',
+      note: input.note?.trim() || null,
+      ...(input.status ? { status: input.status } : {})
+    })
+    .eq('id', input.requestId)
+
+  if (error) return { error: error.message }
+
+  await logAdminAction({
+    adminEmail: session.email,
+    adminId: session.uid,
+    action: 'UPDATE_PAPER_REQUEST',
+    targetType: 'request',
+    targetId: input.requestId,
+    details: { subject_name: input.subject_name, semester: input.semester, status: input.status }
+  })
+
+  revalidatePath('/admin/requests')
+  revalidatePath('/requests')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
+export async function deletePaperRequest(requestId: number) {
+  const session = await getAdminSession()
+  if (!session) return { error: 'Unauthorized' }
+
+  const supabase = await getAdminDb()
+  const { error } = await supabase
+    .from('paper_requests')
+    .delete()
+    .eq('id', requestId)
+
+  if (error) return { error: error.message }
+
+  await logAdminAction({
+    adminEmail: session.email,
+    adminId: session.uid,
+    action: 'DELETE_PAPER_REQUEST',
+    targetType: 'request',
+    targetId: requestId,
+    details: { requestId }
+  })
+
+  revalidatePath('/admin/requests')
+  revalidatePath('/requests')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
+export interface UpdateSubmissionDetailsInput {
+  responseId: string
+  message?: string
+  adminNote?: string
+  requestId?: number
+  subject_name?: string
+  semester?: number
+  exam_type?: string
+  exam_year?: number
+  request_type?: string
+  approveImmediately?: boolean
+}
+
+export async function updateCommunityHelpSubmissionDetails(input: UpdateSubmissionDetailsInput) {
+  const session = await getAdminSession()
+  if (!session) return { error: 'Unauthorized' }
+
+  const supabase = await getAdminDb()
+
+  try {
+    // 1. Fetch current submission
+    const { data: submission, error: fetchErr } = await supabase
+      .from('request_responses')
+      .select(`
+        *,
+        paper_requests:request_id (
+          id,
+          subject_name,
+          requested_by
+        )
+      `)
+      .eq('id', input.responseId)
+      .single()
+
+    if (fetchErr || !submission) {
+      return { error: 'Submission not found' }
+    }
+
+    const parentReq = submission.paper_requests
+    const targetRequestId = input.requestId || parentReq?.id
+
+    // 2. Update paper_requests if details provided
+    if (targetRequestId && (input.subject_name || input.semester || input.exam_type || input.exam_year || input.request_type)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const updateData: any = {}
+      if (input.subject_name?.trim()) updateData.subject_name = input.subject_name.trim()
+      if (input.semester) updateData.semester = Number(input.semester)
+      if (input.exam_type?.trim()) updateData.exam_type = input.exam_type.trim()
+      if (input.exam_year) updateData.exam_year = Number(input.exam_year)
+      if (input.request_type) updateData.request_type = input.request_type
+
+      if (input.approveImmediately) {
+        updateData.status = 'fulfilled'
+      }
+
+      await supabase
+        .from('paper_requests')
+        .update(updateData)
+        .eq('id', targetRequestId)
+    } else if (input.approveImmediately && targetRequestId) {
+      await supabase
+        .from('paper_requests')
+        .update({ status: 'fulfilled' })
+        .eq('id', targetRequestId)
+    }
+
+    // 3. Update request_responses
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const responseUpdate: any = {
+      message: input.message !== undefined ? input.message.trim() : submission.message,
+      admin_note: input.adminNote !== undefined ? input.adminNote.trim() : submission.admin_note
+    }
+
+    if (input.approveImmediately) {
+      responseUpdate.status = 'approved'
+      responseUpdate.reviewed_by = session.uid
+      responseUpdate.reviewed_at = new Date().toISOString()
+      if (!responseUpdate.admin_note) {
+        responseUpdate.admin_note = 'Approved & verified by Admin Department'
+      }
+    }
+
+    const { error: updateErr } = await supabase
+      .from('request_responses')
+      .update(responseUpdate)
+      .eq('id', input.responseId)
+
+    if (updateErr) {
+      return { error: `Failed to update submission: ${updateErr.message}` }
+    }
+
+    // 4. Notifications if approved
+    if (input.approveImmediately) {
+      const subject = input.subject_name || parentReq?.subject_name || 'the requested subject'
+
+      await sendStudentNotification({
+        userId: submission.user_id,
+        title: 'Contribution Approved & Verified! 🎉',
+        message: `Your contribution for "${subject}" has been approved and verified by the Admin Department! It is now live on Prevu. Thank you for helping your batchmates!`,
+        type: 'approved',
+        link: '/requests'
+      })
+
+      if (parentReq?.requested_by && parentReq.requested_by !== submission.user_id) {
+        await sendStudentNotification({
+          userId: parentReq.requested_by,
+          title: 'Request Fulfilled & Verified! ✅',
+          message: `Great news! A batchmate's shared material for your request "${subject}" has been verified and approved by the Admin Department. You can view it now!`,
+          type: 'approved',
+          link: '/requests'
+        })
+      }
+    }
+
+    await logAdminAction({
+      adminEmail: session.email,
+      adminId: session.uid,
+      action: input.approveImmediately ? 'APPROVE_EDIT_COMMUNITY_HELP' : 'EDIT_COMMUNITY_HELP',
+      targetType: 'request',
+      targetId: input.responseId,
+      details: { requestId: targetRequestId, subject: input.subject_name || parentReq?.subject_name }
+    })
+
+    revalidatePath('/admin/requests')
+    revalidatePath('/requests')
+    revalidatePath('/dashboard')
+
+    return { success: true }
+  } catch (err: any) {
+    return { error: err.message || 'Failed to update submission' }
+  }
+}
+
+/**
+ * Fetches batchmate community help submissions pending admin verification
+ */
+export async function getAdminCommunityHelpSubmissions(statusFilter = 'pending') {
+  const session = await getAdminSession()
+  if (!session) return []
+
+  const supabase = await getAdminDb()
+
+  try {
+    let query = supabase
+      .from('request_responses')
+      .select(`
+        *,
+        users:user_id ( id, name, username, email, cu_verified ),
+        paper_requests:request_id (
+          id,
+          subject_name,
+          exam_type,
+          exam_year,
+          semester,
+          request_type,
+          note,
+          status,
+          requested_by,
+          users:requested_by ( id, name, username, email )
+        )
+      `)
+      .order('created_at', { ascending: false })
+
+    if (statusFilter && statusFilter !== 'ALL') {
+      query = query.eq('status', statusFilter.toLowerCase())
+    }
+
+    const { data, error } = await query
+    if (error) {
+      console.warn('Could not fetch request_responses (table might need migration):', error.message)
+      return []
+    }
+
+    return data || []
+  } catch (err) {
+    console.error('Error fetching admin community submissions:', err)
+    return []
+  }
+}
+
+/**
+ * Approves a batchmate community contribution
+ * 1. Sets status to 'approved'
+ * 2. Marks the parent request as 'fulfilled'
+ * 3. Notifies the Contributor: "Approved by Admin! Thank you!"
+ * 4. Notifies the Requester: "Verified material is now available!"
+ */
+export async function approveCommunityHelpSubmission(responseId: string, adminNote?: string) {
+  const session = await getAdminSession()
+  if (!session) return { error: 'Unauthorized' }
+
+  const supabase = await getAdminDb()
+
+  try {
+    // 1. Fetch submission details
+    const { data: submission, error: fetchErr } = await supabase
+      .from('request_responses')
+      .select(`
+        *,
+        paper_requests:request_id (
+          id,
+          subject_name,
+          requested_by
+        )
+      `)
+      .eq('id', responseId)
+      .single()
+
+    if (fetchErr || !submission) {
+      return { error: 'Contribution not found' }
+    }
+
+    // 2. Update response status to approved
+    const { error: updateErr } = await supabase
+      .from('request_responses')
+      .update({
+        status: 'approved',
+        admin_note: adminNote || 'Approved by Admin Department',
+        reviewed_by: session.uid,
+        reviewed_at: new Date().toISOString()
+      })
+      .eq('id', responseId)
+
+    if (updateErr) {
+      return { error: `Failed to approve submission: ${updateErr.message}` }
+    }
+
+    // 3. Mark the parent request as fulfilled
+    const parentReq = submission.paper_requests
+    if (parentReq?.id) {
+      await supabase
+        .from('paper_requests')
+        .update({ status: 'fulfilled' })
+        .eq('id', parentReq.id)
+    }
+
+    // 4. Notify Contributor (Batchmate who shared)
+    await sendStudentNotification({
+      userId: submission.user_id,
+      title: 'Contribution Approved & Verified! 🎉',
+      message: `Your contribution for "${parentReq?.subject_name || 'the requested subject'}" has been approved and verified by the Admin Department! It is now live on the Prevu dashboard and request board. Thank you for helping your batchmates!`,
+      type: 'approved',
+      link: '/requests'
+    })
+
+    // 5. Notify Requester
+    if (parentReq?.requested_by && parentReq.requested_by !== submission.user_id) {
+      await sendStudentNotification({
+        userId: parentReq.requested_by,
+        title: 'Request Fulfilled & Verified! ✅',
+        message: `Great news! A batchmate's shared material for your request "${parentReq?.subject_name}" has been verified and approved by the Admin Department. You can view and download it now!`,
+        type: 'approved',
+        link: '/requests'
+      })
+    }
+
+    await logAdminAction({
+      adminEmail: session.email,
+      adminId: session.uid,
+      action: 'APPROVE_COMMUNITY_HELP',
+      targetType: 'request',
+      targetId: responseId,
+      details: { requestId: parentReq?.id, subject: parentReq?.subject_name, contributorId: submission.user_id }
+    })
+
+    revalidatePath('/admin/requests')
+    revalidatePath('/requests')
+    revalidatePath('/dashboard')
+    return { success: true }
+  } catch (err: any) {
+    return { error: err.message || 'Failed to approve contribution' }
+  }
+}
+
+/**
+ * Rejects a batchmate community contribution
+ */
+export async function rejectCommunityHelpSubmission(responseId: string, reason: string) {
+  const session = await getAdminSession()
+  if (!session) return { error: 'Unauthorized' }
+
+  if (!reason?.trim()) {
+    return { error: 'Please provide a reason for rejection to help the student improve.' }
+  }
+
+  const supabase = await getAdminDb()
+
+  try {
+    // 1. Fetch submission details
+    const { data: submission, error: fetchErr } = await supabase
+      .from('request_responses')
+      .select(`
+        *,
+        paper_requests:request_id (
+          id,
+          subject_name,
+          requested_by
+        )
+      `)
+      .eq('id', responseId)
+      .single()
+
+    if (fetchErr || !submission) {
+      return { error: 'Contribution not found' }
+    }
+
+    // 2. Update response status to rejected
+    const { error: updateErr } = await supabase
+      .from('request_responses')
+      .update({
+        status: 'rejected',
+        admin_note: reason.trim(),
+        reviewed_by: session.uid,
+        reviewed_at: new Date().toISOString()
+      })
+      .eq('id', responseId)
+
+    if (updateErr) {
+      return { error: `Failed to reject submission: ${updateErr.message}` }
+    }
+
+    const parentReq = submission.paper_requests
+
+    // 3. Notify Contributor with the feedback
+    await sendStudentNotification({
+      userId: submission.user_id,
+      title: 'Contribution Review Update',
+      message: `Your contribution for "${parentReq?.subject_name || 'the requested subject'}" could not be approved by the Admin Department: "${reason.trim()}". You are welcome to submit a clearer copy or update!`,
+      type: 'rejected',
+      link: '/requests'
+    })
+
+    await logAdminAction({
+      adminEmail: session.email,
+      adminId: session.uid,
+      action: 'REJECT_COMMUNITY_HELP',
+      targetType: 'request',
+      targetId: responseId,
+      details: { requestId: parentReq?.id, subject: parentReq?.subject_name, reason }
+    })
+
+    revalidatePath('/admin/requests')
+    revalidatePath('/requests')
+    revalidatePath('/dashboard')
+    return { success: true }
+  } catch (err: any) {
+    return { error: err.message || 'Failed to reject contribution' }
+  }
 }
 
 /**

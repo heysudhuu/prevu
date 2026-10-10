@@ -111,6 +111,9 @@ export async function uploadResource(formData: FormData) {
     const rawExamYear = formData.get('exam_year') as string || formData.get('material_year') as string
     const examYear = parseInt(rawExamYear || String(new Date().getFullYear()))
     const fileHash = (formData.get('file_hash') as string) || `hash-${Date.now()}`
+    const unit = resourceCategory === 'study_material'
+      ? ((formData.get('unit') as string)?.trim() || null)
+      : null
 
     if (validFiles.length === 0 || (!rawSubjectName && !rawSubjectId) || !rawExamType || !examYear) {
       return { 
@@ -275,7 +278,8 @@ export async function uploadResource(formData: FormData) {
           original_filename: displayName,
           file_hash: `${fileHash}-${i}`,
           uploaded_by: decoded.uid,
-          status: status
+          status: status,
+          unit: unit
         })
 
       if (dbError) {

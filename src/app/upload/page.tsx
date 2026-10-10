@@ -36,6 +36,7 @@ function UploadFormContent() {
   const [subjectCode, setSubjectCode] = useState('')
   const [examType, setExamType] = useState('MST1')
   const [materialType, setMaterialType] = useState('Notes')
+  const [unitNumber, setUnitNumber] = useState<string>('Unit 1')
   const [examYear, setExamYear] = useState<number>(new Date().getFullYear())
 
   const [files, setFiles] = useState<File[]>([])
@@ -161,6 +162,7 @@ function UploadFormContent() {
         formData.append('exam_type', materialType)
         formData.append('material_year', String(examYear))
         formData.append('exam_year', String(examYear))
+        formData.append('unit', unitNumber)
       } else {
         formData.append('exam_type', examType)
         formData.append('exam_year', String(examYear))
@@ -426,6 +428,34 @@ function UploadFormContent() {
                   />
                 </div>
               </div>
+
+              {/* Unit Selector — only for Study Material */}
+              {isStudy && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-emerald-400" htmlFor="unit_number">
+                      Unit
+                    </label>
+                    <span className="text-[10px] font-mono text-emerald-400/80">Which unit does this cover?</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {['Unit 1', 'Unit 2', 'Unit 3', 'Unit 4', 'Unit 5', 'All Units'].map((u) => (
+                      <button
+                        key={u}
+                        type="button"
+                        onClick={() => setUnitNumber(u)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 cursor-pointer ${
+                          unitNumber === u
+                            ? 'bg-emerald-600 border-emerald-500 text-white shadow-md shadow-emerald-500/20'
+                            : 'bg-prevu-bg border-prevu-surface-light text-prevu-text-muted hover:border-emerald-500/50 hover:text-emerald-300'
+                        }`}
+                      >
+                        {u}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* File Upload Box (Supports 1 to 3 files at one time) */}
               <div className="space-y-2">

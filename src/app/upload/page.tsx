@@ -51,6 +51,8 @@ function UploadFormContent() {
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dropZoneRef = useRef<HTMLDivElement>(null)
+  // Mirror of files state — lets addFiles read current value without functional updaters
+  const filesRef = useRef<File[]>([])
 
   useEffect(() => {
     async function loadOptions() {
@@ -75,28 +77,25 @@ function UploadFormContent() {
     return ACCEPTED_EXTS.includes(ext) || file.type.startsWith('image/')
   }
 
-  // Shared handler to add files from any source
+  // Keep filesRef in sync with files state so addFiles always has the latest snapshot
+  useEffect(() => { filesRef.current = files }, [files])
+
+  // Shared handler to add files from any source (drag, paste, click)
+  // Uses filesRef to avoid functional updaters — prevents React error #441
   const addFiles = useCallback((incoming: File[]) => {
     const valid = incoming.filter(isAcceptedFile)
     if (valid.length === 0) {
       setError('No accepted file types found. Accepted: PDF, JPG, PNG, DOC, DOCX, XLS, XLSX, PPT, PPTX')
       return
     }
-    // Read current files snapshot via functional update, but do NOT call setError inside it.
-    // Instead compute the next state and call both setters outside the updater.
-    setFiles(prev => {
-      const combined = [...prev, ...valid]
-      const next = combined.length > 3 ? combined.slice(0, 3) : combined
-      // Schedule setError after this render cycle to avoid React error #441
-      queueMicrotask(() => {
-        if (combined.length > 3) {
-          setError('You can upload a maximum of 3 files at one time. First 3 files have been selected.')
-        } else {
-          setError(null)
-        }
-      })
-      return next
-    })
+    const combined = [...filesRef.current, ...valid]
+    if (combined.length > 3) {
+      setError('You can upload a maximum of 3 files at one time. First 3 files have been selected.')
+      setFiles(combined.slice(0, 3))
+    } else {
+      setError(null)
+      setFiles(combined)
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

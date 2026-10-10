@@ -4,7 +4,8 @@ import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { getFormDataOptions, checkHashExists, uploadResource } from './actions'
+import { getFormDataOptions, checkHashExists, uploadResource, prepareDirectUpload, completeDirectUpload } from './actions'
+import { createClient } from '@/utils/supabase/client'
 import { Upload, AlertCircle, Sparkles, BookOpen, Layers, Eye, FileText, CheckCircle2, CloudUpload, Clipboard } from 'lucide-react'
 import UploadCelebrationMascot from '@/components/animations/UploadCelebrationMascot'
 
@@ -49,6 +50,7 @@ function UploadFormContent() {
   const [success, setSuccess] = useState(false)
   const [isAdminUpload, setIsAdminUpload] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const [uploadProgressText, setUploadProgressText] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dropZoneRef = useRef<HTMLDivElement>(null)
   // Mirror of files state — lets addFiles read current value without functional updaters
@@ -81,8 +83,17 @@ function UploadFormContent() {
   useEffect(() => { filesRef.current = files }, [files])
 
   // Shared handler to add files from any source (drag, paste, click)
+  const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
+
+  // Shared handler to add files from any source (drag, paste, click)
   // Uses filesRef to avoid functional updaters — prevents React error #441
   const addFiles = useCallback((incoming: File[]) => {
+    const oversized = incoming.find(f => f.size > MAX_FILE_SIZE)
+    if (oversized) {
+      setError(`"${oversized.name}" exceeds the 50MB size limit. Please choose a smaller file.`)
+      return
+    }
+
     const valid = incoming.filter(isAcceptedFile)
     if (valid.length === 0) {
       setError('No accepted file types found. Accepted: PDF, JPG, PNG, DOC, DOCX, XLS, XLSX, PPT, PPTX')
@@ -144,6 +155,13 @@ function UploadFormContent() {
     const incoming = Array.from(e.target.files || [])
     if (incoming.length === 0) return
 
+    const oversized = incoming.find(f => f.size > MAX_FILE_SIZE)
+    if (oversized) {
+      setError(`"${oversized.name}" exceeds the 50MB size limit. Please choose a smaller file.`)
+      e.target.value = ''
+      return
+    }
+
     let updatedFiles: File[] = []
     const combined = [...files, ...incoming]
     if (combined.length > 3) {
@@ -159,24 +177,28 @@ function UploadFormContent() {
     if (targetFile) {
       try {
         const arrayBuffer = await targetFile.arrayBuffer()
-        if (window.crypto && window.crypto.subtle) {
+        if (typeof window !== 'undefined' && window.crypto && window.crypto.subtle) {
           const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer)
           const hashArray = Array.from(new Uint8Array(hashBuffer))
           const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
           
           setFileHash(hashHex)
           
-          // Check for duplicates
-          const duplicate = await checkHashExists(hashHex)
-          if (duplicate) {
-            setDuplicateData(duplicate)
-            setDuplicateAcknowledged(false)
+          // Check for duplicates with error boundary
+          try {
+            const duplicate = await checkHashExists(hashHex)
+            if (duplicate) {
+              setDuplicateData(duplicate)
+              setDuplicateAcknowledged(false)
+            }
+          } catch (dupErr) {
+            console.warn('Duplicate check failed:', dupErr)
           }
         } else {
           setFileHash(`fallback-hash-${Date.now()}-${Math.random()}`)
         }
       } catch (err) {
-        console.error("Hash calculation failed", err)
+        console.error('Hash calculation failed:', err)
         setFileHash(`error-hash-${Date.now()}`)
       }
     }
@@ -211,36 +233,90 @@ function UploadFormContent() {
     
     setError(null)
     setIsUploading(true)
+    setUploadProgressText('Preparing upload...')
     
     try {
-      const formData = new FormData(e.currentTarget)
-      // Append all selected files (1 to 3 files)
-      files.forEach(f => formData.append('files', f))
-      formData.append('file', files[0]) // compatibility
-      formData.append('file_hash', fileHash || `hash-${Date.now()}`)
-      formData.append('year', String(selectedYear))
-      formData.append('semester', String(selectedSemester))
-      formData.append('subject_name', subjectName.trim())
-      formData.append('subject_code', subjectCode.trim())
-      formData.append('resource_category', uploadCategory)
+      // 1. Prepare direct upload session (metadata only, fast & lightweight JSON, bypasses 6MB payload limits)
+      const prepareResult = await prepareDirectUpload({
+        subject_name: subjectName.trim(),
+        subject_code: subjectCode.trim(),
+        year: selectedYear,
+        semester: selectedSemester,
+        resource_category: uploadCategory,
+        material_type: uploadCategory === 'study_material' ? materialType : undefined,
+        exam_type: uploadCategory === 'exam_paper' ? examType : undefined,
+        exam_year: examYear,
+        unit: uploadCategory === 'study_material' ? unitNumber : null,
+        file_hash: fileHash || `hash-${Date.now()}`,
+        files: files.map(f => ({
+          name: f.name,
+          size: f.size,
+          type: f.type
+        }))
+      })
 
-      if (uploadCategory === 'study_material') {
-        formData.append('material_type', materialType)
-        formData.append('exam_type', materialType)
-        formData.append('material_year', String(examYear))
-        formData.append('exam_year', String(examYear))
-        formData.append('unit', unitNumber)
-      } else {
-        formData.append('exam_type', examType)
-        formData.append('exam_year', String(examYear))
+      if (prepareResult.error || !prepareResult.preparedFiles) {
+        setError(prepareResult.error || 'Failed to prepare upload session. Please try again.')
+        return
       }
-      
-      const result = await uploadResource(formData)
-      
-      if (result?.error) {
-        setError(result.error)
-      } else if (result?.success) {
-        setIsAdminUpload(!!result.isAdminUpload)
+
+      // 2. Direct upload each file from browser straight to Supabase Storage
+      const supabase = createClient()
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        const prepared = prepareResult.preparedFiles[i]
+
+        setUploadProgressText(
+          files.length > 1
+            ? `Uploading file ${i + 1} of ${files.length} (${file.name})...`
+            : `Uploading ${file.name}...`
+        )
+
+        const { error: uploadError } = await supabase.storage
+          .from('resources')
+          .uploadToSignedUrl(prepared.filePath, prepared.token, file, {
+            contentType: prepared.mimeType,
+            upsert: false
+          })
+
+        if (uploadError) {
+          // Fallback: direct HTTP PUT to signedUrl
+          try {
+            const putRes = await fetch(prepared.signedUrl, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': prepared.mimeType || 'application/octet-stream'
+              },
+              body: file
+            })
+            if (!putRes.ok) {
+              throw new Error(`Upload failed with status ${putRes.status}`)
+            }
+          } catch {
+            throw new Error(`Failed to upload "${file.name}" to storage: ${uploadError.message}. Please check your connection and try again.`)
+          }
+        }
+      }
+
+      // 3. Complete upload by recording resource in database
+      setUploadProgressText('Finalizing resource submission...')
+      const completeResult = await completeDirectUpload({
+        resolvedSubjectId: prepareResult.resolvedSubjectId!,
+        resolvedExamTypeId: prepareResult.resolvedExamTypeId!,
+        examYear: prepareResult.examYear!,
+        unit: prepareResult.unit,
+        fileHash: prepareResult.fileHash || `hash-${Date.now()}`,
+        files: prepareResult.preparedFiles.map(p => ({
+          filePath: p.filePath,
+          displayName: p.displayName,
+          mimeType: p.mimeType
+        }))
+      })
+
+      if (completeResult.error) {
+        setError(completeResult.error)
+      } else if (completeResult.success) {
+        setIsAdminUpload(!!completeResult.isAdminUpload)
         setSuccess(true)
       }
     } catch (err: unknown) {
@@ -249,6 +325,7 @@ function UploadFormContent() {
       setError(message)
     } finally {
       setIsUploading(false)
+      setUploadProgressText('')
     }
   }
 
@@ -726,7 +803,7 @@ function UploadFormContent() {
             >
               <Upload className="w-4 h-4" />
               {isUploading 
-                ? `Uploading ${files.length} Document${files.length > 1 ? 's' : ''}...` 
+                ? (uploadProgressText || `Uploading ${files.length} Document${files.length > 1 ? 's' : ''}...`) 
                 : isStudy 
                   ? `Submit Study Material (${files.length} file${files.length === 1 ? '' : 's'})` 
                   : `Submit Question Paper (${files.length} file${files.length === 1 ? '' : 's'})`}

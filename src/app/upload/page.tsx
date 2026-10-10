@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { getFormDataOptions, checkHashExists, uploadResource } from './actions'
-import { Upload, AlertCircle, Sparkles, BookOpen, Layers, Eye, FileText, CheckCircle2 } from 'lucide-react'
+import { Upload, AlertCircle, Sparkles, BookOpen, Layers, Eye, FileText, CheckCircle2, CloudUpload, Clipboard } from 'lucide-react'
 import UploadCelebrationMascot from '@/components/animations/UploadCelebrationMascot'
 
 type Subject = { id: number, name: string, code: string, year: number, semester: number, branch_id: number }
@@ -48,6 +48,9 @@ function UploadFormContent() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [isAdminUpload, setIsAdminUpload] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const dropZoneRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     async function loadOptions() {
@@ -64,6 +67,67 @@ function UploadFormContent() {
       setUploadCategory('study_material')
     }
   }, [searchParams])
+
+  // Accepted extensions check
+  const ACCEPTED_EXTS = ['pdf','jpg','jpeg','png','webp','doc','docx','xls','xlsx','ppt','pptx']
+  const isAcceptedFile = (file: File) => {
+    const ext = file.name.split('.').pop()?.toLowerCase() || ''
+    return ACCEPTED_EXTS.includes(ext) || file.type.startsWith('image/')
+  }
+
+  // Shared handler to add files from any source
+  const addFiles = useCallback((incoming: File[]) => {
+    const valid = incoming.filter(isAcceptedFile)
+    if (valid.length === 0) {
+      setError('No accepted file types found. Accepted: PDF, JPG, PNG, DOC, DOCX, XLS, XLSX, PPT, PPTX')
+      return
+    }
+    setFiles(prev => {
+      const combined = [...prev, ...valid]
+      if (combined.length > 3) {
+        setError('You can upload a maximum of 3 files at one time. First 3 files have been selected.')
+        return combined.slice(0, 3)
+      }
+      setError(null)
+      return combined
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Ctrl+V paste handler
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      if (!e.clipboardData) return
+      const pastedFiles = Array.from(e.clipboardData.files)
+      if (pastedFiles.length > 0) {
+        addFiles(pastedFiles)
+      }
+    }
+    window.addEventListener('paste', handlePaste)
+    return () => window.removeEventListener('paste', handlePaste)
+  }, [addFiles])
+
+  // Drag-and-drop handlers
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    // Only reset if leaving the zone entirely
+    if (!dropZoneRef.current?.contains(e.relatedTarget as Node)) {
+      setIsDragging(false)
+    }
+  }
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+    const dropped = Array.from(e.dataTransfer.files)
+    addFiles(dropped)
+  }
 
   // Filter subjects for the selected semester/year as suggestions
   const suggestedSubjects = subjects.filter(
@@ -501,19 +565,69 @@ function UploadFormContent() {
                   </div>
                 )}
 
-                {/* File picker input (disabled if 3 files selected) */}
+                {/* Drag-and-drop zone / file picker */}
                 {files.length < 3 ? (
-                  <div className="relative">
-                    <input 
-                      type="file" 
-                      id="file" 
+                  <div
+                    ref={dropZoneRef}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`relative group flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2 border-dashed cursor-pointer transition-all duration-200 select-none ${
+                      isDragging
+                        ? isStudy
+                          ? 'border-emerald-400 bg-emerald-500/10 scale-[1.01]'
+                          : 'border-prevu-accent bg-prevu-accent/10 scale-[1.01]'
+                        : 'border-prevu-surface-light bg-prevu-bg/60 hover:border-prevu-accent/50 hover:bg-prevu-surface/30'
+                    }`}
+                  >
+                    {/* Hidden real file input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      id="file"
                       multiple
-                      accept=".pdf, .jpg, .jpeg, .png, .doc, .docx, .xls, .xlsx, .ppt, .pptx"
+                      accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
                       onChange={handleFileChange}
-                      className="w-full text-xs text-prevu-text-muted file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-prevu-accent/15 file:text-prevu-accent hover:file:bg-prevu-accent/25 cursor-pointer border border-prevu-surface-light rounded-xl p-2 bg-prevu-bg"
+                      className="hidden"
                     />
-                    <p className="text-[11px] text-prevu-text-muted mt-1">
-                      💡 Tip: You can select 2 to 3 files together (e.g. Page 1, Page 2, Page 3 or Question Paper + Solution).
+
+                    {/* Icon */}
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-200 ${
+                      isDragging
+                        ? isStudy ? 'bg-emerald-500/20 text-emerald-300' : 'bg-prevu-accent/20 text-prevu-accent'
+                        : 'bg-prevu-surface-light text-prevu-text-muted group-hover:text-prevu-accent group-hover:bg-prevu-accent/10'
+                    }`}>
+                      <CloudUpload className="w-6 h-6" />
+                    </div>
+
+                    {/* Text */}
+                    <div className="text-center space-y-1 pointer-events-none">
+                      <p className={`text-sm font-bold transition-colors ${
+                        isDragging
+                          ? isStudy ? 'text-emerald-300' : 'text-prevu-accent'
+                          : 'text-prevu-text group-hover:text-white'
+                      }`}>
+                        {isDragging ? 'Release to add files' : 'Drag & drop files here'}
+                      </p>
+                      <p className="text-[11px] text-prevu-text-muted">
+                        or <span className={`font-semibold ${ isStudy ? 'text-emerald-400' : 'text-prevu-accent' }`}>click to browse</span>
+                      </p>
+                    </div>
+
+                    {/* Hints row */}
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="flex items-center gap-1 px-2 py-1 rounded-lg bg-prevu-surface-light/60 text-[10px] text-prevu-text-muted font-mono">
+                        <Clipboard className="w-3 h-3" /> Ctrl+V to paste
+                      </span>
+                      <span className="flex items-center gap-1 px-2 py-1 rounded-lg bg-prevu-surface-light/60 text-[10px] text-prevu-text-muted font-mono">
+                        Max 50 MB · up to 3 files
+                      </span>
+                    </div>
+
+                    {/* Accepted types */}
+                    <p className="text-[10px] text-prevu-text-muted/60 font-mono">
+                      PDF · JPG · PNG · DOC · XLS · PPT
                     </p>
                   </div>
                 ) : (

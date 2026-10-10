@@ -82,14 +82,20 @@ function UploadFormContent() {
       setError('No accepted file types found. Accepted: PDF, JPG, PNG, DOC, DOCX, XLS, XLSX, PPT, PPTX')
       return
     }
+    // Read current files snapshot via functional update, but do NOT call setError inside it.
+    // Instead compute the next state and call both setters outside the updater.
     setFiles(prev => {
       const combined = [...prev, ...valid]
-      if (combined.length > 3) {
-        setError('You can upload a maximum of 3 files at one time. First 3 files have been selected.')
-        return combined.slice(0, 3)
-      }
-      setError(null)
-      return combined
+      const next = combined.length > 3 ? combined.slice(0, 3) : combined
+      // Schedule setError after this render cycle to avoid React error #441
+      queueMicrotask(() => {
+        if (combined.length > 3) {
+          setError('You can upload a maximum of 3 files at one time. First 3 files have been selected.')
+        } else {
+          setError(null)
+        }
+      })
+      return next
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -140,17 +146,15 @@ function UploadFormContent() {
     if (incoming.length === 0) return
 
     let updatedFiles: File[] = []
-    setFiles(prev => {
-      const combined = [...prev, ...incoming]
-      if (combined.length > 3) {
-        setError('You can upload a maximum of 3 files at one time. First 3 files have been selected.')
-        updatedFiles = combined.slice(0, 3)
-      } else {
-        setError(null)
-        updatedFiles = combined
-      }
-      return updatedFiles
-    })
+    const combined = [...files, ...incoming]
+    if (combined.length > 3) {
+      setError('You can upload a maximum of 3 files at one time. First 3 files have been selected.')
+      updatedFiles = combined.slice(0, 3)
+    } else {
+      setError(null)
+      updatedFiles = combined
+    }
+    setFiles(updatedFiles)
 
     const targetFile = incoming[0] || updatedFiles[0]
     if (targetFile) {

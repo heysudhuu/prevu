@@ -34,3 +34,5 @@ pnpm-debug.log*
 # Editor files
 .vscode/
 .idea/
+.vercel
+.env*

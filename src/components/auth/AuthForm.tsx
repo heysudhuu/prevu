@@ -241,8 +241,12 @@ export default function AuthForm({ initialMode = 'login' }: { initialMode?: 'log
       const syncRes = await syncUserToServer(idToken, userCredential.user.displayName || '')
       
       let destination = redirectTo
-      if (!destination || destination === '/') {
+      if (!destination || destination === '/' || destination === '/login' || destination === '/signup') {
         destination = syncRes?.role === 'admin' ? '/admin' : '/dashboard'
+      }
+
+      if (syncRes?.isNewUser) {
+        destination = `${destination}${destination.includes('?') ? '&' : '?'}welcome=true`
       }
 
       router.push(destination)
@@ -371,7 +375,10 @@ export default function AuthForm({ initialMode = 'login' }: { initialMode?: 'log
           <div className="flex flex-col gap-3">
             <Button 
               onClick={() => {
-                router.push(redirectTo)
+                const target = redirectTo && redirectTo !== '/' && redirectTo !== '/login' && redirectTo !== '/signup'
+                  ? `${redirectTo}${redirectTo.includes('?') ? '&' : '?'}welcome=true`
+                  : '/dashboard?welcome=true'
+                router.push(target)
                 router.refresh()
               }}
               className="w-full py-3 text-base shadow-lg shadow-prevu-accent/25"
@@ -405,6 +412,18 @@ export default function AuthForm({ initialMode = 'login' }: { initialMode?: 'log
       {/* Main Card */}
       <div className="backdrop-blur-xl bg-prevu-surface/90 border border-prevu-surface-light rounded-2xl shadow-2xl p-6 sm:p-8">
         
+        {searchParams.get('deleted') === 'true' && (
+          <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-300 flex items-start gap-2.5">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <p className="font-bold text-white">Account Successfully Deleted</p>
+              <p className="text-prevu-text-muted leading-relaxed">
+                Your Prevu student account and data have been completely removed. Thank you for having been part of our community.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Segmented Mode Switcher */}
         {mode !== 'forgot-password' ? (
           <div className="flex bg-prevu-bg/80 p-1 rounded-xl border border-prevu-surface-light mb-6">

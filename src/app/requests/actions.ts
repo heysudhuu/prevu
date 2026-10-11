@@ -5,7 +5,12 @@ import { cookies } from 'next/headers'
 import { authAdmin } from '@/lib/firebase/server'
 import { revalidatePath } from 'next/cache'
 import { v4 as uuidv4 } from 'uuid'
-import { sendStudentNotification } from '@/lib/notifications'
+import { 
+  sendStudentNotification, 
+  notifyBatchmatesOfQuery, 
+  getUnreadNotificationCount, 
+  markAllStudentNotificationsAsRead 
+} from '@/lib/notifications'
 
 export interface CommunityResponseItem {
   id: string
@@ -238,13 +243,25 @@ export async function createCommunityRequest(formData: FormData) {
       }
     }
 
-    // Send confirmation notification to student
+    // 1. Send confirmation notification to the requester
     await sendStudentNotification({
       userId: decoded.uid,
       title: 'Request Posted Successfully',
       message: `Your request for ${subjectName} has been shared on the Prevu Community Board! Batchmates can now see it and share materials.`,
       type: 'request_update',
       link: '/requests'
+    })
+
+    // 2. Broadcast smart notification to registered batchmates in the same semester & peers
+    const posterDisplayName = userProfile?.name || decoded.name || 'A batchmate'
+    await notifyBatchmatesOfQuery({
+      authorId: decoded.uid,
+      authorName: posterDisplayName,
+      subjectName,
+      title,
+      semester,
+      requestType,
+      requestId: newReq?.id
     })
 
     revalidatePath('/requests')
@@ -587,6 +604,36 @@ export async function markNotificationAsRead(notificationId: string) {
     return { success: true }
   } catch {
     return { error: 'Failed to update notification' }
+  }
+}
+
+/**
+ * Retrieves total unread notification count for authenticated student
+ */
+export async function getUnreadNotificationCountAction(): Promise<number> {
+  const token = (await cookies()).get('firebase-token')?.value
+  if (!token) return 0
+
+  try {
+    const decoded = await authAdmin.verifyIdToken(token)
+    return await getUnreadNotificationCount(decoded.uid)
+  } catch {
+    return 0
+  }
+}
+
+/**
+ * Marks all notifications as read for authenticated student
+ */
+export async function markAllNotificationsAsRead() {
+  const token = (await cookies()).get('firebase-token')?.value
+  if (!token) return { error: 'Unauthorized' }
+
+  try {
+    const decoded = await authAdmin.verifyIdToken(token)
+    return await markAllStudentNotificationsAsRead(decoded.uid)
+  } catch {
+    return { error: 'Failed to update notifications' }
   }
 }
 

@@ -43,5 +43,16 @@ export const authAdmin = {
       }
       throw err
     }
+  },
+  async deleteUser(uid: string) {
+    try {
+      const app = getFirebaseAdminApp()
+      const auth = getAuth(app)
+      await auth.deleteUser(uid)
+      return true
+    } catch (err) {
+      console.warn("Firebase deleteUser failed:", err)
+      return false
+    }
   }
 }

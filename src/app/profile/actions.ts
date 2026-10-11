@@ -98,10 +98,15 @@ export async function updateUserProfile(formData: FormData) {
   // Handle University Email
   if (cuEmail) {
     if (!cuEmail.endsWith('@cuchd.in')) {
-      return { error: 'University email must end with @cuchd.in' }
+      return { error: 'Chandigarh University email must end with @cuchd.in (leave blank if you do not have one yet).' }
     }
     updates.cu_email = cuEmail
     updates.cu_verified = true
+  } else {
+    updates.cu_email = null
+    if (!currentUser.email?.endsWith('@cuchd.in')) {
+      updates.cu_verified = false
+    }
   }
 
   // Username Change Logic (Max 3 changes)
@@ -161,3 +166,99 @@ export async function updateUserProfile(formData: FormData) {
     changesLeft: usernameChanged ? Math.max(0, changesLeft - 1) : changesLeft 
   }
 }
+
+/**
+ * Permanently deletes the student account and removes all associated records.
+ * Requires user confirmation and captures the reason for departure.
+ */
+export async function deleteUserAccount(formData: FormData) {
+  const token = (await cookies()).get('firebase-token')?.value
+  if (!token) {
+    return { error: 'Please log in to perform this action.' }
+  }
+
+  let decoded
+  try {
+    decoded = await authAdmin.verifyIdToken(token)
+  } catch {
+    return { error: 'Invalid or expired session. Please log in again.' }
+  }
+
+  const reason = (formData.get('reason') as string)?.trim()
+  const feedback = (formData.get('feedback') as string)?.trim()
+  const confirmation = (formData.get('confirmation') as string)?.trim().toUpperCase()
+
+  if (!reason) {
+    return { error: 'Please select a reason for deleting your account.' }
+  }
+
+  if (confirmation !== 'DELETE') {
+    return { error: 'Please type "DELETE" to confirm account deletion.' }
+  }
+
+  const supabase = getSupabaseAdmin()
+  const uid = decoded.uid
+
+  try {
+    // 1. Log departure reason in account_deletions table (fail-safe)
+    try {
+      await supabase.from('account_deletions').insert({
+        user_id: uid,
+        email: decoded.email || null,
+        reason,
+        feedback: feedback || null,
+        deleted_at: new Date().toISOString()
+      })
+    } catch {
+      // Table might not exist yet; fail-safe
+    }
+
+    // 2. Remove student notifications
+    try {
+      await supabase.from('student_notifications').delete().eq('user_id', uid)
+    } catch {
+      // safe fallback
+    }
+
+    // 3. Remove bookmarks
+    try {
+      await supabase.from('bookmarks').delete().eq('user_id', uid)
+    } catch {
+      // safe fallback
+    }
+
+    // 4. Remove upvotes
+    try {
+      await supabase.from('resource_upvotes').delete().eq('user_id', uid)
+      await supabase.from('request_upvotes').delete().eq('user_id', uid)
+    } catch {
+      // safe fallback
+    }
+
+    // 5. Delete user profile from database
+    const { error: dbDeleteErr } = await supabase.from('users').delete().eq('id', uid)
+    if (dbDeleteErr) {
+      console.warn('Could not delete user record directly:', dbDeleteErr.message)
+    }
+
+    // 6. Delete user from Firebase Auth
+    try {
+      await authAdmin.deleteUser(uid)
+    } catch (fbErr: any) {
+      console.warn('Firebase deleteUser warning:', fbErr?.message)
+    }
+
+    // 7. Clear session cookie
+    const cookieStore = await cookies()
+    cookieStore.delete('firebase-token')
+
+    revalidatePath('/')
+    revalidatePath('/dashboard')
+    revalidatePath('/profile')
+
+    return { success: true }
+  } catch (err: any) {
+    return { error: err.message || 'An error occurred while deleting your account.' }
+  }
+}
+

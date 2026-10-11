@@ -15,14 +15,17 @@ import {
   FileCheck,
   CheckCircle,
   ExternalLink,
-  MessageSquare
+  MessageSquare,
+  HelpCircle,
+  CheckCheck
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { getMyNotifications, markNotificationAsRead } from '@/app/requests/actions'
+import { getMyNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/requests/actions'
 
 interface SmartExamAlertsModalProps {
   isOpen: boolean
   onClose: () => void
+  onUpdateUnreadCount?: (count: number) => void
 }
 
 interface StudentNotification {
@@ -37,7 +40,8 @@ interface StudentNotification {
 
 export default function SmartExamAlertsModal({
   isOpen,
-  onClose
+  onClose,
+  onUpdateUnreadCount
 }: SmartExamAlertsModalProps) {
   const [activeTab, setActiveTab] = useState<'activity' | 'settings'>('activity')
   const [notifications, setNotifications] = useState<StudentNotification[]>([])
@@ -46,6 +50,7 @@ export default function SmartExamAlertsModal({
   const [permission, setPermission] = useState<NotificationPermission>('default')
   const [examAlerts, setExamAlerts] = useState(true)
   const [newPaperAlerts, setNewPaperAlerts] = useState(true)
+  const [batchmateQueryAlerts, setBatchmateQueryAlerts] = useState(true)
   const [selectedSemester, setSelectedSemester] = useState(4)
   const [savedSuccess, setSavedSuccess] = useState(false)
 
@@ -54,7 +59,10 @@ export default function SmartExamAlertsModal({
       setLoadingNotifications(true)
       getMyNotifications()
         .then(data => {
-          setNotifications(data || [])
+          const list = data || []
+          setNotifications(list)
+          const unread = list.filter(n => !n.is_read).length
+          if (onUpdateUnreadCount) onUpdateUnreadCount(unread)
         })
         .finally(() => {
           setLoadingNotifications(false)
@@ -68,6 +76,7 @@ export default function SmartExamAlertsModal({
             const parsed = JSON.parse(saved)
             setExamAlerts(parsed.examAlerts ?? true)
             setNewPaperAlerts(parsed.newPaperAlerts ?? true)
+            setBatchmateQueryAlerts(parsed.batchmateQueryAlerts ?? true)
             setSelectedSemester(parsed.selectedSemester ?? 4)
           }
         } catch {
@@ -80,10 +89,19 @@ export default function SmartExamAlertsModal({
   if (!isOpen) return null
 
   const handleMarkAsRead = async (id: string) => {
-    setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, is_read: true } : n))
-    )
+    setNotifications(prev => {
+      const updated = prev.map(n => (n.id === id ? { ...n, is_read: true } : n))
+      const unread = updated.filter(n => !n.is_read).length
+      if (onUpdateUnreadCount) onUpdateUnreadCount(unread)
+      return updated
+    })
     await markNotificationAsRead(id)
+  }
+
+  const handleMarkAllAsRead = async () => {
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
+    if (onUpdateUnreadCount) onUpdateUnreadCount(0)
+    await markAllNotificationsAsRead()
   }
 
   const handleRequestPermission = async () => {
@@ -111,6 +129,7 @@ export default function SmartExamAlertsModal({
       localStorage.setItem('prevu_notification_prefs', JSON.stringify({
         examAlerts,
         newPaperAlerts,
+        batchmateQueryAlerts,
         selectedSemester
       }))
       setSavedSuccess(true)
@@ -129,8 +148,8 @@ export default function SmartExamAlertsModal({
       return
     }
 
-    new Notification('⚡ Prevu MST-1 Alert', {
-      body: 'Chandigarh University MST-1 starts in 12 days! Review your bookmarked question papers.',
+    new Notification('⚡ Prevu Community Alert', {
+      body: 'A batchmate in Semester 4 just asked for DBMS MST-1 Question Paper!',
       icon: '/icon-512.svg'
     })
   }
@@ -157,7 +176,7 @@ export default function SmartExamAlertsModal({
                 <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
               </h3>
               <p className="text-xs text-prevu-text-muted mt-0.5">
-                Community request updates, batchmate responses & admin approvals.
+                Batchmate queries, peer requests & verified academic updates.
               </p>
             </div>
           </div>
@@ -206,83 +225,132 @@ export default function SmartExamAlertsModal({
         {/* TAB 1: COMMUNITY ALERTS & ADMIN APPROVAL UPDATES */}
         {/* ============================================================ */}
         {activeTab === 'activity' && (
-          <div className="space-y-3 max-h-[340px] overflow-y-auto pr-1">
-            {loadingNotifications ? (
-              <div className="p-8 text-center text-xs text-prevu-text-muted animate-pulse">
-                Loading notification updates...
-              </div>
-            ) : notifications.length === 0 ? (
-              <div className="p-8 text-center rounded-2xl bg-prevu-surface/40 border border-prevu-surface-light space-y-2">
-                <CheckCircle className="w-8 h-8 text-emerald-400 mx-auto" />
-                <p className="text-xs font-bold text-white">All Caught Up!</p>
-                <p className="text-[11px] text-prevu-text-muted">
-                  When you request study materials or share data with batchmates, admin approval and peer response alerts will appear here.
-                </p>
-                <Button
-                  size="sm"
-                  asChild
-                  className="mt-2 text-xs bg-purple-600 text-white font-bold h-7"
+          <div className="space-y-3">
+            {unreadCount > 0 && (
+              <div className="flex items-center justify-between pb-1 px-1">
+                <span className="text-[11px] text-prevu-text-muted font-medium">
+                  {unreadCount} unread update{unreadCount > 1 ? 's' : ''}
+                </span>
+                <button
+                  onClick={handleMarkAllAsRead}
+                  className="text-[11px] font-bold text-purple-400 hover:text-purple-300 flex items-center gap-1 cursor-pointer transition-colors"
                 >
-                  <Link href="/requests" onClick={onClose}>
-                    Explore Requests
-                  </Link>
-                </Button>
+                  <CheckCheck className="w-3.5 h-3.5" />
+                  <span>Mark all as read</span>
+                </button>
               </div>
-            ) : (
-              notifications.map(notif => {
-                const isApproved = notif.type === 'approved'
-                const isPending = notif.type === 'pending_approval'
-                const isHelped = notif.type === 'batchmate_helped'
-
-                return (
-                  <div
-                    key={notif.id}
-                    onClick={() => handleMarkAsRead(notif.id)}
-                    className={`p-3 rounded-2xl border text-xs space-y-1.5 transition-all ${
-                      notif.is_read
-                        ? 'bg-prevu-surface/50 border-prevu-surface-light opacity-80'
-                        : 'bg-purple-950/20 border-purple-500/40 shadow-sm'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 font-bold text-white">
-                        {isApproved ? (
-                          <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                        ) : isPending ? (
-                          <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                        ) : isHelped ? (
-                          <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                        ) : (
-                          <Bell className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                        )}
-                        <span>{notif.title}</span>
-                      </div>
-                      {!notif.is_read && (
-                        <span className="w-2 h-2 rounded-full bg-purple-400 shrink-0" />
-                      )}
-                    </div>
-
-                    <p className="text-[11px] text-prevu-text-muted leading-relaxed">
-                      {notif.message}
-                    </p>
-
-                    <div className="flex items-center justify-between pt-1 text-[10px] font-mono text-prevu-text-muted">
-                      <span>{new Date(notif.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                      {notif.link && (
-                        <Link
-                          href={notif.link}
-                          onClick={onClose}
-                          className="text-purple-400 hover:text-purple-300 font-bold inline-flex items-center gap-0.5"
-                        >
-                          <span>View</span>
-                          <ExternalLink className="w-2.5 h-2.5" />
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                )
-              })
             )}
+
+            <div className="space-y-2.5 max-h-[330px] overflow-y-auto pr-1">
+              {loadingNotifications ? (
+                <div className="p-8 text-center text-xs text-prevu-text-muted animate-pulse">
+                  Loading notification updates...
+                </div>
+              ) : notifications.length === 0 ? (
+                <div className="p-8 text-center rounded-2xl bg-prevu-surface/40 border border-prevu-surface-light space-y-2">
+                  <CheckCircle className="w-8 h-8 text-emerald-400 mx-auto" />
+                  <p className="text-xs font-bold text-white">All Caught Up!</p>
+                  <p className="text-[11px] text-prevu-text-muted">
+                    When batchmates in your semester ask doubts or request materials, peer alerts will appear right here.
+                  </p>
+                  <Button
+                    size="sm"
+                    asChild
+                    className="mt-2 text-xs bg-purple-600 text-white font-bold h-7"
+                  >
+                    <Link href="/requests" onClick={onClose}>
+                      Explore Community Board
+                    </Link>
+                  </Button>
+                </div>
+              ) : (
+                notifications.map(notif => {
+                  const isApproved = notif.type === 'approved'
+                  const isPending = notif.type === 'pending_approval'
+                  const isHelped = notif.type === 'batchmate_helped'
+                  const isQuery = notif.type === 'batchmate_query'
+                  const isWelcome = notif.type === 'welcome'
+
+                  return (
+                    <div
+                      key={notif.id}
+                      onClick={() => handleMarkAsRead(notif.id)}
+                      className={`p-3 rounded-2xl border text-xs space-y-1.5 transition-all ${
+                        notif.is_read
+                          ? 'bg-prevu-surface/50 border-prevu-surface-light opacity-80'
+                          : isWelcome
+                            ? 'bg-amber-950/25 border-amber-500/50 shadow-sm shadow-amber-500/10'
+                            : isQuery
+                              ? 'bg-cyan-950/20 border-cyan-500/40 shadow-sm shadow-cyan-500/5'
+                              : 'bg-purple-950/20 border-purple-500/40 shadow-sm shadow-purple-500/5'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 font-bold text-white min-w-0">
+                          {isWelcome ? (
+                            <div className="w-5 h-5 rounded-lg bg-gradient-to-tr from-amber-500 to-purple-600 flex items-center justify-center text-white shrink-0 shadow-sm shadow-amber-500/20">
+                              <Sparkles className="w-3 h-3 text-amber-200" />
+                            </div>
+                          ) : isQuery ? (
+                            <div className="w-5 h-5 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shrink-0 shadow-sm shadow-cyan-500/20">
+                              <HelpCircle className="w-3 h-3" />
+                            </div>
+                          ) : isApproved ? (
+                            <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          ) : isPending ? (
+                            <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                          ) : isHelped ? (
+                            <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                          ) : (
+                            <Bell className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                          )}
+                          <div className="flex items-center gap-1.5 truncate">
+                            {isWelcome && (
+                              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-md font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+                                Prevu Family
+                              </span>
+                            )}
+                            {isQuery && (
+                              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-md font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shrink-0">
+                                Peer Query
+                              </span>
+                            )}
+                            <span className="truncate">{notif.title}</span>
+                          </div>
+                        </div>
+                        {!notif.is_read && (
+                          <span className={`w-2 h-2 rounded-full shrink-0 ${isWelcome ? 'bg-amber-400 animate-pulse' : isQuery ? 'bg-cyan-400 animate-pulse' : 'bg-purple-400'}`} />
+                        )}
+                      </div>
+
+                      <p className="text-[11px] text-prevu-text-muted leading-relaxed">
+                        {notif.message}
+                      </p>
+
+                      <div className="flex items-center justify-between pt-1 text-[10px] font-mono text-prevu-text-muted">
+                        <span>{new Date(notif.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                        {notif.link && (
+                          <Link
+                            href={notif.link}
+                            onClick={onClose}
+                            className={`font-bold inline-flex items-center gap-1 transition-colors ${
+                              isWelcome
+                                ? 'text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 px-2 py-0.5 rounded-lg border border-amber-500/20'
+                                : isQuery 
+                                  ? 'text-cyan-400 hover:text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/20 px-2 py-0.5 rounded-lg border border-cyan-500/20'
+                                  : 'text-purple-400 hover:text-purple-300'
+                            }`}
+                          >
+                            <span>{isWelcome ? 'Explore Vault' : isQuery ? 'Help Batchmate' : 'View'}</span>
+                            <ExternalLink className="w-2.5 h-2.5" />
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
           </div>
         )}
 
@@ -313,6 +381,24 @@ export default function SmartExamAlertsModal({
 
             {/* Preferences */}
             <div className="space-y-2.5">
+              <label className="p-3 rounded-2xl bg-prevu-bg/70 border border-prevu-surface-light flex items-start gap-3 cursor-pointer hover:border-purple-500/30 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={batchmateQueryAlerts}
+                  onChange={(e) => setBatchmateQueryAlerts(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 accent-cyan-500 rounded"
+                />
+                <div>
+                  <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <HelpCircle className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Batchmate Academic Queries & Doubts</span>
+                  </div>
+                  <p className="text-[11px] text-prevu-text-muted mt-0.5">
+                    Get notified whenever a batchmate in your semester asks a question or requests materials.
+                  </p>
+                </div>
+              </label>
+
               <label className="p-3 rounded-2xl bg-prevu-bg/70 border border-prevu-surface-light flex items-start gap-3 cursor-pointer hover:border-purple-500/30 transition-colors">
                 <input
                   type="checkbox"

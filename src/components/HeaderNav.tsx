@@ -28,6 +28,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import dynamic from 'next/dynamic'
 import SmartExamAlertsModal from '@/components/notifications/SmartExamAlertsModal'
+import { getUnreadNotificationCountAction } from '@/app/requests/actions'
 
 const ExamCountdownTicker = dynamic(
   () => import('@/components/exam/ExamCountdownTicker'),
@@ -51,9 +52,28 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
   const [alertsModalOpen, setAlertsModalOpen] = useState(false)
   const [exploreMenuOpen, setExploreMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [unreadCount, setUnreadCount] = useState<number>(0)
 
   const exploreRef = useRef<HTMLDivElement>(null)
   const userRef = useRef<HTMLDivElement>(null)
+
+  // Fetch unread notifications count for the authenticated student
+  useEffect(() => {
+    if (!user) {
+      setUnreadCount(0)
+      return
+    }
+
+    const fetchUnread = () => {
+      getUnreadNotificationCountAction()
+        .then(count => setUnreadCount(count || 0))
+        .catch(() => setUnreadCount(0))
+    }
+
+    fetchUnread()
+    const timer = setInterval(fetchUnread, 45000)
+    return () => clearInterval(timer)
+  }, [user])
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -213,14 +233,24 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
           <ExamCountdownTicker />
         </div>
         
-        {/* Smart Exam Alerts Bell */}
+        {/* Smart Exam Alerts & Batchmate Queries Bell */}
         <button
           onClick={() => setAlertsModalOpen(true)}
-          className="w-8 h-8 rounded-xl border border-prevu-surface-light bg-prevu-surface/60 hover:bg-prevu-surface hover:border-purple-500/40 text-prevu-text-muted hover:text-white transition-all flex items-center justify-center cursor-pointer relative"
-          title="Smart Exam Alerts & Notifications"
+          className={`w-8 h-8 rounded-xl border transition-all flex items-center justify-center cursor-pointer relative ${
+            unreadCount > 0
+              ? 'border-purple-500/60 bg-purple-500/15 text-white shadow-sm shadow-purple-500/30'
+              : 'border-prevu-surface-light bg-prevu-surface/60 hover:bg-prevu-surface hover:border-purple-500/40 text-prevu-text-muted hover:text-white'
+          }`}
+          title={unreadCount > 0 ? `${unreadCount} unread community alerts` : 'Smart Exam Alerts & Notifications'}
         >
-          <Bell className="w-3.5 h-3.5 text-purple-400" />
-          <span className="w-1.5 h-1.5 rounded-full bg-purple-400 absolute top-2 right-2 animate-ping" />
+          <Bell className={`w-3.5 h-3.5 ${unreadCount > 0 ? 'text-purple-300' : 'text-purple-400'}`} />
+          {unreadCount > 0 ? (
+            <span className="min-w-[16px] h-4 px-1 rounded-full bg-gradient-to-r from-rose-500 to-amber-500 text-white text-[9px] font-extrabold absolute -top-1 -right-1 flex items-center justify-center shadow-md shadow-rose-500/40 border border-[#0d0d14] animate-pulse">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          ) : (
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-400/40 absolute top-2 right-2" />
+          )}
         </button>
 
         {/* Admin Console Badge Button (if Admin) */}
@@ -414,6 +444,7 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
       <SmartExamAlertsModal
         isOpen={alertsModalOpen}
         onClose={() => setAlertsModalOpen(false)}
+        onUpdateUnreadCount={setUnreadCount}
       />
 
     </div>

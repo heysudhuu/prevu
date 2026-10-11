@@ -16,6 +16,8 @@ import {
 import { getBookmarkedResources, getPaperRequests } from './actions'
 import { isSuperAdminEmail } from '@/lib/auth/admin-check'
 import StudentDashboardTabs from '@/components/dashboard/StudentDashboardTabs'
+import WelcomeFamilyModal from '@/components/dashboard/WelcomeFamilyModal'
+import DashboardWelcomeBanner from '@/components/dashboard/DashboardWelcomeBanner'
 
 export const dynamic = 'force-dynamic'
 
@@ -193,6 +195,12 @@ export default async function StudentDashboardPage({
             </div>
           </div>
         </div>
+
+        {/* First-Login Welcome Popup / Card (Seen on first visit) */}
+        {userProfile && <WelcomeFamilyModal userProfile={userProfile} />}
+
+        {/* Dashboard Welcome Banner (Dismissible) */}
+        {userProfile && <DashboardWelcomeBanner userProfile={userProfile} />}
 
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { authAdmin } from '@/lib/firebase/server'
 import { getSupabaseAdmin } from '@/utils/supabase/admin'
 import { isSuperAdminEmail } from '@/lib/auth/admin-check'
+import { sendStudentNotification } from '@/lib/notifications'
 
 /**
  * Checks whether a given username is available or already taken.
@@ -128,6 +129,15 @@ export async function syncUserToServer(idToken: string, name?: string, username?
         cu_email: email?.endsWith('@cuchd.in') ? email : null,
         role: finalRole
       })
+
+      // Send Option A Welcoming Family Notification to the new student
+      await sendStudentNotification({
+        userId: uid,
+        title: '🎓 Welcome to the Prevu Family!',
+        message: `Hey ${resolvedName}! We're thrilled to have you here. Prevu is built by students, for students at Chandigarh University. Explore past papers, share study notes, ask doubts, and let's help each other ace every MST and End-Term exam together! 🚀`,
+        type: 'welcome',
+        link: '/dashboard'
+      })
     } else {
       const updates: { name?: string; username?: string; cu_verified?: boolean; cu_email?: string; role?: string } = {}
       if (isSuperAdmin && existingUser.role !== 'admin') {
@@ -149,7 +159,7 @@ export async function syncUserToServer(idToken: string, name?: string, username?
       }
     }
 
-    return { success: true, role: finalRole }
+    return { success: true, role: finalRole, isNewUser: !existingUser }
   } catch (error: Error | unknown) {
     console.error('Error syncing user:', error)
     if (error instanceof Error) {

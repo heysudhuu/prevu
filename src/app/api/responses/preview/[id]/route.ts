@@ -68,6 +68,33 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     }
   }
 
+  function extractExtension(filename: string, targetPath: string = ''): string {
+    const pExt = (targetPath.split('?')[0].split('.').pop() || '').trim().toLowerCase()
+    if (pExt && /^[a-z0-9]{2,5}$/.test(pExt)) return pExt
+    const cleanName = filename.replace(/\s*\([^)]*\)\s*$/, '').trim()
+    const nExt = (cleanName.split('.').pop() || '').trim().toLowerCase()
+    if (nExt && /^[a-z0-9]{2,5}$/.test(nExt)) return nExt
+    return ''
+  }
+
+  const filename = responseItem.file_name || 'document.pdf'
+  const ext = extractExtension(filename, targetPath)
+  const isOfficeDoc = ['docx', 'doc', 'pptx', 'ppt', 'xlsx', 'xls'].includes(ext)
+  const isCloudRequested = request.nextUrl.searchParams.get('viewer') === 'cloud'
+
+  if (isOfficeDoc || isCloudRequested) {
+    const { data: urlData, error: urlError } = await supabase.storage
+      .from('resources')
+      .createSignedUrl(targetPath, 60 * 60)
+
+    if (urlError || !urlData?.signedUrl) {
+      return NextResponse.json({ error: 'Could not access file' }, { status: 500 })
+    }
+
+    const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(urlData.signedUrl)}&embedded=true`
+    return NextResponse.redirect(viewerUrl)
+  }
+
   // Download directly from Supabase Storage so we can serve with strict "inline" disposition
   const { data: fileBlob, error: downloadError } = await supabase.storage
     .from('resources')
@@ -75,10 +102,10 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
 
   let arrayBuffer: ArrayBuffer
   let mimeType = 'application/pdf'
-  const ext = (targetPath.split('.').pop() || '').toLowerCase()
   if (['jpg', 'jpeg'].includes(ext)) mimeType = 'image/jpeg'
   else if (ext === 'png') mimeType = 'image/png'
   else if (ext === 'webp') mimeType = 'image/webp'
+  else if (ext === 'txt') mimeType = 'text/plain'
 
   if (!downloadError && fileBlob) {
     arrayBuffer = await fileBlob.arrayBuffer()
@@ -101,7 +128,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     if (contentTypeHeader) mimeType = contentTypeHeader
   }
 
-  const cleanFilename = (responseItem.file_name || 'document.pdf').replace(/[^a-zA-Z0-9._-]/g, '_')
+  const cleanFilename = filename.replace(/[^a-zA-Z0-9._-]/g, '_')
 
   return new NextResponse(arrayBuffer, {
     status: 200,

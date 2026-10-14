@@ -25,7 +25,8 @@ import {
   Clock,
   Moon,
   Sun,
-  PenTool
+  PenTool,
+  Cloud
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -43,6 +44,9 @@ interface PDFViewerModalProps {
   resource: {
     id: string
     exam_year: number
+    file_path?: string
+    original_filename?: string
+    file_type?: string
     subjects?: {
       name?: string
       code?: string
@@ -68,6 +72,22 @@ export default function PDFViewerModal({ isOpen, onClose, resource }: PDFViewerM
   const [zoom, setZoom] = useState<number>(100)
   const [pdfTheme, setPdfTheme] = useState<'default' | 'dark' | 'amoled'>('default')
   const [isAnnotating, setIsAnnotating] = useState(false)
+
+  // Determine file type to choose best in-app viewer strategy
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rawFilename = (resource as any).original_filename || (resource as any).file_path || resource.subjects?.name || ''
+  const cleanName = rawFilename.replace(/\s*\([^)]*\)\s*$/, '').trim()
+  const detectedExt = (cleanName.split('.').pop() || '').toLowerCase()
+  const isOfficeDoc = ['docx', 'doc', 'pptx', 'ppt', 'xlsx', 'xls'].includes(detectedExt)
+  const isImageFile = ['jpg', 'jpeg', 'png', 'webp'].includes(detectedExt)
+
+  const [viewerMode, setViewerMode] = useState<'standard' | 'cloud'>(isOfficeDoc ? 'cloud' : 'standard')
+  const [isIframeLoading, setIsIframeLoading] = useState(true)
+
+  useEffect(() => {
+    setViewerMode(isOfficeDoc ? 'cloud' : 'standard')
+    setIsIframeLoading(true)
+  }, [resource.id, isOfficeDoc])
 
   // AI Assistant State
   const [aiLoading, setAiLoading] = useState(false)
@@ -252,6 +272,42 @@ export default function PDFViewerModal({ isOpen, onClose, resource }: PDFViewerM
           <div className="flex items-center gap-1.5 shrink-0">
             {activeTab === 'viewer' && (
               <>
+                {/* Cloud vs Standard Viewer Mode Indicator / Toggle */}
+                {isOfficeDoc ? (
+                  <div className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold bg-purple-500/15 text-purple-300 border border-purple-500/30 mr-1">
+                    <Cloud className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Cloud Viewer</span>
+                  </div>
+                ) : !isImageFile ? (
+                  <div className="hidden sm:flex items-center bg-prevu-surface border border-prevu-surface-light rounded-xl p-0.5 text-xs mr-1">
+                    <button
+                      onClick={() => {
+                        setViewerMode('standard')
+                        setIsIframeLoading(true)
+                      }}
+                      className={`px-2 py-1 rounded-lg transition-colors cursor-pointer text-xs font-semibold ${
+                        viewerMode === 'standard' ? 'bg-prevu-accent text-white shadow' : 'text-prevu-text-muted hover:text-white'
+                      }`}
+                      title="Standard in-browser PDF viewer"
+                    >
+                      Standard
+                    </button>
+                    <button
+                      onClick={() => {
+                        setViewerMode('cloud')
+                        setIsIframeLoading(true)
+                      }}
+                      className={`px-2 py-1 rounded-lg transition-colors cursor-pointer text-xs font-semibold flex items-center gap-1 ${
+                        viewerMode === 'cloud' ? 'bg-purple-600 text-white shadow' : 'text-prevu-text-muted hover:text-white'
+                      }`}
+                      title="Google Docs Cloud viewer (guarantees preview if browser blocks PDF rendering)"
+                    >
+                      <Cloud className="w-3 h-3 text-cyan-300" />
+                      <span>Cloud</span>
+                    </button>
+                  </div>
+                ) : null}
+
                 {/* PDF Dark / AMOLED Theme Selector */}
                 <div className="flex items-center bg-prevu-surface border border-prevu-surface-light rounded-xl p-0.5 text-xs mr-0.5">
                   <button
@@ -366,7 +422,11 @@ export default function PDFViewerModal({ isOpen, onClose, resource }: PDFViewerM
               asChild
               title="Open in new tab"
             >
-              <a href={`/api/preview/${resource.id}`} target="_blank" rel="noopener noreferrer">
+              <a 
+                href={viewerMode === 'cloud' || isOfficeDoc ? `/api/preview/${resource.id}?viewer=cloud` : `/api/preview/${resource.id}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
                 <ExternalLink className="w-3.5 h-3.5" />
               </a>
             </Button>
@@ -386,24 +446,73 @@ export default function PDFViewerModal({ isOpen, onClose, resource }: PDFViewerM
           
           {/* TAB 1: EMBEDDED IN-APP VIEWER */}
           {activeTab === 'viewer' && (
-            <div className={`w-full h-full flex flex-col items-center justify-center overflow-auto p-2 transition-colors relative ${
+            <div className={`w-full h-full flex flex-col items-center justify-center overflow-hidden p-2 transition-colors relative ${
               pdfTheme === 'amoled' ? 'bg-black' : pdfTheme === 'dark' ? 'bg-[#0f0f15]' : 'bg-[#0d0d12]'
             }`}>
-              <iframe
-                src={`/api/preview/${resource.id}#toolbar=0`}
-                className="w-full h-full rounded-2xl border border-prevu-surface-light shadow-2xl transition-all duration-300"
-                style={{
-                  transform: zoom !== 100 ? `scale(${zoom / 100})` : undefined,
-                  transformOrigin: 'top center',
-                  filter: 
-                    pdfTheme === 'amoled'
-                      ? 'invert(0.95) hue-rotate(180deg) contrast(1.2) brightness(0.95)'
-                      : pdfTheme === 'dark'
-                      ? 'invert(0.92) hue-rotate(180deg) contrast(1.1)'
-                      : 'none'
-                }}
-                title={resource.subjects?.name || 'Question Paper Preview'}
-              />
+              {/* Loading Skeleton / Spinner Overlay */}
+              {isIframeLoading && (
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-prevu-bg/95 backdrop-blur-md gap-3 animate-in fade-in duration-200">
+                  <div className="relative">
+                    <Loader2 className="w-9 h-9 text-prevu-accent animate-spin" />
+                    <div className="absolute inset-0 rounded-full blur-md bg-prevu-accent/30 animate-pulse" />
+                  </div>
+                  <div className="text-center space-y-1 px-4">
+                    <p className="text-sm font-semibold text-white">
+                      Loading In-App Document Preview...
+                    </p>
+                    <p className="text-xs text-prevu-text-muted max-w-sm">
+                      {isOfficeDoc || viewerMode === 'cloud'
+                        ? 'Rendering document safely inside Prevu without downloading.'
+                        : 'Rendering directly in your browser. No file download required.'}
+                    </p>
+                  </div>
+                  {!isOfficeDoc && !isImageFile && (
+                    <button
+                      onClick={() => {
+                        setViewerMode(prev => prev === 'cloud' ? 'standard' : 'cloud')
+                        setIsIframeLoading(true)
+                      }}
+                      className="mt-2 text-xs text-cyan-400 hover:text-cyan-300 underline underline-offset-4 cursor-pointer"
+                    >
+                      {viewerMode === 'standard' ? 'Stuck or slow? Switch to Cloud Viewer' : 'Switch back to Standard Viewer'}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {isImageFile ? (
+                <div className="w-full h-full flex items-center justify-center overflow-auto p-4">
+                  <img
+                    src={`/api/preview/${resource.id}`}
+                    alt={resource.subjects?.name || 'Document Preview'}
+                    className="max-w-full max-h-full object-contain rounded-xl shadow-2xl transition-transform duration-200"
+                    style={{ transform: zoom !== 100 ? `scale(${zoom / 100})` : undefined }}
+                    onLoad={() => setIsIframeLoading(false)}
+                  />
+                </div>
+              ) : (
+                <iframe
+                  key={`${resource.id}-${viewerMode}`}
+                  src={
+                    viewerMode === 'cloud' || isOfficeDoc
+                      ? `/api/preview/${resource.id}?viewer=cloud`
+                      : `/api/preview/${resource.id}#toolbar=0`
+                  }
+                  className="w-full h-full rounded-2xl border border-prevu-surface-light shadow-2xl transition-all duration-300 bg-white"
+                  style={{
+                    transform: zoom !== 100 ? `scale(${zoom / 100})` : undefined,
+                    transformOrigin: 'top center',
+                    filter: 
+                      pdfTheme === 'amoled'
+                        ? 'invert(0.95) hue-rotate(180deg) contrast(1.2) brightness(0.95)'
+                        : pdfTheme === 'dark'
+                        ? 'invert(0.92) hue-rotate(180deg) contrast(1.1)'
+                        : 'none'
+                  }}
+                  title={resource.subjects?.name || 'Question Paper Preview'}
+                  onLoad={() => setIsIframeLoading(false)}
+                />
+              )}
 
               {/* In-App PDF Annotator & Sticky Notes Overlay */}
               <PaperAnnotatorOverlay

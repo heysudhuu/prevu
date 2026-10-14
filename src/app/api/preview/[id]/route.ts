@@ -3,8 +3,21 @@ import { getSupabaseAdmin } from '@/utils/supabase/admin'
 import { cookies } from 'next/headers'
 import { authAdmin } from '@/lib/firebase/server'
 
-function getMimeType(filename: string): string {
-  const ext = (filename.split('.').pop() || '').toLowerCase()
+function extractExtension(filename: string, targetPath: string = ''): string {
+  // First test targetPath since storage paths are clean e.g. "uuid.docx"
+  const pExt = (targetPath.split('?')[0].split('.').pop() || '').trim().toLowerCase()
+  if (pExt && /^[a-z0-9]{2,5}$/.test(pExt)) return pExt
+  
+  // Clean filename: remove trailing "(Part X of Y)" or parenthetical notes
+  const cleanName = filename.replace(/\s*\([^)]*\)\s*$/, '').trim()
+  const nExt = (cleanName.split('.').pop() || '').trim().toLowerCase()
+  if (nExt && /^[a-z0-9]{2,5}$/.test(nExt)) return nExt
+  
+  return ''
+}
+
+function getMimeType(filename: string, targetPath: string = ''): string {
+  const ext = extractExtension(filename, targetPath)
   switch (ext) {
     case 'pdf':
       return 'application/pdf'
@@ -28,7 +41,7 @@ function getMimeType(filename: string): string {
     case 'xls':
       return 'application/vnd.ms-excel'
     case 'xlsx':
-      return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      return 'application/vnd.spreadsheetml.sheet'
     default:
       return 'application/pdf'
   }
@@ -91,13 +104,32 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     }
   }
 
+  const ext = extractExtension(filename, targetPath)
+  const isOfficeDoc = ['docx', 'doc', 'pptx', 'ppt', 'xlsx', 'xls'].includes(ext)
+  const isCloudRequested = request.nextUrl.searchParams.get('viewer') === 'cloud'
+
+  // If file is an Office document (DOCX, PPTX, XLSX) or cloud viewer is requested,
+  // embed via Google Docs Viewer so the browser renders it on screen instead of downloading
+  if (isOfficeDoc || isCloudRequested) {
+    const { data: urlData, error: urlError } = await supabaseAdmin.storage
+      .from('resources')
+      .createSignedUrl(targetPath, 60 * 60) // 1 hour
+
+    if (urlError || !urlData?.signedUrl) {
+      return NextResponse.json({ error: 'Failed to access document preview' }, { status: 500 })
+    }
+
+    const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(urlData.signedUrl)}&embedded=true`
+    return NextResponse.redirect(viewerUrl)
+  }
+
   // Download directly from Supabase Storage so we can serve with strict "inline" disposition
   const { data: fileBlob, error: downloadError } = await supabaseAdmin.storage
     .from('resources')
     .download(targetPath)
 
   let arrayBuffer: ArrayBuffer
-  let mimeType = getMimeType(filename)
+  let mimeType = getMimeType(filename, targetPath)
 
   if (!downloadError && fileBlob) {
     arrayBuffer = await fileBlob.arrayBuffer()

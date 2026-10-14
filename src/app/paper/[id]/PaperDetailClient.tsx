@@ -28,6 +28,7 @@ import AIPaperSolverModal from '@/components/paper/AIPaperSolverModal'
 import ResourceUpvoteButton from '@/components/ResourceUpvoteButton'
 import MockExamModal from '@/components/mock-exam/MockExamModal'
 import ExamHallFlashcardsModal from '@/components/flashcards/ExamHallFlashcardsModal'
+import DownloadButtonWithProgress from '@/components/ui/DownloadButtonWithProgress'
 import { Flame } from 'lucide-react'
 import SaveOfflineButton from '@/components/offline/SaveOfflineButton'
 import QuestionCheckpad from '@/components/tracker/QuestionCheckpad'
@@ -262,16 +263,15 @@ export default function PaperDetailClient({
             </Button>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <Button
+              <DownloadButtonWithProgress
+                resourceId={paper.id}
+                fileName={paper.original_filename}
                 size="lg"
                 variant="outline"
-                asChild
-                className="border-prevu-surface-light hover:border-prevu-accent/50 font-bold"
+                className="w-full border-prevu-surface-light hover:border-prevu-accent/50 font-bold"
               >
-                <a href={`/api/download/${paper.id}`} download>
-                  <Download className="w-4 h-4 mr-2 text-emerald-400" /> Download PDF
-                </a>
-              </Button>
+                <Download className="w-4 h-4 mr-2 text-emerald-400" /> Download PDF
+              </DownloadButtonWithProgress>
 
               <div className="flex">
                 <SaveOfflineButton paper={paper} className="w-full justify-center h-full py-2.5" />
@@ -449,11 +449,15 @@ export default function PaperDetailClient({
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <Button size="sm" variant="outline" asChild className="h-8 text-xs border-prevu-surface-light">
-                  <a href={`/api/download/${paper.id}`} download>
-                    <Download className="w-3.5 h-3.5 mr-1" /> Download
-                  </a>
-                </Button>
+                <DownloadButtonWithProgress
+                  resourceId={paper.id}
+                  fileName={paper.original_filename}
+                  size="sm"
+                  variant="outline"
+                  className="h-8 text-xs border-prevu-surface-light"
+                >
+                  <Download className="w-3.5 h-3.5 mr-1" /> Download
+                </DownloadButtonWithProgress>
                 <Button size="sm" variant="ghost" onClick={() => setPreviewOpen(false)} className="h-8 text-xs">
                   Close
                 </Button>

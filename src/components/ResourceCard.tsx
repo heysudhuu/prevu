@@ -6,6 +6,7 @@ import BookmarkButton from '@/components/BookmarkButton'
 import PreviewButton from '@/components/PreviewButton'
 import SharePaperButton from '@/components/SharePaperButton'
 import ResourceUpvoteButton from '@/components/ResourceUpvoteButton'
+import DownloadButtonWithProgress from '@/components/ui/DownloadButtonWithProgress'
 import Link from 'next/link'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -114,11 +115,13 @@ export function ResourceCard({ resource, isBookmarked = false, initialUpvoted = 
       
       <CardFooter className="flex-none pt-0 border-t-0 flex gap-2">
         <PreviewButton resource={resource} />
-        <Button variant="outline" size="sm" className="flex-1 text-xs border-prevu-surface-light hover:border-prevu-accent/40 font-semibold" asChild>
-          <a href={`/api/download/${resource.id}`}>
-            <Download className="w-3.5 h-3.5 mr-1 text-prevu-text-muted" /> Download
-          </a>
-        </Button>
+        <DownloadButtonWithProgress
+          resourceId={resource.id}
+          fileName={resource.original_filename}
+          variant="outline"
+          size="sm"
+          className="flex-1 text-xs border-prevu-surface-light hover:border-prevu-accent/40 font-semibold"
+        />
       </CardFooter>
     </Card>
   )

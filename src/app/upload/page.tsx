@@ -6,8 +6,14 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from '@/components/ui/Button'
 import { getFormDataOptions, checkHashExists, uploadResource, prepareDirectUpload, completeDirectUpload } from './actions'
 import { createClient } from '@/utils/supabase/client'
-import { Upload, AlertCircle, Sparkles, BookOpen, Layers, Eye, FileText, CheckCircle2, CloudUpload, Clipboard, Loader2, ShieldCheck, Check } from 'lucide-react'
+import { 
+  Upload, AlertCircle, Sparkles, BookOpen, Layers, Eye, FileText, 
+  CheckCircle2, CloudUpload, Clipboard, Loader2, ShieldCheck, Check, 
+  Wand2, AlertTriangle, Sparkle 
+} from 'lucide-react'
 import UploadCelebrationMascot from '@/components/animations/UploadCelebrationMascot'
+import { analyzeImageQuality, autoEnhanceDocumentScan, type QualityAnalysisResult } from '@/lib/scanner/scanQuality'
+import { detectMetadataFromFile, type DetectedMetadata } from '@/lib/scanner/autoDetect'
 
 type Subject = { id: number, name: string, code: string, year: number, semester: number, branch_id: number }
 
@@ -155,6 +161,9 @@ function UploadFormContent() {
   const [totalBytesOverall, setTotalBytesOverall] = useState(0)
   const [currentFileIndex, setCurrentFileIndex] = useState(0)
   const [fileProgressMap, setFileProgressMap] = useState<Record<string, number>>({})
+  const [autoDetected, setAutoDetected] = useState<DetectedMetadata | null>(null)
+  const [qualityMap, setQualityMap] = useState<Record<string, QualityAnalysisResult>>({})
+  const [enhancingIndex, setEnhancingIndex] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [isAdminUpload, setIsAdminUpload] = useState(false)
@@ -191,11 +200,74 @@ function UploadFormContent() {
   // Keep filesRef in sync with files state so addFiles always has the latest snapshot
   useEffect(() => { filesRef.current = files }, [files])
 
+  // Shared handler to process incoming files for smart auto-detection & quality inspection
+  const processIncomingFiles = useCallback(async (incomingFiles: File[]) => {
+    const primary = incomingFiles[0]
+    if (primary && subjects.length > 0) {
+      try {
+        const detected = await detectMetadataFromFile(primary, subjects)
+        if (detected) {
+          setAutoDetected(detected)
+
+          // Pre-fill form fields automatically
+          if (detected.subjectName) setSubjectName(detected.subjectName)
+          if (detected.subjectCode) setSubjectCode(detected.subjectCode)
+          if (detected.year) setSelectedYear(detected.year)
+          if (detected.semester) setSelectedSemester(detected.semester)
+          if (detected.examYear) setExamYear(detected.examYear)
+          if (detected.category) setUploadCategory(detected.category)
+          if (detected.examType) setExamType(detected.examType)
+          if (detected.materialType) setMaterialType(detected.materialType)
+          if (detected.unit) setUnitNumber(detected.unit)
+        }
+      } catch (detectErr) {
+        console.warn('Auto-detection error:', detectErr)
+      }
+    }
+
+    // Inspect image sharpness & readability
+    for (const f of incomingFiles) {
+      if (f.type.startsWith('image/')) {
+        try {
+          const quality = await analyzeImageQuality(f)
+          setQualityMap(prev => ({ ...prev, [f.name]: quality }))
+        } catch (qualErr) {
+          console.warn('Scan quality error:', qualErr)
+        }
+      }
+    }
+  }, [subjects])
+
+  // One-click adaptive contrast enhancer for scans
+  const handleEnhanceFile = async (index: number) => {
+    const targetFile = files[index]
+    if (!targetFile || !targetFile.type.startsWith('image/')) return
+
+    setEnhancingIndex(index)
+    try {
+      const enhancedFile = await autoEnhanceDocumentScan(targetFile)
+      
+      const updatedFiles = [...files]
+      updatedFiles[index] = enhancedFile
+      setFiles(updatedFiles)
+
+      const newQuality = await analyzeImageQuality(enhancedFile)
+      setQualityMap(prev => {
+        const next = { ...prev }
+        delete next[targetFile.name]
+        next[enhancedFile.name] = newQuality
+        return next
+      })
+    } catch (enhErr) {
+      console.error('Enhancement failed:', enhErr)
+    } finally {
+      setEnhancingIndex(null)
+    }
+  }
+
   // Shared handler to add files from any source (drag, paste, click)
   const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
 
-  // Shared handler to add files from any source (drag, paste, click)
-  // Uses filesRef to avoid functional updaters — prevents React error #441
   const addFiles = useCallback((incoming: File[]) => {
     const oversized = incoming.find(f => f.size > MAX_FILE_SIZE)
     if (oversized) {
@@ -216,8 +288,11 @@ function UploadFormContent() {
       setError(null)
       setFiles(combined)
     }
+
+    processIncomingFiles(valid)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [processIncomingFiles])
+
 
   // Ctrl+V paste handler
   useEffect(() => {
@@ -312,20 +387,32 @@ function UploadFormContent() {
       }
     }
 
+    // Run smart auto-detect and quality checks
+    processIncomingFiles(incoming)
+
     // Reset input so user can add another file
     e.target.value = ''
   }
 
   const handleRemoveFile = (index: number) => {
+    const targetFile = files[index]
     setFiles(prev => {
       const updated = prev.filter((_, i) => i !== index)
       if (updated.length === 0) {
         setFileHash('')
         setDuplicateData(null)
         setDuplicateAcknowledged(false)
+        setAutoDetected(null)
       }
       return updated
     })
+    if (targetFile) {
+      setQualityMap(prev => {
+        const next = { ...prev }
+        delete next[targetFile.name]
+        return next
+      })
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -489,6 +576,9 @@ function UploadFormContent() {
             setTotalBytesUploaded(0)
             setTotalBytesOverall(0)
             setFileProgressMap({})
+            setAutoDetected(null)
+            setQualityMap({})
+            setEnhancingIndex(null)
           }}
         />
       </div>
@@ -561,6 +651,37 @@ function UploadFormContent() {
 
             <form id="upload-form" onSubmit={handleSubmit} className="space-y-5">
               
+              {/* Smart Auto-Detected Metadata Alert (Feature 1) */}
+              {autoDetected && (
+                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-purple-500/15 via-prevu-accent/10 to-prevu-bg border border-prevu-accent/35 flex items-center justify-between gap-3 shadow-lg shadow-purple-500/5 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-prevu-accent/20 text-prevu-accent flex items-center justify-center shrink-0 border border-prevu-accent/30">
+                      <Wand2 className="w-4 h-4 text-prevu-accent" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-bold text-white flex items-center gap-1">
+                          Smart Auto-Fill Applied
+                        </span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-prevu-accent/20 text-prevu-accent font-semibold border border-prevu-accent/30">
+                          {autoDetected.confidenceScore}% Match
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-prevu-text-muted truncate max-w-[280px] sm:max-w-md">
+                        Detected from {autoDetected.detectedFrom.join(' • ')}. Fields have been automatically selected.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAutoDetected(null)}
+                    className="text-[11px] text-prevu-text-muted hover:text-white px-2 py-1 rounded-lg hover:bg-prevu-surface transition-colors cursor-pointer shrink-0"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              )}
+
               {/* Year & Semester Grid */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -758,30 +879,77 @@ function UploadFormContent() {
                 {/* Selected Files List */}
                 {files.length > 0 && (
                   <div className="space-y-2 p-3 rounded-2xl bg-prevu-bg/90 border border-prevu-surface-light">
-                    {files.map((f, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between p-2.5 rounded-xl bg-prevu-surface/60 border border-purple-500/30 text-xs"
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <span className="w-6 h-6 rounded-lg bg-purple-600/30 text-purple-300 flex items-center justify-center text-[10px] font-mono font-bold shrink-0">
-                            #{idx + 1}
-                          </span>
-                          <div className="min-w-0">
-                            <p className="font-semibold text-white truncate max-w-[240px] sm:max-w-xs">{f.name}</p>
-                            <p className="text-[10px] font-mono text-prevu-text-muted">{(f.size / (1024 * 1024)).toFixed(2)} MB</p>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveFile(idx)}
-                          className="p-1 rounded-lg text-prevu-text-muted hover:text-red-400 hover:bg-red-500/10 transition-colors text-xs font-bold cursor-pointer"
-                          title="Remove file"
+                    {files.map((f, idx) => {
+                      const quality = qualityMap[f.name]
+                      const isImage = f.type.startsWith('image/')
+                      return (
+                        <div
+                          key={idx}
+                          className="p-3 rounded-xl bg-prevu-surface/60 border border-purple-500/30 text-xs space-y-2 transition-all"
                         >
-                          ✕
-                        </button>
-                      </div>
-                    ))}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="w-6 h-6 rounded-lg bg-purple-600/30 text-purple-300 flex items-center justify-center text-[10px] font-mono font-bold shrink-0">
+                                #{idx + 1}
+                              </span>
+                              <div className="min-w-0">
+                                <p className="font-semibold text-white truncate max-w-[220px] sm:max-w-xs">{f.name}</p>
+                                <p className="text-[10px] font-mono text-prevu-text-muted">{(f.size / (1024 * 1024)).toFixed(2)} MB</p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveFile(idx)}
+                              className="p-1 rounded-lg text-prevu-text-muted hover:text-red-400 hover:bg-red-500/10 transition-colors text-xs font-bold cursor-pointer"
+                              title="Remove file"
+                            >
+                              ✕
+                            </button>
+                          </div>
+
+                          {/* Scan Quality & Readability Indicator (Feature 5) */}
+                          {isImage && quality && (
+                            <div className="pt-2 border-t border-prevu-surface-light/60">
+                              {!quality.isAcceptable ? (
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-300">
+                                  <div className="flex items-start gap-1.5 min-w-0 text-[11px]">
+                                    <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                                    <span>
+                                      {quality.issues[0]} <span className="font-mono text-[10px] text-amber-400">({quality.score}% Score)</span>
+                                    </span>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleEnhanceFile(idx)}
+                                    disabled={enhancingIndex === idx}
+                                    className="h-7 text-[10px] font-bold border-amber-500/40 text-amber-300 hover:bg-amber-500/20 shrink-0"
+                                  >
+                                    {enhancingIndex === idx ? (
+                                      <>
+                                        <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                                        <span>Enhancing...</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Sparkles className="w-3 h-3 mr-1 text-amber-400" />
+                                        <span>Auto-Enhance Contrast</span>
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 px-1 font-medium">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                  <span>Scan sharpness & readability verified (Clarity: {quality.score}%)</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
 

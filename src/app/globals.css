@@ -198,3 +198,23 @@
 .section-gradient-alt {
   background: linear-gradient(180deg, #09090d 0%, #0e0e16 50%, #09090d 100%);
 }
+
+@keyframes progressStripes {
+  0% { background-position: 0 0; }
+  100% { background-position: 24px 0; }
+}
+
+.animate-progress-stripes {
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.2) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.2) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 24px 24px;
+  animation: progressStripes 1s linear infinite;
+}

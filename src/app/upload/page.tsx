@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from '@/components/ui/Button'
 import { getFormDataOptions, checkHashExists, uploadResource, prepareDirectUpload, completeDirectUpload } from './actions'
 import { createClient } from '@/utils/supabase/client'
-import { Upload, AlertCircle, Sparkles, BookOpen, Layers, Eye, FileText, CheckCircle2, CloudUpload, Clipboard } from 'lucide-react'
+import { Upload, AlertCircle, Sparkles, BookOpen, Layers, Eye, FileText, CheckCircle2, CloudUpload, Clipboard, Loader2, ShieldCheck, Check } from 'lucide-react'
 import UploadCelebrationMascot from '@/components/animations/UploadCelebrationMascot'
 
 type Subject = { id: number, name: string, code: string, year: number, semester: number, branch_id: number }
@@ -21,6 +21,109 @@ const STUDY_MATERIAL_TYPES = [
   { value: 'Cheatsheet', label: 'Formula Sheet & Quick Cheatsheet', icon: '⚡' },
   { value: 'Study Material', label: 'General Study Material / Slides', icon: '💡' },
 ]
+
+function formatBytes(bytes: number, decimals = 1): string {
+  if (bytes <= 0) return '0 B'
+  const k = 1024
+  const dm = decimals < 0 ? 0 : decimals
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
+}
+
+/**
+ * Uploads a file directly to Supabase storage signed URL with live byte-level progress reporting via XHR,
+ * with automatic fallback to Supabase client / fetch in case of network variance.
+ */
+function uploadFileWithProgress(
+  prepared: { filePath: string; token: string; signedUrl: string; mimeType: string },
+  file: File,
+  supabase: ReturnType<typeof createClient>,
+  onProgress: (loadedBytes: number, totalBytes: number) => void
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    try {
+      const xhr = new XMLHttpRequest()
+      xhr.open('PUT', prepared.signedUrl, true)
+
+      // Supabase storage signed upload URLs expect multipart FormData with file body
+      const formData = new FormData()
+      formData.append('cacheControl', '3600')
+      formData.append('', file)
+
+      xhr.upload.onprogress = (evt) => {
+        if (evt.lengthComputable && evt.total > 0) {
+          onProgress(evt.loaded, evt.total)
+        }
+      }
+
+      xhr.onload = async () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          onProgress(file.size, file.size)
+          resolve()
+        } else {
+          console.warn(`XHR direct upload returned HTTP ${xhr.status}, falling back to Supabase client:`, xhr.responseText)
+          try {
+            const { error: uploadError } = await supabase.storage
+              .from('resources')
+              .uploadToSignedUrl(prepared.filePath, prepared.token, file, {
+                contentType: prepared.mimeType,
+                upsert: false
+              })
+
+            if (uploadError) {
+              const putRes = await fetch(prepared.signedUrl, {
+                method: 'PUT',
+                headers: { 'Content-Type': prepared.mimeType || 'application/octet-stream' },
+                body: file
+              })
+              if (!putRes.ok) {
+                throw new Error(`Upload failed with status ${putRes.status}`)
+              }
+            }
+            onProgress(file.size, file.size)
+            resolve()
+          } catch (fallbackErr: any) {
+            reject(new Error(fallbackErr?.message || `Failed to upload ${file.name}`))
+          }
+        }
+      }
+
+      xhr.onerror = async () => {
+        console.warn('XHR network event error, attempting Supabase client fallback')
+        try {
+          const { error: uploadError } = await supabase.storage
+            .from('resources')
+            .uploadToSignedUrl(prepared.filePath, prepared.token, file, {
+              contentType: prepared.mimeType,
+              upsert: false
+            })
+
+          if (uploadError) {
+            const putRes = await fetch(prepared.signedUrl, {
+              method: 'PUT',
+              headers: { 'Content-Type': prepared.mimeType || 'application/octet-stream' },
+              body: file
+            })
+            if (!putRes.ok) {
+              throw new Error(`Upload failed with status ${putRes.status}`)
+            }
+          }
+          onProgress(file.size, file.size)
+          resolve()
+        } catch (fallbackErr: any) {
+          reject(new Error(fallbackErr?.message || 'Network error during upload. Please check your connection.'))
+        }
+      }
+
+      xhr.ontimeout = () => reject(new Error('Upload request timed out. Please try again.'))
+
+      xhr.send(formData)
+    } catch (err) {
+      reject(err)
+    }
+  })
+}
 
 function UploadFormContent() {
   const searchParams = useSearchParams()
@@ -46,6 +149,12 @@ function UploadFormContent() {
   const [duplicateData, setDuplicateData] = useState<any | null>(null)
   const [duplicateAcknowledged, setDuplicateAcknowledged] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadStage, setUploadStage] = useState<'idle' | 'preparing' | 'uploading' | 'finalizing' | 'complete'>('idle')
+  const [totalBytesUploaded, setTotalBytesUploaded] = useState(0)
+  const [totalBytesOverall, setTotalBytesOverall] = useState(0)
+  const [currentFileIndex, setCurrentFileIndex] = useState(0)
+  const [fileProgressMap, setFileProgressMap] = useState<Record<string, number>>({})
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [isAdminUpload, setIsAdminUpload] = useState(false)
@@ -233,7 +342,15 @@ function UploadFormContent() {
     
     setError(null)
     setIsUploading(true)
-    setUploadProgressText('Preparing upload...')
+    setUploadProgress(5)
+    setUploadStage('preparing')
+    setUploadProgressText('Verifying file details & initializing secure session...')
+    
+    const totalBytes = files.reduce((acc, f) => acc + (f.size || 0), 0)
+    setTotalBytesOverall(totalBytes)
+    setTotalBytesUploaded(0)
+    setFileProgressMap({})
+    setCurrentFileIndex(0)
     
     try {
       // 1. Prepare direct upload session (metadata only, fast & lightweight JSON, bypasses 6MB payload limits)
@@ -260,46 +377,58 @@ function UploadFormContent() {
         return
       }
 
-      // 2. Direct upload each file from browser straight to Supabase Storage
+      setUploadStage('uploading')
+      setUploadProgress(12)
+
+      // 2. Direct upload each file from browser straight to Supabase Storage with real-time byte progress
       const supabase = createClient()
+      let accumulatedBytesFromCompletedFiles = 0
+
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
         const prepared = prepareResult.preparedFiles[i]
+        setCurrentFileIndex(i)
 
         setUploadProgressText(
           files.length > 1
-            ? `Uploading file ${i + 1} of ${files.length} (${file.name})...`
+            ? `Uploading part ${i + 1} of ${files.length}: ${file.name}...`
             : `Uploading ${file.name}...`
         )
 
-        const { error: uploadError } = await supabase.storage
-          .from('resources')
-          .uploadToSignedUrl(prepared.filePath, prepared.token, file, {
-            contentType: prepared.mimeType,
-            upsert: false
-          })
+        await uploadFileWithProgress(
+          prepared,
+          file,
+          supabase,
+          (fileLoaded, fileTotal) => {
+            const currentTotalLoaded = accumulatedBytesFromCompletedFiles + fileLoaded
+            setTotalBytesUploaded(currentTotalLoaded)
 
-        if (uploadError) {
-          // Fallback: direct HTTP PUT to signedUrl
-          try {
-            const putRes = await fetch(prepared.signedUrl, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': prepared.mimeType || 'application/octet-stream'
-              },
-              body: file
-            })
-            if (!putRes.ok) {
-              throw new Error(`Upload failed with status ${putRes.status}`)
-            }
-          } catch {
-            throw new Error(`Failed to upload "${file.name}" to storage: ${uploadError.message}. Please check your connection and try again.`)
+            // Map byte transfer to the 12% - 88% overall progress range
+            const byteFraction = totalBytes > 0 ? (currentTotalLoaded / totalBytes) : (fileLoaded / fileTotal)
+            const mappedPercent = Math.min(88, Math.max(12, Math.round(12 + byteFraction * 76)))
+            setUploadProgress(mappedPercent)
+
+            const singleFilePercent = Math.min(100, Math.round((fileLoaded / (fileTotal || 1)) * 100))
+            setFileProgressMap(prev => ({
+              ...prev,
+              [file.name]: singleFilePercent
+            }))
           }
-        }
+        )
+
+        accumulatedBytesFromCompletedFiles += file.size
+        setTotalBytesUploaded(accumulatedBytesFromCompletedFiles)
+        setFileProgressMap(prev => ({
+          ...prev,
+          [file.name]: 100
+        }))
       }
 
       // 3. Complete upload by recording resource in database
-      setUploadProgressText('Finalizing resource submission...')
+      setUploadStage('finalizing')
+      setUploadProgress(92)
+      setUploadProgressText('Recording resource in Prevu database & indexing tags...')
+
       const completeResult = await completeDirectUpload({
         resolvedSubjectId: prepareResult.resolvedSubjectId!,
         resolvedExamTypeId: prepareResult.resolvedExamTypeId!,
@@ -316,8 +445,15 @@ function UploadFormContent() {
       if (completeResult.error) {
         setError(completeResult.error)
       } else if (completeResult.success) {
+        setUploadProgress(100)
+        setUploadStage('complete')
+        setUploadProgressText('Upload completed successfully!')
         setIsAdminUpload(!!completeResult.isAdminUpload)
-        setSuccess(true)
+
+        // Short celebration transition delay
+        setTimeout(() => {
+          setSuccess(true)
+        }, 500)
       }
     } catch (err: unknown) {
       console.error('Upload submission failed:', err)
@@ -325,7 +461,6 @@ function UploadFormContent() {
       setError(message)
     } finally {
       setIsUploading(false)
-      setUploadProgressText('')
     }
   }
 
@@ -349,6 +484,11 @@ function UploadFormContent() {
             setDuplicateData(null)
             setDuplicateAcknowledged(false)
             setIsAdminUpload(false)
+            setUploadProgress(0)
+            setUploadStage('idle')
+            setTotalBytesUploaded(0)
+            setTotalBytesOverall(0)
+            setFileProgressMap({})
           }}
         />
       </div>
@@ -781,6 +921,148 @@ function UploadFormContent() {
                 </div>
               )}
               
+              {/* Active Upload Processing & Percentage Card */}
+              {isUploading && (
+                <div className="p-4 rounded-2xl bg-prevu-bg/95 border border-prevu-surface-light shadow-2xl space-y-3.5 backdrop-blur-xl animate-in fade-in duration-300">
+                  {/* Top Status Header & Percent Badge */}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                        uploadProgress >= 100
+                          ? 'bg-emerald-500/20 text-emerald-400'
+                          : isStudy
+                            ? 'bg-emerald-500/15 text-emerald-300'
+                            : 'bg-prevu-accent/15 text-prevu-accent'
+                      }`}>
+                        {uploadProgress >= 100 ? (
+                          <CheckCircle2 className="w-5 h-5 text-emerald-400 animate-bounce" />
+                        ) : (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <h4 className="text-xs font-bold text-white">
+                            {uploadProgress >= 100 
+                              ? 'Upload Complete!' 
+                              : uploadStage === 'preparing'
+                                ? 'Initializing Vault Session'
+                                : uploadStage === 'finalizing'
+                                  ? 'Cataloging Resource'
+                                  : 'Transferring to Prevu Vault'}
+                          </h4>
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-mono font-medium bg-prevu-surface-light text-prevu-text-muted border border-prevu-surface-light/60">
+                            {uploadStage === 'preparing' ? 'Step 1 of 3' : uploadStage === 'uploading' ? 'Step 2 of 3' : 'Step 3 of 3'}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-prevu-text-muted truncate max-w-[260px] sm:max-w-md">
+                          {uploadProgressText}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Prominent Real-Time Percentage Display */}
+                    <div className="text-right shrink-0">
+                      <span className={`text-2xl sm:text-3xl font-black font-mono tracking-tight ${
+                        uploadProgress >= 100
+                          ? 'text-emerald-400'
+                          : isStudy
+                            ? 'text-emerald-400'
+                            : 'text-prevu-accent'
+                      }`}>
+                        {uploadProgress}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Primary Progress Bar with Live Shimmer */}
+                  <div className="space-y-1.5">
+                    <div className="w-full h-3 bg-prevu-surface rounded-full overflow-hidden p-0.5 border border-prevu-surface-light relative">
+                      <div 
+                        className={`h-full rounded-full transition-all duration-300 ease-out relative overflow-hidden ${
+                          uploadProgress >= 100
+                            ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                            : isStudy
+                              ? 'bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-400'
+                              : 'bg-gradient-to-r from-purple-600 via-prevu-accent to-fuchsia-500'
+                        }`}
+                        style={{ width: `${Math.max(4, uploadProgress)}%` }}
+                      >
+                        {/* Animated striped shimmer on the progress bar */}
+                        <div className="absolute inset-0 animate-progress-stripes opacity-30" />
+                      </div>
+                    </div>
+
+                    {/* Real-time Byte Stats & Secure Notice */}
+                    <div className="flex items-center justify-between text-[10px] font-mono text-prevu-text-muted pt-0.5">
+                      <span>
+                        {totalBytesOverall > 0 ? (
+                          `${formatBytes(totalBytesUploaded)} of ${formatBytes(totalBytesOverall)} transferred`
+                        ) : (
+                          'Calculating payload size...'
+                        )}
+                      </span>
+                      <span className="flex items-center gap-1 text-prevu-text-muted/80">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Secure SSL Stream
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Multi-file Progress Breakdown */}
+                  {files.length > 1 && (
+                    <div className="space-y-1.5 pt-1.5 border-t border-prevu-surface-light/60">
+                      <div className="text-[10px] font-semibold uppercase tracking-wider text-prevu-text-muted flex items-center justify-between">
+                        <span>Documents Progress</span>
+                        <span>{files.length} Files Total</span>
+                      </div>
+                      {files.map((file, idx) => {
+                        const filePercent = fileProgressMap[file.name] ?? 0
+                        const isDone = filePercent >= 100
+                        const isCurrent = idx === currentFileIndex && uploadStage === 'uploading'
+                        return (
+                          <div 
+                            key={idx} 
+                            className={`flex items-center justify-between text-[11px] p-2 rounded-xl transition-colors ${
+                              isCurrent
+                                ? 'bg-prevu-surface/80 border border-prevu-accent/40 shadow-sm'
+                                : 'bg-prevu-surface/40 border border-prevu-surface-light/40'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className={`w-4 h-4 rounded flex items-center justify-center text-[9px] font-mono font-bold shrink-0 ${
+                                isDone 
+                                  ? 'bg-emerald-500/20 text-emerald-400' 
+                                  : isCurrent 
+                                    ? isStudy ? 'bg-emerald-500/20 text-emerald-300 animate-pulse' : 'bg-prevu-accent/20 text-prevu-accent animate-pulse' 
+                                    : 'bg-prevu-surface text-prevu-text-muted'
+                              }`}>
+                                {isDone ? '✓' : idx + 1}
+                              </span>
+                              <span className="text-white truncate max-w-[200px] sm:max-w-xs">{file.name}</span>
+                            </div>
+                            <span className={`font-mono text-[10px] font-semibold shrink-0 ml-2 ${
+                              isDone 
+                                ? 'text-emerald-400' 
+                                : isCurrent 
+                                  ? isStudy ? 'text-emerald-300' : 'text-prevu-accent' 
+                                  : 'text-prevu-text-muted'
+                            }`}>
+                              {isDone ? '100% ✓' : isCurrent ? `${filePercent}%` : 'Queued'}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* Friendly Reassurance Note */}
+                  <div className="flex items-center gap-2 text-[10px] text-prevu-text-muted/80 bg-prevu-surface/40 px-3 py-2 rounded-xl border border-prevu-surface-light/40">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
+                    <span>Please keep this window open while processing and uploading to the cloud.</span>
+                  </div>
+                </div>
+              )}
+
               {error && (
                 <div className="p-3 bg-red-500/10 border border-red-500/25 rounded-xl flex items-start gap-2.5 text-xs text-red-400">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -801,12 +1083,21 @@ function UploadFormContent() {
               }`}
               disabled={isUploading || files.length === 0 || !subjectName.trim() || (!!duplicateData && !duplicateAcknowledged)}
             >
-              <Upload className="w-4 h-4" />
-              {isUploading 
-                ? (uploadProgressText || `Uploading ${files.length} Document${files.length > 1 ? 's' : ''}...`) 
-                : isStudy 
-                  ? `Submit Study Material (${files.length} file${files.length === 1 ? '' : 's'})` 
-                  : `Submit Question Paper (${files.length} file${files.length === 1 ? '' : 's'})`}
+              {isUploading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Processing Upload ({uploadProgress}%)...</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4" />
+                  <span>
+                    {isStudy 
+                      ? `Submit Study Material (${files.length} file${files.length === 1 ? '' : 's'})` 
+                      : `Submit Question Paper (${files.length} file${files.length === 1 ? '' : 's'})`}
+                  </span>
+                </>
+              )}
             </Button>
           </CardFooter>
         </Card>

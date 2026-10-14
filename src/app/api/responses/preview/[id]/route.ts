@@ -68,19 +68,49 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     }
   }
 
-  // Generate signed URL from resources storage bucket
-  const { data: urlData, error: urlError } = await supabase.storage
+  // Download directly from Supabase Storage so we can serve with strict "inline" disposition
+  const { data: fileBlob, error: downloadError } = await supabase.storage
     .from('resources')
-    .createSignedUrl(targetPath, 60 * 15) // 15 mins
+    .download(targetPath)
 
-  if (urlError || !urlData?.signedUrl) {
-    // Fallback to public URL
-    const { data: pubData } = supabase.storage.from('resources').getPublicUrl(targetPath)
-    if (pubData?.publicUrl) {
-      return NextResponse.redirect(pubData.publicUrl)
+  let arrayBuffer: ArrayBuffer
+  let mimeType = 'application/pdf'
+  const ext = (targetPath.split('.').pop() || '').toLowerCase()
+  if (['jpg', 'jpeg'].includes(ext)) mimeType = 'image/jpeg'
+  else if (ext === 'png') mimeType = 'image/png'
+  else if (ext === 'webp') mimeType = 'image/webp'
+
+  if (!downloadError && fileBlob) {
+    arrayBuffer = await fileBlob.arrayBuffer()
+    if (fileBlob.type) mimeType = fileBlob.type
+  } else {
+    const { data: urlData, error: urlError } = await supabase.storage
+      .from('resources')
+      .createSignedUrl(targetPath, 60 * 15)
+
+    if (urlError || !urlData?.signedUrl) {
+      return NextResponse.json({ error: 'Could not access file' }, { status: 500 })
     }
-    return NextResponse.json({ error: 'Could not generate download link' }, { status: 500 })
+
+    const fetchRes = await fetch(urlData.signedUrl)
+    if (!fetchRes.ok) {
+      return NextResponse.json({ error: 'Failed to fetch content' }, { status: 502 })
+    }
+    arrayBuffer = await fetchRes.arrayBuffer()
+    const contentTypeHeader = fetchRes.headers.get('content-type')
+    if (contentTypeHeader) mimeType = contentTypeHeader
   }
 
-  return NextResponse.redirect(urlData.signedUrl)
+  const cleanFilename = (responseItem.file_name || 'document.pdf').replace(/[^a-zA-Z0-9._-]/g, '_')
+
+  return new NextResponse(arrayBuffer, {
+    status: 200,
+    headers: {
+      'Content-Type': mimeType,
+      'Content-Disposition': `inline; filename="${cleanFilename}"`,
+      'Content-Length': arrayBuffer.byteLength.toString(),
+      'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+      'X-Content-Type-Options': 'nosniff',
+    }
+  })
 }

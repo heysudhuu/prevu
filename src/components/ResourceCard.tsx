@@ -114,7 +114,12 @@ export function ResourceCard({ resource, isBookmarked = false, initialUpvoted = 
       </CardContent>
       
       <CardFooter className="flex-none pt-0 border-t-0 flex gap-2">
-        <PreviewButton resource={resource} />
+        <PreviewButton 
+          resource={resource} 
+          variant="secondary"
+          label="Preview First"
+          className="flex-1 font-semibold border border-prevu-surface-light hover:border-prevu-accent/50 hover:bg-prevu-surface-elevated transition-all"
+        />
         <DownloadButtonWithProgress
           resourceId={resource.id}
           fileName={resource.original_filename}

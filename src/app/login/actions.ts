@@ -41,6 +41,7 @@ export async function checkUsernameAvailable(username: string) {
 
 /**
  * Resolves an email address from either an email or a username/UID identifier.
+ * Checks for minor typos (e.g. py771649611 vs py77164961) to help students recover their accounts.
  */
 export async function resolveEmailFromIdentifier(identifier: string): Promise<{ email?: string; error?: string }> {
   try {
@@ -49,17 +50,46 @@ export async function resolveEmailFromIdentifier(identifier: string): Promise<{ 
       return { error: 'Please provide a username or email address.' }
     }
 
-    // If identifier already has '@', it's an email
+    const supabase = getSupabaseAdmin()
+
+    // If identifier already has '@', it's an email address
     if (cleanIdentifier.includes('@')) {
+      const { data: userByEmail } = await supabase
+        .from('users')
+        .select('email, username')
+        .or(`email.ilike.${cleanIdentifier},cu_email.ilike.${cleanIdentifier}`)
+        .limit(1)
+        .maybeSingle()
+
+      if (userByEmail?.email) {
+        return { email: userByEmail.email }
+      }
+
+      // Check if user had a typo in the email (e.g., extra character at the end)
+      const prefix = cleanIdentifier.split('@')[0]
+      if (prefix.length >= 4) {
+        const shortenedPrefix = prefix.slice(0, -1)
+        const { data: similarUser } = await supabase
+          .from('users')
+          .select('email, username')
+          .or(`email.ilike.%${shortenedPrefix}%,username.ilike.%${shortenedPrefix}%`)
+          .limit(1)
+          .maybeSingle()
+
+        if (similarUser?.email) {
+          return {
+            error: `No account found for "${cleanIdentifier}". Did you mean ${similarUser.email} (username @${similarUser.username})?`
+          }
+        }
+      }
+
       return { email: cleanIdentifier }
     }
-
-    const supabase = getSupabaseAdmin()
 
     // Lookup user by username (case-insensitive) or CU email prefix or ID
     const { data, error } = await supabase
       .from('users')
-      .select('email')
+      .select('email, username')
       .or(`username.ilike.${cleanIdentifier},cu_email.ilike.${cleanIdentifier}@cuchd.in,cu_email.ilike.${cleanIdentifier}`)
       .limit(1)
       .maybeSingle()
@@ -70,6 +100,23 @@ export async function resolveEmailFromIdentifier(identifier: string): Promise<{ 
 
     if (data?.email) {
       return { email: data.email }
+    }
+
+    // Check if user had a minor typo in username
+    if (cleanIdentifier.length >= 4) {
+      const shortened = cleanIdentifier.slice(0, -1)
+      const { data: similar } = await supabase
+        .from('users')
+        .select('email, username')
+        .or(`username.ilike.%${shortened}%,email.ilike.%${shortened}%`)
+        .limit(1)
+        .maybeSingle()
+
+      if (similar?.username) {
+        return {
+          error: `No account found with username "${cleanIdentifier}". Did you mean @${similar.username} (${similar.email})?`
+        }
+      }
     }
 
     return { 

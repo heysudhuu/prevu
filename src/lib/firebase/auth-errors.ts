@@ -3,10 +3,12 @@ export function getFriendlyAuthErrorMessage(error: unknown): string {
   
   const errorMessage = error instanceof Error ? error.message : String(error)
   
+  if (errorMessage.includes('auth/user-not-found')) {
+    return 'No registered account was found with this email or username. Please check your spelling or create a new account.'
+  }
   if (
     errorMessage.includes('auth/invalid-credential') || 
-    errorMessage.includes('auth/wrong-password') || 
-    errorMessage.includes('auth/user-not-found')
+    errorMessage.includes('auth/wrong-password')
   ) {
     return 'Invalid email or password. Please check your credentials and try again.'
   }

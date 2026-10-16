@@ -194,14 +194,14 @@ export default function AuthForm({ initialMode = 'login' }: { initialMode?: 'log
       try {
         let authEmail = identifier.trim()
 
-        // Resolve username/UID to registered email
-        if (!authEmail.includes('@')) {
-          const resolution = await resolveEmailFromIdentifier(authEmail)
-          if (resolution.error || !resolution.email) {
-            setError(resolution.error || `No account found with username "${authEmail}".`)
-            setLoading(false)
-            return
-          }
+        // Resolve username/UID to registered email or detect typos
+        const resolution = await resolveEmailFromIdentifier(authEmail)
+        if (resolution.error) {
+          setError(resolution.error)
+          setLoading(false)
+          return
+        }
+        if (resolution.email) {
           authEmail = resolution.email
         }
 
@@ -274,13 +274,13 @@ export default function AuthForm({ initialMode = 'login' }: { initialMode?: 'log
     setLoading(true)
     try {
       let resetEmail = target
-      if (!resetEmail.includes('@')) {
-        const resolution = await resolveEmailFromIdentifier(resetEmail)
-        if (resolution.error || !resolution.email) {
-          setError(resolution.error || `No account found with username "${resetEmail}".`)
-          setLoading(false)
-          return
-        }
+      const resolution = await resolveEmailFromIdentifier(resetEmail)
+      if (resolution.error) {
+        setError(resolution.error)
+        setLoading(false)
+        return
+      }
+      if (resolution.email) {
         resetEmail = resolution.email
       }
 

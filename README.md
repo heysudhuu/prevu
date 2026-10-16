@@ -26,6 +26,7 @@
   <a href="#-core-platform-modules">Core Modules</a> •
   <a href="#-data-models--schema">Database Schema</a> •
   <a href="#-security--privacy-posture">Security</a> •
+  <a href="#-platform-policies-terms--conditions">Policies & Terms</a> •
   <a href="#-local-development-setup">Setup Guide</a> •
   <a href="#-contributing">Contributing</a>
 </p>
@@ -139,6 +140,13 @@ flowchart TB
 * **Structured Exit Feedback:** Captures departure reasons (*Graduated*, *Exams Concluded*, *Privacy Concerns*, etc.) for product metrics.
 * **Explicit Confirmation Guard:** Requires confirmation phrase matching (`DELETE`) before executing transactional cascading deletions across database and authentication providers.
 
+### 7. 🎯 Prevu CBT Arena & Examination Simulator
+* **High-Fidelity CBT Simulator:** Real-time exam practice environment replicating university Computer-Based Tests (Open Elective *Cyber Forensics & Digital Security* [FSO-307], Universal Human Values, Campus Aptitudes, and Core CS).
+* **Configurable Exam Parameters:** Students choose target question count (automatically capped with helpful warnings if requested count exceeds question bank size) and time limit (strictly enforced maximum ceiling of 2 minutes/question).
+* **Live Campus Leaderboard:** Dynamic student ranking with automatic upserting (reattempts immediately update with the student's latest score) to track study improvements over time.
+* **Smart PDF-to-MCQ Parser:** Client-side regex engine that converts raw text, PDFs, and notes into structured single/multi-choice questions with options and explanations.
+* **Student Contribution & Moderation:** Open portal for submitting questions and proposing new subjects, subject to rigorous admin verification before public release.
+
 ---
 
 ## 🗄️ Database Schema & Data Models
@@ -222,6 +230,57 @@ erDiagram
 * **Signed Storage Policies:** PDF uploads and image avatars are isolated in dedicated buckets with size and MIME validation (`application/pdf`, `image/*`).
 * **PostgREST Query Sanitization:** Client-side search expressions undergo strict special character stripping (`[,()]`) to prevent SQL/PostgREST injection attacks.
 * **Cookie Isolation:** Auth tokens are delivered inside encrypted, `HttpOnly`, `SameSite=Lax`, and `Secure` cookie jars.
+
+---
+
+## 📜 Platform Policies, Terms & Conditions
+
+Prevu is committed to maintaining an ethical, transparent, and collaborative academic learning community. By accessing or using the Prevu platform, student tools, or services, all users agree to comply with the policies, terms, and codes of conduct outlined below.
+
+### 1. 🤝 User Acceptance & Terms of Service (ToS)
+* **Eligibility:** Prevu is intended primarily for students, scholars, researchers, and faculty members affiliated with Chandigarh University and collaborating academic institutions.
+* **Account Responsibility:** Users are responsible for safeguarding their login credentials (Google OAuth or Email/Password). Any activity originating from an authenticated account is the responsibility of that account holder.
+* **Accuracy of Profile Details:** Students must provide accurate academic information (UID, semester enrollment, and branch) to facilitate proper cohort routing and verified contributor badging. Impersonating other students or faculty members is strictly prohibited.
+
+### 2. 🎓 Academic Integrity & Anti-Cheating Policy
+* **Educational Purpose Only:** All resources, previous year question papers (PYQs), topper notes, syllabus blueprints, and CBT practice mocks available on Prevu are intended solely for preparation, revision, self-assessment, and academic research.
+* **Strict Prohibition of Live Exam Leaking:** Students must **NEVER** upload, distribute, or request ongoing, live, or proctored question papers, midterm tests, or final examinations while an examination cycle is actively underway.
+* **Zero Cheating Assistance:** Soliciting or providing real-time exam answers, unauthorized exam aid, or proxy examination services through community requests or chat boards is grounds for immediate, permanent account suspension.
+
+### 3. 🎯 CBT Arena & Leaderboard Fair Play Policy
+* **Honest Self-Assessment:** The Prevu CBT Arena is engineered to provide genuine examination practice under realistic time constraints. Users agree to attempt mock tests ethically without automated scripts, answer scrapers, or browser tampering.
+* **Leaderboard Governance:**
+  * Reattempting an exam updates the student's entry on the subject leaderboard with their **latest score and completion time** (upsert model).
+  * Automated botting, script-based test submission, or synthetic response generation to artificially inflate leaderboard rankings will result in score invalidation and account restriction.
+* **Question Bank Contributions:** Community-submitted questions and auto-parsed PDFs must contain accurate options, verified answer keys, and clear educational explanations. Fictitious or intentionally misleading answers will be rejected by administrators.
+
+### 4. 🛡️ Content Contribution, Moderation & Acceptable Use
+* **Mandatory Administrative Audit:** To maintain academic excellence and prevent spam, all user-contributed question papers, study guides, and CBT subject proposals enter a moderation queue (`status: pending`) and require admin verification before public indexing.
+* **Acceptable Content Guidelines:**
+  * **Allowed:** Authentic previous year university question papers, self-authored lecture notes, formula sheets, open elective question banks, code snippets, and constructive doubt responses.
+  * **Strictly Prohibited:** Defamatory, obscene, harassing, or sexually explicit content; commercial advertisements; malicious links; unverified leaked test material; or copyright-infringing commercial publications (such as copyrighted full-length textbook PDFs).
+* **Community Reporting:** Users can flag inappropriate notes, faulty questions, or abusive requests. The moderation team reserves the right to unpublish, edit, or delete any content violating these guidelines without prior notice.
+
+### 5. ⚖️ Intellectual Property, Copyright & Fair Use (DMCA)
+* **Fair Use Doctrine:** Prevu operates under the principle of **Fair Dealing / Fair Use** (Section 52 of the Indian Copyright Act, 1957, and standard international educational exceptions) for non-commercial educational instruction, personal study, critique, and academic review.
+* **User Ownership:** Contributors retain intellectual property rights to their original notes, summaries, and solutions while granting Prevu a perpetual, non-exclusive, royalty-free license to host, display, index, and distribute the materials to students.
+* **Copyright Takedown Procedure:** If you are a copyright holder, faculty member, or publisher and believe that specific material hosted on Prevu infringes upon your copyright:
+  1. Open a GitHub Issue or contact the administrative team with:
+     * Exact URL or identifier of the material in question.
+     * Proof of copyright ownership or authorized representation.
+     * Specific statement requesting removal.
+  2. The Prevu administrative team will review and takedown verified infringing content within **24 to 48 hours**.
+
+### 6. 🔐 Privacy, Identity & Data Autonomy (Right to be Forgotten)
+* **No Sale of Student Data:** Prevu does not sell, rent, monetize, or broker student personal information to any third parties or marketing networks.
+* **Minimalist Data Footprint:** We collect only essential metadata required for academic matchmaking (UID, student name, email, semester, branch, and earned scholar karma).
+* **Authentication Security:** Passwords are encrypted and securely managed via Firebase Auth. Session tokens use `HttpOnly`, `SameSite=Lax`, and `Secure` cookie boundaries.
+* **Self-Service Account Erasure:** Under the **Right to be Forgotten**, students can permanently delete their account and associated profile records at any time via Profile Settings with zero administrative lock-in.
+
+### 7. 🏛️ Institutional Disclaimer & Limitation of Liability
+* **Independent Student Initiative:** Prevu is an open-source, student-engineered academic platform developed independently by students. It is **not** an official entity, branch, or representative of the administrative board of Chandigarh University.
+* **No Warranty:** All study materials, solutions, and CBT mock scores are provided on an **"as-is" and "as-available"** basis without warranty of any kind. Prevu makes no guarantee of university exam outcomes or grade improvements.
+* **Limitation of Liability:** In no event shall Prevu maintainers, contributors, or administrators be liable for any direct, indirect, incidental, or consequential damages resulting from platform downtime, lost notes, or academic discrepancies.
 
 ---
 

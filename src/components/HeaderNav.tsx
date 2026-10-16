@@ -99,12 +99,19 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
   // Core primary links
   const primaryLinks = [
     { href: '/browse', label: 'Study Hub', icon: <FileText className="w-3.5 h-3.5 text-prevu-accent" /> },
+    { href: '/cbt', label: 'CBT Arena', icon: <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> },
     { href: '/requests', label: 'Community', icon: <MessageSquare className="w-3.5 h-3.5 text-purple-400" /> },
     { href: '/vault', label: 'Vault', icon: <WifiOff className="w-3.5 h-3.5 text-cyan-400" /> },
   ]
 
   // Explore sub-links
   const exploreLinks = [
+    { 
+      href: '/cbt', 
+      label: 'CBT Mock Arena', 
+      desc: 'Real-time exam simulators with timers for Open Electives & CBTs',
+      icon: <Sparkles className="w-4 h-4 text-cyan-400" /> 
+    },
     { 
       href: '/exam-prep', 
       label: 'Exam Prep Workspace', 

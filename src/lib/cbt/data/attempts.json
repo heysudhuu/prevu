@@ -1,0 +1,43 @@
+{
+  "FSO-307": [
+    {
+      "userId": "user-latest-attempt",
+      "username": "py77164961",
+      "userName": "Nisha",
+      "cuVerified": true,
+      "subjectCode": "FSO-307",
+      "score": 8,
+      "totalQuestions": 15,
+      "percentage": 53.3,
+      "timeSpentSeconds": 258,
+      "attemptsCount": 1,
+      "updatedAt": "2026-10-16T16:11:24.819Z"
+    },
+    {
+      "userId": "peer-1",
+      "username": "harsh_cu",
+      "userName": "Harsh Vardhan",
+      "cuVerified": true,
+      "subjectCode": "FSO-307",
+      "score": 13,
+      "totalQuestions": 15,
+      "percentage": 86.7,
+      "timeSpentSeconds": 312,
+      "attemptsCount": 2,
+      "updatedAt": "2026-10-16T14:11:24.820Z"
+    },
+    {
+      "userId": "peer-2",
+      "username": "simran_kaur",
+      "userName": "Simran Kaur",
+      "cuVerified": true,
+      "subjectCode": "FSO-307",
+      "score": 11,
+      "totalQuestions": 15,
+      "percentage": 73.3,
+      "timeSpentSeconds": 384,
+      "attemptsCount": 1,
+      "updatedAt": "2026-10-16T11:11:24.820Z"
+    }
+  ]
+}

@@ -32,10 +32,12 @@ import {
   ShieldAlert,
   Info,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  Flame
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import DeleteAccountModal from './DeleteAccountModal'
+import { CollaboratorBadge, getCollaboratorTier } from '@/components/ui/CollaboratorBadge'
 
 interface ProfileFormProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -205,6 +207,8 @@ export default function ProfileForm({ user, stats }: ProfileFormProps) {
 
   const displayAvatar = avatarPreview || avatarUrl
   const selectedBranchLabel = branches.find(b => b.id === branch)?.label || branch
+  const userKarma = ((stats?.uploads || 0) * 25) + (isCUVerified ? 15 : 0)
+  const collaboratorTier = getCollaboratorTier(userKarma)
 
   return (
     <div className="w-full">
@@ -261,13 +265,13 @@ export default function ProfileForm({ user, stats }: ProfileFormProps) {
               {/* ID Card Body: Avatar + Names */}
               <div className="py-6 flex flex-col sm:flex-row items-center sm:items-start gap-5 relative z-10">
                 
-                {/* Interactive Avatar with Camera Overlay */}
+                {/* Interactive Avatar with Camera Overlay & Collaborator Ring */}
                 <div 
                   className="relative group/avatar cursor-pointer shrink-0" 
                   onClick={() => fileInputRef.current?.click()}
                   title="Click to change photo"
                 >
-                  <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-gradient-to-br from-purple-600 via-indigo-600 to-violet-800 flex items-center justify-center text-white text-3xl font-extrabold shadow-xl shadow-purple-900/30 border-2 border-white/20 relative">
+                  <div className={`w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-gradient-to-br from-purple-600 via-indigo-600 to-violet-800 flex items-center justify-center text-white text-3xl font-extrabold shadow-xl ${collaboratorTier.ringColor} ${collaboratorTier.glowColor} relative`}>
                     {displayAvatar ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img 
@@ -286,16 +290,13 @@ export default function ProfileForm({ user, stats }: ProfileFormProps) {
                     </div>
                   </div>
 
-                  {/* Corner Badge */}
-                  {isAdmin ? (
-                    <div className="absolute -bottom-2 -right-2 p-1.5 rounded-xl bg-purple-950 border border-purple-500 text-purple-300 shadow-md">
-                      <ShieldCheck className="w-4 h-4" />
-                    </div>
-                  ) : isCUVerified ? (
-                    <div className="absolute -bottom-2 -right-2 p-1.5 rounded-xl bg-emerald-950 border border-emerald-500 text-emerald-400 shadow-md">
-                      <CheckCircle2 className="w-4 h-4" />
-                    </div>
-                  ) : null}
+                  {/* Corner Collaborator Tier Badge */}
+                  <div 
+                    className="absolute -bottom-2 -right-2 p-1.5 rounded-xl bg-zinc-950 border border-white/20 text-white shadow-lg flex items-center justify-center text-xs"
+                    title={`${collaboratorTier.title} (${userKarma} Karma pts)`}
+                  >
+                    <span>{collaboratorTier.icon}</span>
+                  </div>
                 </div>
 
                 {/* Identity Information */}
@@ -304,9 +305,12 @@ export default function ProfileForm({ user, stats }: ProfileFormProps) {
                     {name || 'Student Name'}
                   </h3>
                   
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-mono text-xs font-semibold bg-purple-500/15 text-purple-300 border border-purple-500/30">
-                    <AtSign className="w-3 h-3" />
-                    <span>{username || 'username'}</span>
+                  <div className="flex flex-wrap items-center gap-1.5 justify-center sm:justify-start">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-mono text-xs font-semibold bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                      <AtSign className="w-3 h-3" />
+                      <span>{username || 'username'}</span>
+                    </div>
+                    <CollaboratorBadge karma={userKarma} size="sm" />
                   </div>
 
                   <p className="text-xs text-prevu-text-muted flex items-center justify-center sm:justify-start gap-1.5 pt-1">
@@ -399,11 +403,21 @@ export default function ProfileForm({ user, stats }: ProfileFormProps) {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 text-center">
+            <div className="grid grid-cols-3 gap-2.5 text-center">
               <div className="p-3 rounded-xl bg-prevu-bg border border-prevu-surface-light space-y-1">
-                <div className="flex items-center justify-center gap-1.5 text-prevu-text-muted text-xs">
+                <div className="flex items-center justify-center gap-1 text-prevu-text-muted text-[11px]">
+                  <Flame className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Karma</span>
+                </div>
+                <div className="text-xl font-bold text-amber-300 font-mono">
+                  {userKarma}
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-prevu-bg border border-prevu-surface-light space-y-1">
+                <div className="flex items-center justify-center gap-1 text-prevu-text-muted text-[11px]">
                   <BookOpen className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Papers Contributed</span>
+                  <span>Shared</span>
                 </div>
                 <div className="text-xl font-bold text-white font-mono">
                   {stats?.uploads ?? 0}
@@ -411,14 +425,29 @@ export default function ProfileForm({ user, stats }: ProfileFormProps) {
               </div>
 
               <div className="p-3 rounded-xl bg-prevu-bg border border-prevu-surface-light space-y-1">
-                <div className="flex items-center justify-center gap-1.5 text-prevu-text-muted text-xs">
+                <div className="flex items-center justify-center gap-1 text-prevu-text-muted text-[11px]">
                   <BookmarkCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Vault Bookmarks</span>
+                  <span>Vault</span>
                 </div>
                 <div className="text-xl font-bold text-white font-mono">
                   {stats?.bookmarks ?? 0}
                 </div>
               </div>
+            </div>
+
+            {/* Collaborator Tier Banner */}
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{collaboratorTier.icon}</span>
+                <div>
+                  <span className="font-bold text-white block">{collaboratorTier.title}</span>
+                  <span className="text-[10px] text-prevu-text-muted">Rank tier based on your Karma</span>
+                </div>
+              </div>
+              <Link href="/leaderboard" className="text-[11px] font-bold text-amber-400 hover:text-white hover:underline flex items-center gap-1">
+                <span>Hall of Fame</span>
+                <ArrowRight className="w-3 h-3" />
+              </Link>
             </div>
 
             {/* Handle Change Counter Notice */}

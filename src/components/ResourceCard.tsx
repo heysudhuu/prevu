@@ -109,8 +109,14 @@ export function ResourceCard({ resource, isBookmarked = false, initialUpvoted = 
             )}
 
             {isVerified && !isAdmin && (
-              <span className="inline-flex items-center text-emerald-400" title="CU Verified Student">
+              <span className="inline-flex items-center text-emerald-400 shrink-0" title="CU Verified Student">
                 <CheckCircle className="w-3.5 h-3.5" />
+              </span>
+            )}
+
+            {!isAdmin && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold bg-amber-500/10 text-amber-300 border border-amber-500/25 shrink-0" title="Verified Peer Collaborator">
+                ★ Contributor
               </span>
             )}
           </div>

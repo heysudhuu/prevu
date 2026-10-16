@@ -8,6 +8,7 @@ import CommunityConnect from '@/components/landing/CommunityConnect'
 import StudentSuggestionBox from '@/components/landing/StudentSuggestionBox'
 import LiveStatsSection from '@/components/landing/LiveStatsSection'
 import RecentPapersSection from '@/components/landing/RecentPapersSection'
+import KarmaAchieversSection from '@/components/landing/KarmaAchieversSection'
 
 export default function Home() {
   return (
@@ -23,7 +24,11 @@ export default function Home() {
       <Suspense fallback={null}>
         <RecentPapersSection />
       </Suspense>
-      {/* 4. Community Requests Preview */}
+      {/* 4. Campus Karma Achievers & Hall of Fame Collaborators */}
+      <Suspense fallback={null}>
+        <KarmaAchieversSection />
+      </Suspense>
+      {/* 5. Community Requests Preview */}
       <Suspense fallback={null}>
         <CommunityRequestsSection />
       </Suspense>

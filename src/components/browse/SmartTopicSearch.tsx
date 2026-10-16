@@ -24,7 +24,8 @@ export default function SmartTopicSearch({
     if (onSelectTopic) {
       onSelectTopic(topic)
     } else {
-      router.push(`/browse?sem=${topic.semester}&search=${encodeURIComponent(topic.name)}`)
+      const q = topic.searchQuery || topic.subjectName
+      router.push(`/browse?sem=${topic.semester}&search=${encodeURIComponent(q)}`)
     }
   }
 

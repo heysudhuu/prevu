@@ -8,6 +8,7 @@ import SmartTopicSearch from '@/components/browse/SmartTopicSearch'
 import CourseWorkspaceDeck from '@/components/browse/CourseWorkspaceDeck'
 import BrowseResourceList from '@/components/browse/BrowseResourceList'
 import { Sparkles, MessageSquarePlus, FileQuestion, ChevronLeft, ChevronRight } from 'lucide-react'
+import { resolveSearchKeywords } from '@/lib/search/smartSearch'
 
 export const dynamic = 'force-dynamic'
 
@@ -71,6 +72,61 @@ export default async function BrowsePage({
   const resolvedExamTypes = (examTypesData && examTypesData.length > 0) ? examTypesData : defaultExamTypes
   const subjects = subjectsData || []
 
+  // Resolve search keywords, acronyms, and aliases
+  const resolved = resolveSearchKeywords(searchFilter)
+  
+  // Find matching subject IDs using smart search logic across all database subjects
+  let matchingSubjectIds: number[] = []
+  if (resolved.normalized) {
+    const matched = subjects.filter((s) => {
+      const sName = s.name.toLowerCase()
+      const sCode = s.code.toLowerCase()
+
+      // Exact or partial canonical match
+      if (resolved.canonicalNames.some((c) => sName.includes(c.toLowerCase()) || c.toLowerCase().includes(sName))) {
+        return true
+      }
+
+      // Any pattern match
+      if (resolved.searchPatterns.some((p) => sName.includes(p) || sCode.includes(p))) {
+        return true
+      }
+
+      return false
+    })
+    matchingSubjectIds = matched.map((s) => s.id)
+  }
+
+  // Cross-semester intelligent handling:
+  // If user filtered by semester (e.g. sem=4) but searched for a course in another semester (e.g. OS in Sem 3),
+  // expand semester filter so user gets the actual papers instead of an empty screen.
+  let effectiveSemFilter = semFilter
+  let crossSemesterNotice: { searchedTerm: string; actualSemesters: number[] } | null = null
+
+  if (semFilter && searchFilter && matchingSubjectIds.length > 0) {
+    const subjectsInRequestedSem = subjects.filter(
+      (s) => s.semester === semFilter && matchingSubjectIds.includes(s.id)
+    )
+
+    if (subjectsInRequestedSem.length === 0) {
+      const actualSemesters = Array.from(
+        new Set(
+          subjects
+            .filter((s) => matchingSubjectIds.includes(s.id) && s.semester)
+            .map((s) => s.semester as number)
+        )
+      ).sort((a, b) => a - b)
+
+      if (actualSemesters.length > 0) {
+        effectiveSemFilter = undefined // Expand so user gets papers
+        crossSemesterNotice = {
+          searchedTerm: searchFilter,
+          actualSemesters,
+        }
+      }
+    }
+  }
+
   // Build Query with Server-side filtering
   let query = supabase
     .from('resources')
@@ -85,30 +141,21 @@ export default async function BrowsePage({
 
   if (branchFilter) query = query.eq('subjects.branch_id', branchFilter)
   if (yearFilter) query = query.eq('subjects.year', yearFilter)
-  if (semFilter) query = query.eq('subjects.semester', semFilter)
+  if (effectiveSemFilter) query = query.eq('subjects.semester', effectiveSemFilter)
   if (subjectFilter) query = query.eq('subject_id', subjectFilter)
   if (typeFilter) query = query.eq('exam_type_id', typeFilter)
 
   // Server-side keyword search (sanitized against PostgREST injection)
   if (searchFilter) {
     const sanitizedSearch = searchFilter.replace(/[,()]/g, '').trim()
-    if (sanitizedSearch) {
-      const { data: matchingSubjects } = await supabase
-        .from('subjects')
-        .select('id')
-        .or(`name.ilike.%${sanitizedSearch}%,code.ilike.%${sanitizedSearch}%`)
-
-      const subjectIds = (matchingSubjects || []).map(s => s.id)
-
-      if (subjectIds.length > 0) {
-        query = query.in('subject_id', subjectIds)
+    if (matchingSubjectIds.length > 0) {
+      query = query.or(`subject_id.in.(${matchingSubjectIds.join(',')}),original_filename.ilike.%${sanitizedSearch}%`)
+    } else {
+      const isYear = !isNaN(parseInt(sanitizedSearch)) && parseInt(sanitizedSearch) > 2000
+      if (isYear) {
+        query = query.eq('exam_year', parseInt(sanitizedSearch))
       } else {
-        const isYear = !isNaN(parseInt(sanitizedSearch)) && parseInt(sanitizedSearch) > 2000
-        if (isYear) {
-          query = query.eq('exam_year', parseInt(sanitizedSearch))
-        } else {
-          query = query.ilike('original_filename', `%${sanitizedSearch}%`)
-        }
+        query = query.ilike('original_filename', `%${sanitizedSearch}%`)
       }
     }
   }
@@ -194,6 +241,32 @@ export default async function BrowsePage({
           <div className="my-5">
             <SmartTopicSearch />
           </div>
+
+          {/* Cross-Semester Discovery Notice */}
+          {crossSemesterNotice && (
+            <div className="my-5 p-4 rounded-2xl bg-gradient-to-r from-purple-950/70 via-prevu-surface to-purple-950/70 border border-purple-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xl backdrop-blur-xl animate-fade-in">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-300 shrink-0">
+                  <Sparkles className="w-4 h-4 text-purple-400" />
+                </div>
+                <div className="text-xs sm:text-sm text-purple-100">
+                  Found question papers for <strong className="text-white">&ldquo;{crossSemesterNotice.searchedTerm}&rdquo;</strong> in <strong className="text-purple-300">Semester {crossSemesterNotice.actualSemesters.join(' & ')}</strong> (none currently filed under Semester {semFilter}).
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                <Button size="sm" className="h-8 text-xs font-bold bg-prevu-accent text-white hover:bg-prevu-accent-hover shadow-sm" asChild>
+                  <Link href={`/browse?sem=${crossSemesterNotice.actualSemesters[0]}&search=${encodeURIComponent(searchFilter)}`}>
+                    Filter to Sem {crossSemesterNotice.actualSemesters[0]}
+                  </Link>
+                </Button>
+                <Button size="sm" variant="outline" className="h-8 text-xs border-purple-500/40 text-purple-200 hover:text-white" asChild>
+                  <Link href={`/browse?search=${encodeURIComponent(searchFilter)}`}>
+                    View All
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Unified Resources List (Supports Grid & Compact Table View) */}
           <section className="mt-6">

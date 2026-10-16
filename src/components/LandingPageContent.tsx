@@ -65,70 +65,85 @@ const heroItemVariants: Variants = {
 }
 
 // Curriculum breakdown by semester for the fast-track explorer
-const SEMESTER_COURSES: Record<number, Array<{ code: string; name: string; pyqs: number; notes: number; tag: string }>> = {
+// Curriculum breakdown by semester for the fast-track explorer
+const SEMESTER_COURSES: Record<number, Array<{
+  code: string
+  name: string
+  pyqs: number
+  notes: number
+  tag: string
+  searchQuery?: string
+  targetSem?: number
+}>> = {
   1: [
-    { code: '23SPH-101', name: 'Engineering Physics', pyqs: 12, notes: 8, tag: 'Foundation' },
-    { code: '23SMT-101', name: 'Calculus & Linear Algebra', pyqs: 16, notes: 14, tag: 'High-Yield' },
-    { code: '23EET-101', name: 'Basic Electrical Engineering', pyqs: 9, notes: 6, tag: 'Core' },
-    { code: '23CST-101', name: 'Programming with C / Python', pyqs: 14, notes: 11, tag: 'Practical' }
+    { code: '22PCH105', name: 'Communication Skill', pyqs: 9, notes: 6, tag: 'High-Yield', searchQuery: 'Communication Skill', targetSem: 1 },
+    { code: '22MTH101', name: 'Mathematics 1', pyqs: 3, notes: 4, tag: 'Foundation', searchQuery: 'Mathematics 1', targetSem: 1 },
+    { code: '25CSH-107', name: 'Logical Thinking (LTPS)', pyqs: 5, notes: 5, tag: 'Core', searchQuery: 'Logical Thinking', targetSem: 1 },
+    { code: 'CSE', name: 'Engineering Physics', pyqs: 3, notes: 3, tag: 'Foundation', searchQuery: 'Engineering physic', targetSem: 1 }
   ],
   2: [
-    { code: '23SCH-102', name: 'Engineering Chemistry', pyqs: 10, notes: 7, tag: 'Foundation' },
-    { code: '23SMT-102', name: 'Differential Equations', pyqs: 14, notes: 12, tag: 'High-Yield' },
-    { code: '23CST-102', name: 'Object Oriented Programming', pyqs: 18, notes: 15, tag: 'Core' },
-    { code: '23ECT-102', name: 'Digital Electronics Basics', pyqs: 8, notes: 5, tag: 'Core' }
+    { code: '22CS201', name: 'Data Structures & Algorithms', pyqs: 5, notes: 4, tag: 'Core', searchQuery: 'Data Structure', targetSem: 2 },
+    { code: '22CS101', name: 'Programming in C', pyqs: 4, notes: 6, tag: 'Practical', searchQuery: 'Programming for Problem Solving' },
+    { code: '22PCH101', name: 'Engineering Chemistry', pyqs: 3, notes: 5, tag: 'Foundation', searchQuery: 'Engineering Chemistry' },
+    { code: 'CSE', name: 'Digital Electronics', pyqs: 3, notes: 4, tag: 'Core', searchQuery: 'Digital Electronics' }
   ],
   3: [
-    { code: '23CST-201', name: 'Data Structures & Algorithms', pyqs: 22, notes: 18, tag: 'Essential' },
-    { code: '23CST-202', name: 'Digital Logic & Computer Design', pyqs: 14, notes: 9, tag: 'Core' },
-    { code: '23SMT-201', name: 'Discrete Mathematical Structures', pyqs: 19, notes: 13, tag: 'High-Yield' },
-    { code: '23CST-203', name: 'Computer Architecture & Org.', pyqs: 11, notes: 8, tag: 'Core' }
+    { code: '23CSH-242', name: 'Operating System', pyqs: 2, notes: 19, tag: 'MST Hot', searchQuery: 'Operating System', targetSem: 3 },
+    { code: '23CSH-243', name: 'Database Management System', pyqs: 7, notes: 16, tag: 'Core', searchQuery: 'Database Management System', targetSem: 3 },
+    { code: '23CSH-241', name: 'Data Structure & ADS', pyqs: 5, notes: 15, tag: 'Essential', searchQuery: 'Data Structure', targetSem: 3 },
+    { code: '23CST-204', name: 'Computer Org. & Architecture', pyqs: 3, notes: 8, tag: 'Core', searchQuery: 'Computer Organization and Architecture', targetSem: 3 },
+    { code: '23CST-247', name: 'Agile Development Methodologies', pyqs: 5, notes: 10, tag: 'MST Hot', searchQuery: 'Agile Development Methodologies', targetSem: 3 },
+    { code: '22CSH-201', name: 'Java Programming & OOPS', pyqs: 7, notes: 14, tag: 'Core', searchQuery: 'Java Programming', targetSem: 3 },
+    { code: 'PRACTICE-SHEET', name: 'Probability and Statistics', pyqs: 9, notes: 14, tag: 'High-Yield', searchQuery: 'Probability and Statistics', targetSem: 3 },
+    { code: '23CST-237', name: 'Discrete Mathematics', pyqs: 2, notes: 8, tag: 'Core', searchQuery: 'Discrete Mathematics', targetSem: 3 }
   ],
   4: [
-    { code: '23CST-204', name: 'Operating Systems', pyqs: 24, notes: 19, tag: 'MST Hot' },
-    { code: '23CST-205', name: 'Database Management Systems', pyqs: 20, notes: 16, tag: 'Core' },
-    { code: '23CST-206', name: 'Design & Analysis of Algorithms', pyqs: 21, notes: 15, tag: 'High-Yield' },
-    { code: '23CST-207', name: 'Theory of Computation (Automata)', pyqs: 17, notes: 12, tag: 'Crucial' }
+    { code: '23CSH-242', name: 'Operating System', pyqs: 4, notes: 19, tag: 'Cycle A/B', searchQuery: 'Operating System' },
+    { code: '23CSH-243', name: 'Database Management System', pyqs: 7, notes: 16, tag: 'Cycle A/B', searchQuery: 'Database Management System' },
+    { code: 'CSE', name: 'Design & Analysis of Algorithms', pyqs: 3, notes: 12, tag: 'High-Yield', searchQuery: 'Design and Analysis of Algorithms' },
+    { code: '23CSH-312', name: 'Computer Network', pyqs: 2, notes: 10, tag: 'Core', searchQuery: 'Computer Network' }
   ],
   5: [
-    { code: '23CST-301', name: 'Computer Networks', pyqs: 18, notes: 14, tag: 'Core' },
-    { code: '23CST-302', name: 'Software Engineering & Agile', pyqs: 15, notes: 10, tag: 'MST Hot' },
-    { code: '23CST-303', name: 'Full-Stack Web Development', pyqs: 13, notes: 11, tag: 'Practical' },
-    { code: '23AIT-301', name: 'Artificial Intelligence & ML', pyqs: 17, notes: 16, tag: 'Specialization' }
+    { code: '23CSH-312', name: 'Computer Network', pyqs: 2, notes: 14, tag: 'Core', searchQuery: 'Computer Network', targetSem: 5 },
+    { code: 'CSE', name: 'Design & Analysis of Algorithms', pyqs: 2, notes: 15, tag: 'High-Yield', searchQuery: 'Design and Analysis of Algorithms', targetSem: 5 },
+    { code: 'CSE', name: 'Operating System (Adv)', pyqs: 2, notes: 10, tag: 'Core', searchQuery: 'Operating system', targetSem: 5 },
+    { code: 'CSE', name: 'Mobile Application Development', pyqs: 1, notes: 8, tag: 'Practical', searchQuery: 'Mobile Application Development', targetSem: 5 }
   ],
   6: [
-    { code: '23CST-304', name: 'Compiler Design', pyqs: 14, notes: 10, tag: 'High-Yield' },
-    { code: '23CST-305', name: 'Cloud Computing Architecture', pyqs: 16, notes: 12, tag: 'Industry' },
-    { code: '23CST-306', name: 'Information & Network Security', pyqs: 12, notes: 9, tag: 'Core' },
-    { code: '23DST-301', name: 'Big Data & Data Analytics', pyqs: 15, notes: 13, tag: 'Specialization' }
+    { code: '22CST-390', name: 'Theory Of Computation (Automata)', pyqs: 3, notes: 12, tag: 'Crucial', searchQuery: 'Theory Of Computation', targetSem: 6 },
+    { code: '21CSH-311', name: 'Design and Analysis of Algorithms', pyqs: 1, notes: 10, tag: 'High-Yield', searchQuery: 'Design and Analyis of Algorithms', targetSem: 6 },
+    { code: '23CST-304', name: 'Compiler Design', pyqs: 4, notes: 6, tag: 'Core', searchQuery: 'Compiler Design' },
+    { code: '23CST-305', name: 'Cloud Computing Architecture', pyqs: 6, notes: 8, tag: 'Industry', searchQuery: 'Cloud Computing' }
   ],
   7: [
-    { code: '23CST-401', name: 'Deep Learning & Neural Networks', pyqs: 11, notes: 9, tag: 'Advanced' },
-    { code: '23CST-402', name: 'DevOps & Site Reliability', pyqs: 9, notes: 7, tag: 'Industry' },
-    { code: '23CST-403', name: 'Distributed Systems', pyqs: 10, notes: 8, tag: 'Advanced' },
-    { code: '23CST-404', name: 'Internet of Things (IoT)', pyqs: 8, notes: 6, tag: 'Elective' }
+    { code: '22CST-354', name: 'Parallel and Distributed Computing', pyqs: 4, notes: 8, tag: 'Core', searchQuery: 'Parallel and Distributed Computing', targetSem: 7 },
+    { code: 'FSO-307', name: 'Cyber Security Essentials', pyqs: 1, notes: 6, tag: 'Elective', searchQuery: 'Cyber Security Essentials for Forensics', targetSem: 7 },
+    { code: '23CST-401', name: 'Deep Learning & Neural Networks', pyqs: 4, notes: 5, tag: 'Specialization', searchQuery: 'Deep Learning' },
+    { code: '23CST-403', name: 'Distributed Systems', pyqs: 3, notes: 4, tag: 'Advanced', searchQuery: 'Distributed Systems' }
   ],
   8: [
-    { code: '23CST-405', name: 'Cyber Forensics & Incident Response', pyqs: 7, notes: 5, tag: 'Elective' },
-    { code: '23CST-406', name: 'Natural Language Processing', pyqs: 9, notes: 8, tag: 'Advanced' },
-    { code: '23CST-407', name: 'Blockchain Technologies', pyqs: 8, notes: 6, tag: 'Emerging' },
-    { code: '23CAP-408', name: 'Major Capstone Project Defense', pyqs: 5, notes: 12, tag: 'Final Yr' }
+    { code: '23CST-405', name: 'Cyber Forensics & Incident Response', pyqs: 7, notes: 5, tag: 'Elective', searchQuery: 'Cyber Forensics' },
+    { code: '23CST-406', name: 'Natural Language Processing', pyqs: 9, notes: 8, tag: 'Advanced', searchQuery: 'Natural Language Processing' },
+    { code: '23CST-407', name: 'Blockchain Technologies', pyqs: 8, notes: 6, tag: 'Emerging', searchQuery: 'Blockchain' },
+    { code: '23CAP-408', name: 'Major Capstone Project Defense', pyqs: 5, notes: 12, tag: 'Final Yr', searchQuery: 'Capstone' }
   ]
 }
 
 const POPULAR_SEARCHES = [
-  'Operating Systems',
-  '23CST-201',
-  'DAA MST-1',
-  'Discrete Maths',
-  'DBMS EST 2024',
-  'Computer Networks'
+  'Operating System',
+  'DBMS',
+  'Data Structure',
+  'Agile Methodologies',
+  'Computer Network',
+  'Theory Of Computation',
+  'Probability & Statistics',
+  'Communication Skills'
 ]
 
 export default function LandingPageContent() {
   const router = useRouter()
   const [heroSearch, setHeroSearch] = useState('')
-  const [selectedSem, setSelectedSem] = useState<number>(4)
+  const [selectedSem, setSelectedSem] = useState<number>(3)
   const [previewModalOpen, setPreviewModalOpen] = useState(false)
   const [isSearchFocused, setIsSearchFocused] = useState(false)
 
@@ -524,14 +539,22 @@ export default function LandingPageContent() {
 
                   <div className="mt-5 pt-3 border-t border-prevu-surface-light/60 flex items-center justify-between">
                     <Link
-                      href={`/browse?sem=${selectedSem}&search=${encodeURIComponent(course.name)}`}
+                      href={
+                        course.targetSem
+                          ? `/browse?sem=${course.targetSem}&search=${encodeURIComponent(course.searchQuery || course.name)}`
+                          : `/browse?search=${encodeURIComponent(course.searchQuery || course.name)}`
+                      }
                       className="text-xs font-bold text-prevu-accent hover:text-white flex items-center gap-1 transition-colors"
                     >
                       <span>Find Papers</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </Link>
                     <Link
-                      href={`/study-material?sem=${selectedSem}&search=${encodeURIComponent(course.name)}`}
+                      href={
+                        course.targetSem
+                          ? `/study-material?sem=${course.targetSem}&search=${encodeURIComponent(course.searchQuery || course.name)}`
+                          : `/study-material?search=${encodeURIComponent(course.searchQuery || course.name)}`
+                      }
                       className="text-xs font-semibold text-prevu-text-muted hover:text-white transition-colors"
                     >
                       Notes

@@ -21,7 +21,7 @@ export default function SemesterSwitcherPill() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  const [activeSem, setActiveSem] = useState<number>(4)
+  const [activeSem, setActiveSem] = useState<number>(3)
   const [isOpen, setIsOpen] = useState(false)
   const pillRef = useRef<HTMLDivElement>(null)
 

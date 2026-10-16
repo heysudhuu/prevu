@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Search, X, Filter, BookOpen } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -37,6 +37,10 @@ export default function BrowseFilterBar({
 
   const [searchTerm, setSearchTerm] = useState(currentSearch)
   const [showAdvanced, setShowAdvanced] = useState(Boolean(currentYear || currentSubject || currentBranch))
+
+  useEffect(() => {
+    setSearchTerm(currentSearch)
+  }, [currentSearch])
 
   const updateFilters = (updates: Record<string, string | number | undefined>) => {
     const params = new URLSearchParams(searchParams.toString())

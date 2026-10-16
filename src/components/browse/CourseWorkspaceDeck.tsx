@@ -48,7 +48,44 @@ export default function CourseWorkspaceDeck({
     })
   }
 
-  if (semesterSubjects.length === 0) return null
+  if (semesterSubjects.length === 0) {
+    return (
+      <div className="mb-6 p-4 rounded-2xl bg-prevu-surface/40 border border-prevu-surface-light flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-prevu-text-muted">
+        <div className="flex items-center gap-2">
+          <Layers className="w-4 h-4 text-prevu-accent shrink-0" />
+          <span>No subjects currently filed under <strong className="text-white">Semester {currentSem}</strong>. Check Semester 3 for core courses or explore all subjects.</span>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              const params = new URLSearchParams(searchParams.toString())
+              params.set('sem', '3')
+              startTransition(() => {
+                router.push(`/browse?${params.toString()}`)
+              })
+            }}
+            className="px-3 py-1.5 rounded-xl bg-prevu-surface-elevated hover:bg-prevu-accent hover:text-white text-xs font-bold transition-all border border-prevu-surface-light cursor-pointer"
+          >
+            Switch to Sem 3
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const params = new URLSearchParams(searchParams.toString())
+              params.delete('sem')
+              startTransition(() => {
+                router.push(`/browse?${params.toString()}`)
+              })
+            }}
+            className="px-3 py-1.5 rounded-xl hover:bg-prevu-surface text-xs text-prevu-accent hover:underline cursor-pointer font-semibold"
+          >
+            Show All
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="mb-6 p-3 sm:p-4 rounded-2xl bg-prevu-surface/60 border border-prevu-surface-light shadow-lg">

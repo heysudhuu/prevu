@@ -239,7 +239,10 @@ export default async function BrowsePage({
 
           {/* AI Auto-Tagged Syllabus Topic Search Bar */}
           <div className="my-5">
-            <SmartTopicSearch />
+            <SmartTopicSearch 
+              currentSem={semFilter}
+              currentSearch={searchFilter}
+            />
           </div>
 
           {/* Cross-Semester Discovery Notice */}

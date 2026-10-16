@@ -23,10 +23,12 @@ export default function SemesterSwitcherPill() {
 
   const [activeSem, setActiveSem] = useState<number>(3)
   const [isOpen, setIsOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const pillRef = useRef<HTMLDivElement>(null)
 
-  // Initialize from URL search param or localStorage
+  // Initialize from URL search param or localStorage only after mount
   useEffect(() => {
+    setMounted(true)
     const urlSem = searchParams.get('sem')
     if (urlSem && !isNaN(parseInt(urlSem))) {
       const parsed = parseInt(urlSem)
@@ -86,11 +88,14 @@ export default function SemesterSwitcherPill() {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
+        suppressHydrationWarning
         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-prevu-surface-light/80 hover:bg-prevu-surface-elevated text-prevu-text hover:text-white border border-prevu-surface-light hover:border-prevu-accent/50 shadow-sm transition-all cursor-pointer group"
         title="Quick-switch your active semester"
       >
         <span className="w-2 h-2 rounded-full bg-emerald-400 group-hover:bg-prevu-accent transition-colors animate-pulse" />
-        <span className="font-mono text-prevu-accent font-bold">Sem {activeSem}</span>
+        <span className="font-mono text-prevu-accent font-bold" suppressHydrationWarning>
+          Sem {mounted ? activeSem : 3}
+        </span>
         <ChevronDown className={`w-3.5 h-3.5 text-prevu-text-muted transition-transform duration-200 ${isOpen ? 'rotate-180 text-white' : ''}`} />
       </button>
 

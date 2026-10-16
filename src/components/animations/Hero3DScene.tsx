@@ -45,42 +45,39 @@ function FloatingElements({ isMobile = false }: { isMobile?: boolean }) {
   }), [])
 
   return (
-    <group ref={groupRef} scale={isMobile ? 0.75 : 1} position={isMobile ? [0, 0, 0] : [0, 0, 0]}>
-      {/* 1. Main floating abstract paper / slate */}
-      <Float speed={2} rotationIntensity={1.5} floatIntensity={1.5} position={isMobile ? [1.5, 2, -3] : [4, 2, -2]}>
-        <RoundedBox args={[2.5, 3.2, 0.15]} radius={0.1} smoothness={4} material={glassMaterial}>
+    <group ref={groupRef} scale={isMobile ? 0.6 : 0.9} position={[0, 0, 0]}>
+      {/* 1. Main floating abstract glass slate (pushed far to the right edge) */}
+      <Float speed={1.5} rotationIntensity={1} floatIntensity={1.2} position={isMobile ? [3.5, 3, -6] : [6.5, 1.5, -3]}>
+        <RoundedBox args={[2.2, 3.0, 0.12]} radius={0.1} smoothness={4} material={glassMaterial}>
           <MeshDistortMaterial
             color="#8b5cf6"
-            distort={0.15}
-            speed={1.5}
+            distort={0.12}
+            speed={1.2}
             roughness={0.2}
             metalness={0.4}
             transparent
-            opacity={0.65}
+            opacity={0.45}
           />
         </RoundedBox>
       </Float>
 
-      {/* 2. Floating geometric cubes representing data/records */}
-      <Float speed={2.5} rotationIntensity={2} floatIntensity={2} position={isMobile ? [-2, 1, -4] : [-4.5, 1.5, -4]}>
-        <Octahedron args={[1.2]} material={accentMaterial} />
+      {/* 2. Floating geometric octahedron (pushed far to the left edge) */}
+      <Float speed={2} rotationIntensity={1.5} floatIntensity={1.5} position={isMobile ? [-3.5, 2, -7] : [-6.5, 1, -4]}>
+        <Octahedron args={[1.0]} material={accentMaterial} />
       </Float>
 
-      <Float speed={1.8} rotationIntensity={1} floatIntensity={1.5} position={isMobile ? [-1.5, -3, -4] : [-3, -3, -3]}>
-        <Box args={[1.4, 1.4, 1.4]} material={secondaryMaterial} />
+      {/* 3. Floating secondary geometric cube (pushed to deep bottom-left) */}
+      <Float speed={1.5} rotationIntensity={1} floatIntensity={1.2} position={isMobile ? [-3, -4, -8] : [-5.5, -3, -5]}>
+        <Box args={[1.1, 1.1, 1.1]} material={secondaryMaterial} />
       </Float>
 
-      {/* 3. Orbiting glass spheres */}
-      <Float speed={3} rotationIntensity={3} floatIntensity={2.5} position={isMobile ? [2, -2, -5] : [5, -2, -5]}>
-        <Sphere args={[0.8, 32, 32]} material={glassMaterial} />
+      {/* 4. Orbiting ambient glass spheres */}
+      <Float speed={2.5} rotationIntensity={2} floatIntensity={2} position={isMobile ? [3, -4, -8] : [7, -2.5, -5]}>
+        <Sphere args={[0.7, 32, 32]} material={glassMaterial} />
       </Float>
 
-      <Float speed={1.2} rotationIntensity={1} floatIntensity={1} position={[-5, 0, -6]}>
-        <Sphere args={[0.5, 16, 16]} material={accentMaterial} />
-      </Float>
-
-      <Float speed={1.5} rotationIntensity={2} floatIntensity={0.8} position={[3, -5, -6]}>
-        <Box args={[0.5, 0.5, 0.5]} material={secondaryMaterial} />
+      <Float speed={1.2} rotationIntensity={1} floatIntensity={1} position={[-7, -1, -6]}>
+        <Sphere args={[0.4, 16, 16]} material={accentMaterial} />
       </Float>
     </group>
   )
@@ -109,7 +106,7 @@ export default function Hero3DScene() {
   const isMobile = typeof window !== 'undefined' ? window.innerWidth < 768 : false
 
   return (
-    <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden opacity-75 sm:opacity-70">
+    <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden opacity-35 sm:opacity-45">
       <Suspense fallback={null}>
         <Canvas 
           camera={{ position: [0, 0, 10], fov: isMobile ? 55 : 45 }} 

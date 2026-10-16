@@ -33,92 +33,101 @@ export function ResourceCard({ resource, isBookmarked = false, initialUpvoted = 
   const subjectUrl = `/subject/${encodeURIComponent(subjectCode)}`
   const isSeniorRecommended = upvoteCount >= 3 || (isVerified && normalizedType.includes('note'))
 
+  const isNotes = normalizedType.includes('note') || normalizedType.includes('syllab') || normalizedType.includes('material')
+
   return (
-    <Card className={`w-full flex flex-col h-full group transition-all duration-300 card-hover-lift ${
+    <Card className={`w-full flex flex-col h-full group transition-all duration-300 card-hover-lift bg-prevu-surface/90 border border-prevu-surface-light hover:border-prevu-accent/50 ${
       isAdmin 
-        ? 'border-purple-500/30 hover:border-purple-500/60 bg-gradient-to-b from-purple-950/20 via-prevu-surface to-prevu-surface shadow-lg shadow-purple-950/20 hover:shadow-2xl hover:shadow-purple-500/20 hover:-translate-y-1.5' 
-        : 'hover:border-prevu-accent/50 hover:shadow-xl hover:shadow-prevu-accent/10 hover:-translate-y-1.5'
+        ? 'hover:shadow-xl hover:shadow-purple-500/15' 
+        : 'hover:shadow-xl hover:shadow-prevu-accent/10'
     }`}>
-      <CardHeader className="flex-none pb-3 border-b-0">
-        <div className="flex items-center justify-between gap-2 mb-2.5">
+      <CardHeader className="flex-none p-4 pb-2 border-b-0">
+        {/* Top Header: Badges & Quick Action Icons */}
+        <div className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-1.5 flex-wrap">
             <Badge variant={examBadgeVariant}>
               {examName}
             </Badge>
-            {isAdmin && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40 uppercase tracking-wider">
-                <ShieldCheck className="w-3 h-3" /> Official
+
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-prevu-bg border border-prevu-surface-light text-prevu-text-muted">
+              {resource.exam_year}
+            </span>
+
+            {isNotes && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                Notes
               </span>
             )}
-            {isSeniorRecommended && !isAdmin && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 uppercase tracking-wider">
-                ⭐ Senior Recommended
+
+            {isAdmin && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40">
+                <ShieldCheck className="w-3 h-3" /> Official
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-mono font-medium text-prevu-text-muted bg-prevu-bg/90 px-2 py-0.5 rounded-md border border-prevu-surface-light">
-              {resource.exam_year}
-            </span>
+          {/* Quick Actions (Upvote, Share, Bookmark) */}
+          <div className="flex items-center gap-1">
             <ResourceUpvoteButton resourceId={resource.id} initialUpvoted={initialUpvoted} initialCount={upvoteCount} />
             <SharePaperButton resource={resource} />
             <BookmarkButton resourceId={resource.id} initialBookmarked={isBookmarked} />
           </div>
         </div>
 
-        <CardTitle className="text-base sm:text-lg font-bold line-clamp-2 text-white group-hover:text-prevu-accent transition-colors">
+        {/* Course Title */}
+        <CardTitle className="text-sm sm:text-base font-bold line-clamp-2 text-white group-hover:text-prevu-accent transition-colors leading-snug">
           <Link href={`/paper/${resource.id}`} className="hover:underline">
             {resource.subjects?.name}
           </Link>
         </CardTitle>
 
-        <div className="flex items-center gap-2 mt-1.5">
+        {/* Code & Semester Pill */}
+        <div className="flex items-center gap-2 mt-2">
           <Link 
             href={subjectUrl}
-            className="text-[11px] font-mono font-semibold text-prevu-accent bg-prevu-accent/10 hover:bg-prevu-accent/20 px-2 py-0.5 rounded border border-prevu-accent/20 transition-colors"
+            className="text-[10px] font-mono font-bold text-prevu-accent bg-prevu-accent/10 hover:bg-prevu-accent/20 px-2 py-0.5 rounded border border-prevu-accent/25 transition-colors"
           >
             {resource.subjects?.code}
           </Link>
-          <span className="text-xs font-mono text-prevu-text-muted">
-            Sem {resource.subjects?.semester} (Year {resource.subjects?.year || Math.ceil((resource.subjects?.semester || 1) / 2)})
+          <span className="text-[11px] font-mono text-prevu-text-muted">
+            Sem {resource.subjects?.semester}
           </span>
         </div>
       </CardHeader>
       
-      <CardContent className="flex-1 flex flex-col justify-end pb-3 pt-0">
-        <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-prevu-surface-light/60 text-xs text-prevu-text-muted">
-          <div className="flex items-center gap-1.5 truncate">
+      <CardContent className="flex-1 flex flex-col justify-end px-4 py-2 pt-0">
+        <div className="flex items-center justify-between gap-2 pt-2 border-t border-prevu-surface-light/50 text-xs text-prevu-text-muted">
+          <div className="flex items-center gap-1.5 truncate text-[11px]">
             {isAdmin ? (
-              <span className="font-semibold text-purple-300 flex items-center gap-1 truncate text-xs">
-                <span>By <strong className="text-purple-200">Prevu</strong></span>
+              <span className="font-semibold text-purple-300 truncate">
+                Prevu Team
               </span>
             ) : (
-              <span className="truncate text-xs">
+              <span className="truncate">
                 By @{resource.users?.username || resource.users?.name || 'student'}
               </span>
             )}
 
             {isVerified && !isAdmin && (
-              <span className="inline-flex items-center text-emerald-400 gap-0.5" title="CU Verified">
+              <span className="inline-flex items-center text-emerald-400" title="CU Verified Student">
                 <CheckCircle className="w-3.5 h-3.5" />
               </span>
             )}
           </div>
 
-          <span className="text-[11px] text-prevu-text-muted/70 font-mono shrink-0 flex items-center gap-1">
+          <span className="text-[10px] text-prevu-text-muted font-mono shrink-0 flex items-center gap-1">
             <FileText className="w-3 h-3 text-prevu-text-muted" />
             PDF
           </span>
         </div>
       </CardContent>
       
-      <CardFooter className="flex-none pt-0 border-t-0 flex gap-2">
+      <CardFooter className="flex-none p-4 pt-1 border-t-0 flex gap-2">
         <PreviewButton 
           resource={resource} 
           variant="secondary"
-          label="Preview First"
-          className="flex-1 font-semibold border border-prevu-surface-light hover:border-prevu-accent/50 hover:bg-prevu-surface-elevated transition-all"
+          label="Preview"
+          className="flex-1 text-xs font-semibold border border-prevu-surface-light hover:border-prevu-accent/50 hover:bg-prevu-surface-elevated transition-all"
         />
         <DownloadButtonWithProgress
           resourceId={resource.id}

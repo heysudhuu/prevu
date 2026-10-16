@@ -1,11 +1,12 @@
 import { createClient } from '@/utils/supabase/server'
-import { ResourceCard } from '@/components/ResourceCard'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 import Header from '@/components/Header'
 import { getUserBookmarkIds, getUserUpvotedResourceIds, getResourceUpvoteCounts } from '@/app/dashboard/actions'
 import BrowseFilterBar from '@/components/browse/BrowseFilterBar'
 import SmartTopicSearch from '@/components/browse/SmartTopicSearch'
+import CourseWorkspaceDeck from '@/components/browse/CourseWorkspaceDeck'
+import BrowseResourceList from '@/components/browse/BrowseResourceList'
 import { Sparkles, MessageSquarePlus, FileQuestion, ChevronLeft, ChevronRight } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -168,6 +169,14 @@ export default async function BrowsePage({
             </Button>
           </div>
 
+          {/* Subject-First Course Workspace Deck */}
+          <CourseWorkspaceDeck
+            subjects={subjects}
+            currentSem={semFilter}
+            currentSubject={subjectFilter}
+            currentType={typeFilter}
+          />
+
           {/* Interactive Filter Bar */}
           <BrowseFilterBar 
             subjects={subjects}
@@ -186,21 +195,16 @@ export default async function BrowsePage({
             <SmartTopicSearch />
           </div>
 
-          {/* Resources Grid */}
-          <section>
+          {/* Unified Resources List (Supports Grid & Compact Table View) */}
+          <section className="mt-6">
             {resources.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 animate-fade-in">
-                  {resources.map((resource) => (
-                    <ResourceCard 
-                      key={resource.id} 
-                      resource={resource} 
-                      isBookmarked={bookmarkIds.includes(resource.id)}
-                      initialUpvoted={userUpvotedIds.includes(resource.id)}
-                      upvoteCount={upvoteCounts[resource.id] || 0}
-                    />
-                  ))}
-                </div>
+                <BrowseResourceList
+                  resources={resources}
+                  bookmarkIds={bookmarkIds}
+                  userUpvotedIds={userUpvotedIds}
+                  upvoteCounts={upvoteCounts}
+                />
 
                 {/* Pagination Controls */}
                 {totalPages > 1 && (

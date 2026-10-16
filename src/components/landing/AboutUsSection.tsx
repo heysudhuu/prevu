@@ -7,10 +7,11 @@ import {
   BookOpen, 
   Heart, 
   ChevronDown, 
-  ChevronUp,
   HelpCircle,
   Zap,
-  Users
+  Users,
+  CheckCircle2,
+  Sparkles
 } from 'lucide-react'
 
 export default function AboutUsSection() {
@@ -19,7 +20,7 @@ export default function AboutUsSection() {
   const faqs = [
     {
       q: "Is Prevu officially affiliated with Chandigarh University?",
-      a: "Prevu is an independent, non-profit, student-run academic project created by BE-CSE students at Chandigarh University to provide free, organized access to study materials and question papers."
+      a: "Prevu is an independent, non-profit, student-run academic project created by BE-CSE students at Chandigarh University to provide free, organized, high-speed access to study materials and question papers."
     },
     {
       q: "Are all question papers and notes free to download?",
@@ -27,19 +28,23 @@ export default function AboutUsSection() {
     },
     {
       q: "How are submitted question papers verified?",
-      a: "When a student or peer uploads a paper, our admin and moderator team inspects the document for legibility, accurate subject code, correct semester, and exam year before it goes live on the archive."
+      a: "When a student uploads a paper, our moderation team inspects the document for legibility, accurate course code (e.g. 23CST-204), correct semester, and exam year before it is approved on the public vault."
+    },
+    {
+      q: "Can I save question papers for offline reading?",
+      a: "Yes! Prevu is a certified Progressive Web App (PWA). Click 'Save Offline' on any question paper to store it in your device's encrypted vault. You can read it during exams even when campus Wi-Fi drops completely."
     },
     {
       q: "How can I contribute my exam papers and notes?",
-      a: "Simply click the 'Upload' button in the navigation bar or dashboard, select your semester and subject, attach your PDF or clear images, and submit! Verified contributions help hundreds of your batchmates."
+      a: "Click 'Upload Paper' in the top bar or mobile bottom menu. Select your semester and course, attach the PDF or clear scans, and submit. You'll receive +50 Scholar Karma and climb the university contributor leaderboard!"
     }
   ]
 
   return (
-    <section className="py-24 bg-prevu-bg border-t border-prevu-surface-light relative overflow-hidden">
+    <section className="py-24 bg-prevu-bg border-b border-prevu-surface-light relative overflow-hidden">
       
-      {/* Ambient background glow */}
-      <div className="absolute top-0 right-1/4 w-96 h-96 bg-purple-600/10 blur-[130px] rounded-full pointer-events-none" />
+      {/* Subtle ambient lighting */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-purple-600/10 blur-[140px] rounded-full pointer-events-none" />
 
       <div className="container mx-auto px-4 max-w-5xl space-y-20 relative z-10">
         
@@ -47,7 +52,7 @@ export default function AboutUsSection() {
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-prevu-accent/15 text-prevu-accent border border-prevu-accent/30 uppercase tracking-wider">
             <Heart className="w-3.5 h-3.5" />
-            <span>Our Story & Mission</span>
+            <span>Our Story &amp; Mission</span>
           </div>
 
           <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
@@ -55,103 +60,85 @@ export default function AboutUsSection() {
             <span className="text-gradient-purple">for CU students.</span>
           </h2>
 
-          <p className="text-base sm:text-lg text-prevu-text-muted leading-relaxed">
-            Every exam week, thousands of students scramble across cluttered WhatsApp groups, dead Google Drive links, and messy Telegram chats just to find a single past MST question paper. We built <strong>Prevu</strong> to fix this forever.
+          <p className="text-sm sm:text-base text-prevu-text-muted leading-relaxed">
+            Every exam week, thousands of engineering students scramble across ephemeral WhatsApp groups, expired Google Drive links, and blurry handheld photos moments before an assessment. We engineered <strong>Prevu</strong> to permanently solve information fragmentation at Chandigarh University.
           </p>
         </div>
 
         {/* 4 Core Guarantees & Pillars Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.45, delay: 0.05 }}
-            whileHover={{ y: -6, transition: { duration: 0.2 } }}
-            className="p-6 rounded-2xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-purple-500/40 transition-colors space-y-3 shadow-lg group"
-          >
-            <div className="w-12 h-12 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-300 group-hover:scale-110 transition-transform">
-              <Zap className="w-6 h-6" />
-            </div>
-            <h3 className="text-base font-bold text-white group-hover:text-purple-300 transition-colors">100% Free Forever</h3>
-            <p className="text-xs text-prevu-text-muted leading-relaxed">
-              No paywalls, subscriptions, or pay-to-unlock coin gates. Pure open academic knowledge for all.
-            </p>
-          </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.45, delay: 0.15 }}
-            whileHover={{ y: -6, transition: { duration: 0.2 } }}
-            className="p-6 rounded-2xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-emerald-500/40 transition-colors space-y-3 shadow-lg group"
-          >
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
-            <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors">Verified Quality</h3>
-            <p className="text-xs text-prevu-text-muted leading-relaxed">
-              Every single paper and document is reviewed for clarity and correctness before going live on the archive.
-            </p>
-          </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.45, delay: 0.25 }}
-            whileHover={{ y: -6, transition: { duration: 0.2 } }}
-            className="p-6 rounded-2xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-amber-500/40 transition-colors space-y-3 shadow-lg group"
-          >
-            <div className="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-300 group-hover:scale-110 transition-transform">
-              <BookOpen className="w-6 h-6" />
-            </div>
-            <h3 className="text-base font-bold text-white group-hover:text-amber-300 transition-colors">Exact CU Blueprint</h3>
-            <p className="text-xs text-prevu-text-muted leading-relaxed">
-              Mapped directly to Chandigarh University’s official MST 1, MST 2, and EST question patterns.
-            </p>
-          </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.45, delay: 0.35 }}
-            whileHover={{ y: -6, transition: { duration: 0.2 } }}
-            className="p-6 rounded-2xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-cyan-500/40 transition-colors space-y-3 shadow-lg group"
-          >
-            <div className="w-12 h-12 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-300 group-hover:scale-110 transition-transform">
-              <Users className="w-6 h-6" />
-            </div>
-            <h3 className="text-base font-bold text-white group-hover:text-cyan-300 transition-colors">Student Community</h3>
-            <p className="text-xs text-prevu-text-muted leading-relaxed">
-              Maintained and powered by peer contributions from every semester and engineering specialization.
-            </p>
-          </motion.div>
-
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            {
+              icon: Zap,
+              title: "100% Free Forever",
+              desc: "No subscriptions, coin systems, or pay-to-unlock gates. Pure open academic knowledge for all students.",
+              color: "text-purple-400 bg-purple-500/15 border-purple-500/30"
+            },
+            {
+              icon: ShieldCheck,
+              title: "Audited Quality",
+              desc: "Every PDF is reviewed for clarity, correct subject codes, and complete page sequences before going live.",
+              color: "text-emerald-400 bg-emerald-500/15 border-emerald-500/30"
+            },
+            {
+              icon: BookOpen,
+              title: "Exact CU Pattern",
+              desc: "Strictly aligned with Chandigarh University’s MST 1, MST 2, and EST marking schemes and course weightage.",
+              color: "text-amber-400 bg-amber-500/15 border-amber-500/30"
+            },
+            {
+              icon: Users,
+              title: "Peer Community",
+              desc: "Crowdsourced and validated by high-scoring seniors and active peers across all CSE specializations.",
+              color: "text-cyan-400 bg-cyan-500/15 border-cyan-500/30"
+            }
+          ].map((item, idx) => {
+            const Icon = item.icon
+            return (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.45, delay: idx * 0.08 }}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                className="p-5 sm:p-6 rounded-3xl bg-prevu-surface/85 border border-prevu-surface-light hover:border-prevu-accent/40 transition-all shadow-xl space-y-3 flex flex-col justify-between"
+              >
+                <div>
+                  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${item.color} mb-3`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-base font-bold text-white mb-1.5">{item.title}</h3>
+                  <p className="text-xs text-prevu-text-muted leading-relaxed">{item.desc}</p>
+                </div>
+              </motion.div>
+            )
+          })}
         </div>
 
         {/* Interactive FAQ Section */}
-        <div className="space-y-6 max-w-3xl mx-auto">
+        <div className="space-y-6 max-w-3xl mx-auto pt-6">
           <div className="text-center space-y-1">
-            <h3 className="text-2xl font-bold text-white flex items-center justify-center gap-2">
-              <HelpCircle className="w-5 h-5 text-prevu-accent" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-prevu-surface border border-prevu-surface-light text-prevu-accent mb-2">
+              <HelpCircle className="w-3.5 h-3.5" />
+              <span>Got Questions?</span>
+            </div>
+            <h3 className="text-2xl sm:text-3xl font-extrabold text-white">
               Frequently Asked Questions
             </h3>
-            <p className="text-xs text-prevu-text-muted">Everything you need to know about using and contributing to Prevu.</p>
+            <p className="text-xs text-prevu-text-muted">Everything you need to know about navigating and contributing to Prevu.</p>
           </div>
 
           <div className="space-y-3">
             {faqs.map((faq, idx) => (
               <div 
                 key={idx}
-                className="rounded-2xl border border-prevu-surface-light bg-prevu-surface/80 overflow-hidden transition-all shadow-md"
+                className="rounded-2xl border border-prevu-surface-light bg-prevu-surface/90 overflow-hidden transition-all shadow-md"
               >
                 <button
+                  type="button"
                   onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                  className="w-full p-4 text-left flex items-center justify-between gap-3 text-sm font-semibold text-prevu-text hover:text-prevu-accent transition-colors"
+                  className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-3 text-sm font-bold text-white hover:text-prevu-accent transition-colors cursor-pointer"
                 >
                   <span>{faq.q}</span>
                   <ChevronDown className={`w-4 h-4 text-prevu-text-muted shrink-0 transition-transform duration-200 ${openFaq === idx ? 'rotate-180 text-prevu-accent' : ''}`} />
@@ -166,7 +153,7 @@ export default function AboutUsSection() {
                       transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] as const }}
                       className="overflow-hidden"
                     >
-                      <div className="px-4 pb-4 pt-1 text-xs text-prevu-text-muted leading-relaxed border-t border-prevu-surface-light/40">
+                      <div className="px-4 sm:px-5 pb-5 pt-0 text-xs text-prevu-text-muted leading-relaxed border-t border-prevu-surface-light/40">
                         {faq.a}
                       </div>
                     </motion.div>

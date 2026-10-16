@@ -30,14 +30,17 @@ import { Analytics } from "@vercel/analytics/next";
 import { SiteAnalyticsTracker } from "@/components/analytics/SiteAnalyticsTracker";
 import PWAProvider from "@/components/pwa/PWAProvider";
 
+import MobileBottomNav from "@/components/navigation/MobileBottomNav";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
       className={`${inter.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans bg-prevu-bg text-prevu-text">
+      <body className="min-h-full flex flex-col font-sans bg-prevu-bg text-prevu-text pb-16 md:pb-0">
         {children}
+        <MobileBottomNav />
         <PWAProvider />
         <SiteAnalyticsTracker />
         <PrevuMascot />

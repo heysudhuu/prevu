@@ -98,15 +98,25 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
 
   // Core primary links
   const primaryLinks = [
-    { href: '/browse', label: 'Papers', icon: <FileText className="w-3.5 h-3.5 text-prevu-accent" /> },
+    { href: '/browse', label: 'Study Hub', icon: <FileText className="w-3.5 h-3.5 text-prevu-accent" /> },
     { href: '/requests', label: 'Community', icon: <MessageSquare className="w-3.5 h-3.5 text-purple-400" /> },
     { href: '/vault', label: 'Vault', icon: <WifiOff className="w-3.5 h-3.5 text-cyan-400" /> },
-    { href: '/study-planner', label: 'Planner', icon: <Brain className="w-3.5 h-3.5 text-purple-400" /> },
-    { href: '/exam-prep', label: 'Exam Prep', icon: <Target className="w-3.5 h-3.5 text-amber-400" /> },
   ]
 
   // Explore sub-links
   const exploreLinks = [
+    { 
+      href: '/exam-prep', 
+      label: 'Exam Prep Workspace', 
+      desc: 'Targeted MST & EST prep with syllabus weightage',
+      icon: <Target className="w-4 h-4 text-amber-400" /> 
+    },
+    { 
+      href: '/study-planner', 
+      label: 'Study Planner', 
+      desc: 'Exam countdown & personal revision scheduler',
+      icon: <Brain className="w-4 h-4 text-purple-400" /> 
+    },
     { 
       href: '/study-material', 
       label: 'Study Material', 
@@ -118,12 +128,6 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
       label: 'Subjects Directory', 
       desc: 'All 8 semesters curriculum papers',
       icon: <GraduationCap className="w-4 h-4 text-cyan-400" /> 
-    },
-    { 
-      href: '/requests', 
-      label: 'Community Board', 
-      desc: 'Request PYQs, notes & batchmate help',
-      icon: <MessageSquare className="w-4 h-4 text-purple-400" /> 
     },
     { 
       href: '/leaderboard', 

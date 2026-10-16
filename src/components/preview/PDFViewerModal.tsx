@@ -26,7 +26,8 @@ import {
   Moon,
   Sun,
   PenTool,
-  Cloud
+  Cloud,
+  Focus
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -72,6 +73,7 @@ export default function PDFViewerModal({ isOpen, onClose, resource }: PDFViewerM
   const [zoom, setZoom] = useState<number>(100)
   const [pdfTheme, setPdfTheme] = useState<'default' | 'dark' | 'amoled'>('default')
   const [isAnnotating, setIsAnnotating] = useState(false)
+  const [focusMode, setFocusMode] = useState(false)
 
   // Determine file type to choose best in-app viewer strategy
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -232,44 +234,67 @@ export default function PDFViewerModal({ isOpen, onClose, resource }: PDFViewerM
             </div>
           </div>
 
-          {/* Tab Selection Navigation */}
-          <div className="flex items-center bg-prevu-surface border border-prevu-surface-light rounded-xl p-0.5 shrink-0 self-stretch sm:self-auto justify-between">
-            <button
-              onClick={() => handleSelectTab('viewer')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                activeTab === 'viewer'
-                  ? 'bg-prevu-accent text-white shadow-sm'
-                  : 'text-prevu-text-muted hover:text-white'
-              }`}
-            >
-              <FileText className="w-3.5 h-3.5" /> Paper View
-            </button>
+          {/* Tab Selection Navigation (Hidden in Focus Mode) */}
+          {!focusMode && (
+            <div className="flex items-center bg-prevu-surface border border-prevu-surface-light rounded-xl p-0.5 shrink-0 self-stretch sm:self-auto justify-between">
+              <button
+                onClick={() => handleSelectTab('viewer')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  activeTab === 'viewer'
+                    ? 'bg-prevu-accent text-white shadow-sm'
+                    : 'text-prevu-text-muted hover:text-white'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" /> Paper View
+              </button>
 
-            <button
-              onClick={() => handleSelectTab('ai')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                activeTab === 'ai'
-                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm'
-                  : 'text-prevu-text-muted hover:text-white'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-yellow-300" /> AI Blueprint
-            </button>
+              <button
+                onClick={() => handleSelectTab('ai')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  activeTab === 'ai'
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm'
+                    : 'text-prevu-text-muted hover:text-white'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-yellow-300" /> AI Blueprint
+              </button>
 
-            <button
-              onClick={() => handleSelectTab('discussion')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                activeTab === 'discussion'
-                  ? 'bg-prevu-accent text-white shadow-sm'
-                  : 'text-prevu-text-muted hover:text-white'
-              }`}
-            >
-              <MessageSquare className="w-3.5 h-3.5" /> Doubts ({comments.length})
-            </button>
-          </div>
+              <button
+                onClick={() => handleSelectTab('discussion')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  activeTab === 'discussion'
+                    ? 'bg-prevu-accent text-white shadow-sm'
+                    : 'text-prevu-text-muted hover:text-white'
+                }`}
+              >
+                <MessageSquare className="w-3.5 h-3.5" /> Doubts ({comments.length})
+              </button>
+            </div>
+          )}
 
           {/* Action Toolbar */}
           <div className="flex items-center gap-1.5 shrink-0">
+            {/* Focus / Night Before Exam Mode Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setFocusMode(prev => !prev)
+                if (!focusMode) {
+                  setActiveTab('viewer')
+                }
+              }}
+              className={`h-8 px-2.5 text-xs transition-all cursor-pointer font-bold ${
+                focusMode 
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-sm shadow-amber-500/20' 
+                  : 'border-prevu-surface-light text-prevu-text-muted hover:text-amber-300 hover:border-amber-500/40'
+              }`}
+              title={focusMode ? 'Exit Focus Mode' : 'Night-Before-Exam Focus Mode: Zero distraction reading'}
+            >
+              <Focus className="w-3.5 h-3.5 sm:mr-1 text-amber-400" />
+              <span className="hidden sm:inline">{focusMode ? 'Exit Focus' : 'Focus'}</span>
+            </Button>
+
             {activeTab === 'viewer' && (
               <>
                 {/* Cloud vs Standard Viewer Mode Indicator / Toggle */}

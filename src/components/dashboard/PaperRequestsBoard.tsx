@@ -238,8 +238,8 @@ export default function PaperRequestsBoard({
                   <span className="px-2.5 py-0.5 rounded font-mono font-bold text-xs bg-purple-500/15 text-purple-300 border border-purple-500/25">
                     {req.exam_type} • {req.exam_year}
                   </span>
-                  <span className="text-[10px] text-prevu-text-muted">
-                    Sem {req.semester}
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                    🔥 +50 Karma
                   </span>
                 </div>
 
@@ -253,20 +253,25 @@ export default function PaperRequestsBoard({
                   </p>
                 )}
 
-                <div className="text-[11px] text-prevu-text-muted mt-2">
-                  Requested by: <strong className="text-prevu-text">@{req.users?.username || 'student'}</strong>
+                <div className="flex items-center justify-between text-[11px] text-prevu-text-muted mt-2">
+                  <span>
+                    Requested by: <strong className="text-prevu-text">@{req.users?.username || 'student'}</strong>
+                  </span>
+                  <span className="text-[10px] font-mono text-prevu-accent font-semibold">
+                    Sem {req.semester}
+                  </span>
                 </div>
               </div>
 
               <div className="pt-2 border-t border-prevu-surface-light/60">
                 <Button 
                   size="sm" 
-                  className="w-full text-xs h-8 bg-prevu-accent/15 hover:bg-prevu-accent/25 text-prevu-accent border border-prevu-accent/30 flex items-center justify-center gap-1.5"
+                  className="w-full text-xs h-8 bg-gradient-to-r from-purple-600/30 to-prevu-accent/30 hover:from-purple-600/50 hover:to-prevu-accent/50 text-white border border-purple-500/40 flex items-center justify-center gap-1.5 font-bold shadow-sm"
                   asChild
                 >
                   <Link href={`/upload?subject=${encodeURIComponent(req.subject_name)}&type=${req.exam_type}&sem=${req.semester}&year=${Math.ceil(req.semester / 2)}`}>
-                    <UploadCloud className="w-3.5 h-3.5" />
-                    <span>I Have This Paper — Upload</span>
+                    <UploadCloud className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Upload &amp; Claim Bounty</span>
                   </Link>
                 </Button>
               </div>

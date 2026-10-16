@@ -2,11 +2,11 @@
 
 @theme inline {
   --color-prevu-bg: #09090d;
-  --color-prevu-surface: #121218;
-  --color-prevu-surface-light: #20202c;
-  --color-prevu-surface-elevated: #282838;
-  --color-prevu-text: #fafafa;
-  --color-prevu-text-muted: #9494a6;
+  --color-prevu-surface: #111118;
+  --color-prevu-surface-light: #1c1c28;
+  --color-prevu-surface-elevated: #242436;
+  --color-prevu-text: #f4f4f8;
+  --color-prevu-text-muted: #9292a4;
   --color-prevu-accent: #8b5cf6;
   --color-prevu-accent-hover: #7c3aed;
   --color-prevu-accent-light: #a78bfa;
@@ -217,4 +217,15 @@
   );
   background-size: 24px 24px;
   animation: progressStripes 1s linear infinite;
+}
+
+/* Mobile Safe-Area Bottom Inset */
+.safe-area-pb {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
+/* Distraction-Free Night Reading Mode */
+.night-reading-mode {
+  background-color: #07070a !important;
+  color: #ededf2 !important;
 }

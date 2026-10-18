@@ -2,8 +2,7 @@ import { cookies } from 'next/headers'
 import { authAdmin } from '@/lib/firebase/server'
 import Header from '@/components/Header'
 import CbtArenaHub from '@/components/cbt/CbtArenaHub'
-import { getAllStoredLeaderboards } from '@/lib/cbt/cbtStore'
-import { getApprovedContributedQuestions } from '@/lib/cbt/actions'
+import { getAllCbtLeaderboards, getApprovedContributedQuestions } from '@/lib/cbt/actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,7 +27,7 @@ export default async function CbtPage() {
 
   let initialLeaderboards = {}
   try {
-    initialLeaderboards = getAllStoredLeaderboards() || {}
+    initialLeaderboards = await getAllCbtLeaderboards() || {}
   } catch {
     initialLeaderboards = {}
   }

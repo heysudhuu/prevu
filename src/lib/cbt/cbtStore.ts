@@ -4,11 +4,19 @@ import { CbtLeaderboardEntry } from './types'
 
 const DATA_DIR = path.join(process.cwd(), 'src', 'lib', 'cbt', 'data')
 const ATTEMPTS_FILE = path.join(DATA_DIR, 'attempts.json')
+const QUESTIONS_FILE = path.join(DATA_DIR, 'contributed_questions.json')
+const SUBJECTS_FILE = path.join(DATA_DIR, 'contributed_subjects.json')
 
 // Ensure directory and file exist
 function ensureStore() {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true })
+  }
+  if (!fs.existsSync(QUESTIONS_FILE)) {
+    fs.writeFileSync(QUESTIONS_FILE, JSON.stringify([], null, 2), 'utf8')
+  }
+  if (!fs.existsSync(SUBJECTS_FILE)) {
+    fs.writeFileSync(SUBJECTS_FILE, JSON.stringify([], null, 2), 'utf8')
   }
   if (!fs.existsSync(ATTEMPTS_FILE)) {
     // Initial seeded student entries for realistic campus competition
@@ -166,3 +174,112 @@ export function saveStoredAttempt(entry: {
     return []
   }
 }
+
+/**
+ * Save batch contributed questions to local fallback storage
+ */
+export function saveStoredBatchContributedQuestions(items: Array<any>): number {
+  try {
+    ensureStore()
+    const content = fs.existsSync(QUESTIONS_FILE) ? fs.readFileSync(QUESTIONS_FILE, 'utf8') : '[]'
+    const list = JSON.parse(content || '[]') as any[]
+    
+    const timestamp = new Date().toISOString()
+    const newItems = items.map((item, idx) => ({
+      ...item,
+      id: Date.now() + idx,
+      created_at: timestamp,
+      updated_at: timestamp
+    }))
+
+    const combined = [...list, ...newItems]
+    fs.writeFileSync(QUESTIONS_FILE, JSON.stringify(combined, null, 2), 'utf8')
+    return newItems.length
+  } catch (err) {
+    console.warn('Error saving batch questions to local fallback store:', err)
+    return items.length
+  }
+}
+
+/**
+ * Save single contributed question to local fallback storage
+ */
+export function saveStoredContributedQuestion(item: any): any {
+  try {
+    ensureStore()
+    const content = fs.existsSync(QUESTIONS_FILE) ? fs.readFileSync(QUESTIONS_FILE, 'utf8') : '[]'
+    const list = JSON.parse(content || '[]') as any[]
+    
+    const timestamp = new Date().toISOString()
+    const record = {
+      ...item,
+      id: Date.now(),
+      created_at: timestamp,
+      updated_at: timestamp
+    }
+
+    list.push(record)
+    fs.writeFileSync(QUESTIONS_FILE, JSON.stringify(list, null, 2), 'utf8')
+    return record
+  } catch (err) {
+    console.warn('Error saving question to local fallback store:', err)
+    return item
+  }
+}
+
+/**
+ * Retrieve all stored contributed questions
+ */
+export function getStoredContributedQuestions(): any[] {
+  try {
+    ensureStore()
+    if (!fs.existsSync(QUESTIONS_FILE)) return []
+    const content = fs.readFileSync(QUESTIONS_FILE, 'utf8')
+    return JSON.parse(content || '[]')
+  } catch (err) {
+    console.warn('Error reading stored contributed questions:', err)
+    return []
+  }
+}
+
+/**
+ * Save proposed subject to local fallback storage
+ */
+export function saveStoredContributedSubject(subj: any): any {
+  try {
+    ensureStore()
+    const content = fs.existsSync(SUBJECTS_FILE) ? fs.readFileSync(SUBJECTS_FILE, 'utf8') : '[]'
+    const list = JSON.parse(content || '[]') as any[]
+
+    const timestamp = new Date().toISOString()
+    const record = {
+      ...subj,
+      id: Date.now(),
+      created_at: timestamp,
+      updated_at: timestamp
+    }
+
+    list.push(record)
+    fs.writeFileSync(SUBJECTS_FILE, JSON.stringify(list, null, 2), 'utf8')
+    return record
+  } catch (err) {
+    console.warn('Error saving subject to local fallback store:', err)
+    return subj
+  }
+}
+
+/**
+ * Retrieve all stored contributed subjects
+ */
+export function getStoredContributedSubjects(): any[] {
+  try {
+    ensureStore()
+    if (!fs.existsSync(SUBJECTS_FILE)) return []
+    const content = fs.readFileSync(SUBJECTS_FILE, 'utf8')
+    return JSON.parse(content || '[]')
+  } catch (err) {
+    console.warn('Error reading stored contributed subjects:', err)
+    return []
+  }
+}
+

@@ -23,7 +23,8 @@ import {
   RefreshCw,
   Edit3,
   Tag,
-  FolderPlus
+  FolderPlus,
+  X
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { submitCommunityCbtQuestion, batchSubmitCommunityCbtQuestions, proposeNewCbtSubject } from '@/lib/cbt/actions'
@@ -538,9 +539,18 @@ export default function CbtQuestionContributor({ initialSubject = '' }: CbtQuest
 
         {/* Global Feedback Messages */}
         {error && (
-          <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2 animate-fade-in font-medium">
-            <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
-            <span>{error}</span>
+          <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between gap-3 animate-fade-in font-medium">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+              <span>{error}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setError(null)}
+              className="text-rose-400 hover:text-white transition-colors cursor-pointer shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         )}
 

@@ -256,9 +256,57 @@ export const CBT_SUBJECTS: CbtSubject[] = [
 ]
 
 /**
+ * Helper to normalize raw contributed question to CbtQuestion
+ */
+export function normalizeContributedQuestion(q: any): CbtQuestion {
+  let options: { id: string; text: string }[] = []
+  if (Array.isArray(q.options_json)) {
+    options = q.options_json.map((o: any, i: number) => ({
+      id: String(o.id || String.fromCharCode(65 + i)),
+      text: String(o.text || '')
+    }))
+  } else if (q.options_json && typeof q.options_json === 'object') {
+    options = Object.entries(q.options_json).map(([k, v]) => ({
+      id: k,
+      text: String(v)
+    }))
+  }
+
+  const rawTopic = (q.unit_tag || '').toLowerCase()
+  let matchedTopicId = 'all'
+  if (rawTopic.includes('ratio')) matchedTopicId = 'ratio-proportion'
+  else if (rawTopic.includes('percent')) matchedTopicId = 'percentages'
+  else if (rawTopic.includes('age')) matchedTopicId = 'problems-on-ages'
+  else if (rawTopic.includes('profit') || rawTopic.includes('discount')) matchedTopicId = 'profit-loss-discount'
+  else if (rawTopic.includes('variation')) matchedTopicId = 'variation'
+  else if (rawTopic) matchedTopicId = rawTopic.replace(/[^a-z0-9]+/g, '-')
+
+  return {
+    id: String(q.id),
+    subjectCode: q.subject_code,
+    subjectName: q.subject_name,
+    semester: q.semester || 1,
+    category: q.category || 'aptitude',
+    topic: matchedTopicId,
+    topicName: q.unit_tag || 'Community Contribution',
+    question: q.question,
+    type: q.question_type || 'single',
+    options,
+    correctAnswers: q.correct_answers || ['A'],
+    explanation: q.explanation || '',
+    status: 'approved',
+    submittedBy: q.user_name || q.username
+  }
+}
+
+/**
  * Returns all questions for a given subject code, optionally filtered by topic
  */
-export function getQuestionsForSubject(subjectCode: string, topicId?: string): CbtQuestion[] {
+export function getQuestionsForSubject(
+  subjectCode: string, 
+  topicId?: string,
+  extraApprovedQuestions: (CbtQuestion | any)[] = []
+): CbtQuestion[] {
   const code = subjectCode.trim().toUpperCase()
   let pool: CbtQuestion[] = []
   if (code === 'FSO-307' || code === 'FSO307') {
@@ -267,59 +315,13 @@ export function getQuestionsForSubject(subjectCode: string, topicId?: string): C
     pool = [...APT301_QUESTIONS]
   }
 
-  // Load approved contributed questions from persistent storage
-  if (typeof process !== 'undefined' && process.versions?.node) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { getStoredContributedQuestions } = require('./cbtStore')
-      const stored = getStoredContributedQuestions() || []
-      const approved = stored.filter((q: any) => 
-        q.status === 'approved' && 
-        (q.subject_code?.toUpperCase() === code || q.subject_code?.replace(/-/g, '').toUpperCase() === code.replace(/-/g, ''))
-      )
-
-      for (const q of approved) {
-        let options: { id: string; text: string }[] = []
-        if (Array.isArray(q.options_json)) {
-          options = q.options_json.map((o: any, i: number) => ({
-            id: String(o.id || String.fromCharCode(65 + i)),
-            text: String(o.text || '')
-          }))
-        } else if (q.options_json && typeof q.options_json === 'object') {
-          options = Object.entries(q.options_json).map(([k, v]) => ({
-            id: k,
-            text: String(v)
-          }))
-        }
-
-        const rawTopic = (q.unit_tag || '').toLowerCase()
-        let matchedTopicId = 'all'
-        if (rawTopic.includes('ratio')) matchedTopicId = 'ratio-proportion'
-        else if (rawTopic.includes('percent')) matchedTopicId = 'percentages'
-        else if (rawTopic.includes('age')) matchedTopicId = 'problems-on-ages'
-        else if (rawTopic.includes('profit') || rawTopic.includes('discount')) matchedTopicId = 'profit-loss-discount'
-        else if (rawTopic.includes('variation')) matchedTopicId = 'variation'
-        else if (rawTopic) matchedTopicId = rawTopic.replace(/[^a-z0-9]+/g, '-')
-
-        pool.push({
-          id: String(q.id),
-          subjectCode: q.subject_code,
-          subjectName: q.subject_name,
-          semester: q.semester || 1,
-          category: q.category || 'aptitude',
-          topic: matchedTopicId,
-          topicName: q.unit_tag || 'Community Contribution',
-          question: q.question,
-          type: q.question_type || 'single',
-          options,
-          correctAnswers: q.correct_answers || ['A'],
-          explanation: q.explanation || '',
-          status: 'approved',
-          submittedBy: q.user_name || q.username
-        })
+  if (extraApprovedQuestions && extraApprovedQuestions.length > 0) {
+    for (const raw of extraApprovedQuestions) {
+      const q = raw.subjectCode ? (raw as CbtQuestion) : normalizeContributedQuestion(raw)
+      const qCode = q.subjectCode?.toUpperCase() || ''
+      if (qCode === code || qCode.replace(/-/g, '') === code.replace(/-/g, '')) {
+        pool.push(q)
       }
-    } catch {
-      // Dynamic require safe fallback
     }
   }
 
@@ -336,14 +338,15 @@ export function generateTestQuestions(
   subjectCode: string,
   requestedCount: number,
   shuffle: boolean = true,
-  topicId?: string
+  topicId?: string,
+  extraApprovedQuestions: (CbtQuestion | any)[] = []
 ): {
   questions: CbtQuestion[]
   totalAvailable: number
   actualCount: number
   notice?: string
 } {
-  const all = getQuestionsForSubject(subjectCode, topicId)
+  const all = getQuestionsForSubject(subjectCode, topicId, extraApprovedQuestions)
   const totalAvailable = all.length
 
   if (totalAvailable === 0) {

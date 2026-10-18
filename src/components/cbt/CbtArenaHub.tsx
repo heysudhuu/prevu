@@ -35,11 +35,13 @@ import Link from 'next/link'
 interface CbtArenaHubProps {
   isAuthenticated?: boolean
   initialLeaderboards?: Record<string, CbtLeaderboardEntry[]>
+  approvedQuestions?: any[]
 }
 
 export default function CbtArenaHub({ 
   isAuthenticated = false,
-  initialLeaderboards = {}
+  initialLeaderboards = {},
+  approvedQuestions = []
 }: CbtArenaHubProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState<string>('')
@@ -58,37 +60,53 @@ export default function CbtArenaHub({
     questions: any[]
   } | null>(null)
 
+  const subjects = useMemo(() => {
+    return CBT_SUBJECTS.map(subj => {
+      const code = subj.code.toUpperCase()
+      const extraCount = (approvedQuestions || []).filter((q: any) => {
+        const qCode = (q.subject_code || q.subjectCode || '').toUpperCase()
+        return qCode === code || qCode.replace(/-/g, '') === code.replace(/-/g, '')
+      }).length
+      return {
+        ...subj,
+        totalQuestions: subj.totalQuestions + extraCount
+      }
+    })
+  }, [approvedQuestions])
+
   // Total verified questions across all subjects
   const totalVerifiedQuestions = useMemo(() => {
-    return CBT_SUBJECTS.reduce((sum, s) => sum + (s.totalQuestions || 0), 0)
-  }, [])
+    return subjects.reduce((sum, s) => sum + (s.totalQuestions || 0), 0)
+  }, [subjects])
 
-  const categories = [
-    { id: 'all', label: 'All Suites', count: CBT_SUBJECTS.length, icon: Layers },
+  const categories = useMemo(() => [
+    { id: 'all', label: 'All Suites', count: subjects.length, icon: Layers },
     { 
       id: 'aptitude', 
       label: 'Aptitude & Placements', 
-      count: `${CBT_SUBJECTS.find(s => s.category === 'aptitude')?.totalQuestions || 290} MCQs`,
+      count: `${subjects.find(s => s.category === 'aptitude')?.totalQuestions || 290} MCQs`,
       icon: Zap 
     },
     { 
       id: 'open-elective', 
       label: 'Open Electives (7th Sem)', 
-      count: `${CBT_SUBJECTS.find(s => s.category === 'open-elective')?.totalQuestions || 51} MCQs`,
+      count: `${subjects.find(s => s.category === 'open-elective')?.totalQuestions || 51} MCQs`,
       icon: Compass 
     },
     { id: 'uhv', label: 'UHV (Ethics)', count: 'Mandatory', icon: ShieldCheck },
     { id: 'core', label: 'Core Technical MSTs', count: 'Coming Soon', icon: GraduationCap }
-  ]
+  ], [subjects])
 
-  const filteredSubjects = CBT_SUBJECTS.filter(s => {
-    const matchesCat = selectedCategory === 'all' || s.category === selectedCategory
-    const matchesQuery = !searchQuery.trim() || 
-      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.topics.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()))
-    return matchesCat && matchesQuery
-  })
+  const filteredSubjects = useMemo(() => {
+    return subjects.filter(s => {
+      const matchesCat = selectedCategory === 'all' || s.category === selectedCategory
+      const matchesQuery = !searchQuery.trim() || 
+        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.topics.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()))
+      return matchesCat && matchesQuery
+    })
+  }, [subjects, selectedCategory, searchQuery])
 
   const handleOpenConfig = (subject: CbtSubject, topicId: string = 'all') => {
     // Check if user is authenticated
@@ -115,7 +133,8 @@ export default function CbtArenaHub({
       activeSubject.code,
       config.questionCount,
       config.shuffleQuestions,
-      config.selectedTopic
+      config.selectedTopic,
+      approvedQuestions
     )
 
     setRunningExam({
@@ -141,7 +160,8 @@ export default function CbtArenaHub({
             runningExam.subject.code,
             runningExam.config.questionCount,
             runningExam.config.shuffleQuestions,
-            runningExam.config.selectedTopic
+            runningExam.config.selectedTopic,
+            approvedQuestions
           )
           setRunningExam({
             ...runningExam,

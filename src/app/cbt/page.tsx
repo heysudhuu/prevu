@@ -2,7 +2,7 @@ import { cookies } from 'next/headers'
 import { authAdmin } from '@/lib/firebase/server'
 import Header from '@/components/Header'
 import CbtArenaHub from '@/components/cbt/CbtArenaHub'
-import { getAllStoredLeaderboards } from '@/lib/cbt/cbtStore'
+import { getAllStoredLeaderboards, getStoredContributedQuestions } from '@/lib/cbt/cbtStore'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,6 +32,14 @@ export default async function CbtPage() {
     initialLeaderboards = {}
   }
 
+  let approvedQuestions = []
+  try {
+    const stored = getStoredContributedQuestions() || []
+    approvedQuestions = stored.filter((q: any) => q.status === 'approved')
+  } catch {
+    approvedQuestions = []
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#07070c] text-prevu-text relative overflow-hidden">
       {/* Ambient background glows */}
@@ -49,6 +57,7 @@ export default async function CbtPage() {
           <CbtArenaHub 
             isAuthenticated={isAuthenticated} 
             initialLeaderboards={JSON.parse(JSON.stringify(initialLeaderboards || {}))}
+            approvedQuestions={JSON.parse(JSON.stringify(approvedQuestions || []))}
           />
         </div>
       </main>

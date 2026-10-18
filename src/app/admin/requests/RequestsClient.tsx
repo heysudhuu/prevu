@@ -522,13 +522,13 @@ export default function RequestsClient({
     })
   }, [cbtQuestions, cbtStatusFilter, cbtSubjectFilter, cbtSearchQuery])
 
-  const handleReviewCbt = async (questionId: number, action: 'approved' | 'rejected', feedback?: string) => {
+  const handleReviewCbt = async (questionId: number | string, action: 'approved' | 'rejected', feedback?: string) => {
     setActionLoading(true)
     try {
       const res = await reviewCbtQuestion(questionId, action, feedback)
       if (res.success) {
         setCbtQuestions(prev =>
-          prev.map(q => q.id === questionId ? { ...q, status: action, admin_feedback: feedback || null } : q)
+          prev.map(q => String(q.id) === String(questionId) ? { ...q, status: action, admin_feedback: feedback || null } : q)
         )
         if (action === 'approved') {
           alert('CBT Question approved and published to the student CBT Arena!')
@@ -540,8 +540,8 @@ export default function RequestsClient({
       } else {
         alert(res.error || 'Failed to review question')
       }
-    } catch {
-      alert('Error reviewing question')
+    } catch (err: any) {
+      alert(`Error reviewing question: ${err?.message || 'Server error'}`)
     } finally {
       setActionLoading(false)
     }
@@ -562,15 +562,16 @@ export default function RequestsClient({
     try {
       const res = await batchApproveCbtQuestionsAdmin(pendingIds)
       if (res.success) {
+        const idStrings = pendingIds.map(String)
         setCbtQuestions(prev =>
-          prev.map(q => pendingIds.includes(q.id) ? { ...q, status: 'approved' } : q)
+          prev.map(q => idStrings.includes(String(q.id)) ? { ...q, status: 'approved' } : q)
         )
-        alert(`Successfully approved ${res.count} CBT questions! They are now live for student mock practice.`)
+        alert(`Successfully approved ${res.count || pendingIds.length} CBT questions! They are now live for student mock practice.`)
       } else {
         alert(res.error || 'Failed to batch approve')
       }
-    } catch {
-      alert('Error batch approving questions')
+    } catch (err: any) {
+      alert(`Error batch approving questions: ${err?.message || 'Server error'}`)
     } finally {
       setActionLoading(false)
     }

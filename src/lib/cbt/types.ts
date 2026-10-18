@@ -11,8 +11,11 @@ export interface CbtQuestion {
   subjectName: string
   semester: number
   category: 'open-elective' | 'aptitude' | 'uhv' | 'core'
+  topic?: string
+  topicName?: string
   partName?: string
   sectionName?: string
+  passage?: string
   question: string
   type: CbtQuestionType
   options: CbtOption[]
@@ -21,6 +24,14 @@ export interface CbtQuestion {
   difficulty?: 'easy' | 'medium' | 'hard'
   status?: 'approved' | 'pending'
   submittedBy?: string
+}
+
+export interface CbtSubjectTopic {
+  id: string
+  name: string
+  count: number
+  questionCount?: number
+  description?: string
 }
 
 export interface CbtSubject {
@@ -33,6 +44,7 @@ export interface CbtSubject {
   totalQuestions: number
   description: string
   topics: string[]
+  topicsList?: CbtSubjectTopic[]
   credits?: number
   isReady: boolean
   badgeColor: string
@@ -43,6 +55,7 @@ export interface CbtExamConfig {
   timeLimitMinutes: number
   shuffleQuestions: boolean
   shuffleOptions: boolean
+  selectedTopic?: string
 }
 
 export interface CbtUserAnswer {

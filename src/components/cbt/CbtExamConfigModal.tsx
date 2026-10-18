@@ -9,10 +9,12 @@ interface CbtExamConfigModalProps {
   subject: CbtSubject
   isOpen: boolean
   onClose: () => void
+  initialTopicId?: string
   onStartExam: (config: {
     questionCount: number
     timeLimitMinutes: number
     shuffleQuestions: boolean
+    selectedTopic?: string
   }) => void
 }
 
@@ -20,14 +22,40 @@ export default function CbtExamConfigModal({
   subject,
   isOpen,
   onClose,
+  initialTopicId = 'all',
   onStartExam
 }: CbtExamConfigModalProps) {
-  const maxAvailable = subject.totalQuestions || 51
+  const hasTopics = subject.topicsList && subject.topicsList.length > 0
+  const [selectedTopic, setSelectedTopic] = useState<string>(initialTopicId)
+
+  // Sync initialTopicId when modal opens with a specific topic
+  React.useEffect(() => {
+    if (isOpen) {
+      setSelectedTopic(initialTopicId || 'all')
+    }
+  }, [isOpen, initialTopicId])
+
+  // Determine max questions available based on active topic or entire subject
+  const activeTopicObj = useMemo(() => {
+    if (!hasTopics || selectedTopic === 'all') return null
+    return subject.topicsList?.find(t => t.id === selectedTopic) || null
+  }, [hasTopics, selectedTopic, subject.topicsList])
+
+  const maxAvailable = useMemo(() => {
+    if (activeTopicObj) return activeTopicObj.count
+    return subject.totalQuestions || 20
+  }, [activeTopicObj, subject.totalQuestions])
 
   // Default: 25 questions or all available if fewer
   const [questionCount, setQuestionCount] = useState<number>(Math.min(25, maxAvailable))
   const [customInput, setCustomInput] = useState<string>('')
   const [shuffleQuestions, setShuffleQuestions] = useState<boolean>(true)
+
+  // Re-adjust questionCount if topic change causes it to exceed maxAvailable
+  React.useEffect(() => {
+    setQuestionCount(prev => Math.min(prev, maxAvailable))
+    setCustomInput('')
+  }, [maxAvailable])
 
   // Maximum allowed time: Exactly 2 minutes per selected question
   const maxAllowedMinutes = useMemo(() => Math.max(5, questionCount * 2), [questionCount])
@@ -36,10 +64,53 @@ export default function CbtExamConfigModal({
   const defaultMinutes = useMemo(() => Math.round(questionCount * 1.5), [questionCount])
   const [timeLimitMinutes, setTimeLimitMinutes] = useState<number>(defaultMinutes)
 
+  // Keep timeLimitMinutes updated when questionCount shifts
+  React.useEffect(() => {
+    setTimeLimitMinutes(Math.round(questionCount * 1.5))
+  }, [questionCount])
+
   // Track if user attempted to input more than available
   const [exceededNotice, setExceededNotice] = useState<string | null>(null)
 
+  // Dynamic preset counts based on current topic capacity
+  const countPresets = useMemo(() => {
+    if (maxAvailable <= 5) {
+      return [
+        { label: `All (${maxAvailable})`, count: maxAvailable }
+      ]
+    }
+    if (maxAvailable <= 10) {
+      return [
+        { label: '5 (Quick)', count: 5 },
+        { label: `All (${maxAvailable})`, count: maxAvailable }
+      ]
+    }
+    if (maxAvailable <= 20) {
+      return [
+        { label: '5 (Quick)', count: 5 },
+        { label: '10 (Std)', count: 10 },
+        { label: '15 (Deep)', count: 15 },
+        { label: `All (${maxAvailable})`, count: maxAvailable }
+      ]
+    }
+    return [
+      { label: '15 (Quick)', count: 15 },
+      { label: '25 (Std)', count: 25 },
+      { label: '50 (Full)', count: 50 },
+      { label: `All (${maxAvailable})`, count: maxAvailable }
+    ]
+  }, [maxAvailable])
+
   if (!isOpen) return null
+
+  const handleTopicChange = (topicId: string) => {
+    setSelectedTopic(topicId)
+    setExceededNotice(null)
+    const topicCount = topicId === 'all' 
+      ? (subject.totalQuestions || 20)
+      : (subject.topicsList?.find(t => t.id === topicId)?.count || 5)
+    setQuestionCount(topicCount)
+  }
 
   const handleSelectCount = (count: number) => {
     setExceededNotice(null)
@@ -57,7 +128,7 @@ export default function CbtExamConfigModal({
     if (num > maxAvailable) {
       setQuestionCount(maxAvailable)
       setTimeLimitMinutes(Math.round(maxAvailable * 1.5))
-      setExceededNotice(`We currently have ${maxAvailable} verified questions for this subject. We have capped your test to all ${maxAvailable} questions!`)
+      setExceededNotice(`We currently have ${maxAvailable} verified questions for this selection. We capped your test to all ${maxAvailable} questions!`)
     } else {
       setExceededNotice(null)
       setQuestionCount(num)
@@ -76,14 +147,15 @@ export default function CbtExamConfigModal({
     onStartExam({
       questionCount,
       timeLimitMinutes,
-      shuffleQuestions
+      shuffleQuestions,
+      selectedTopic
     })
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
       <div 
-        className="relative w-full max-w-xl bg-prevu-surface border border-prevu-surface-light rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6 text-prevu-text overflow-hidden"
+        className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto bg-prevu-surface border border-prevu-surface-light rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6 text-prevu-text scrollbar-thin scrollbar-thumb-prevu-surface-light"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Ambient Top Glow */}
@@ -100,7 +172,7 @@ export default function CbtExamConfigModal({
               {subject.name}
             </h2>
             <div className="text-xs text-prevu-text-muted mt-0.5 font-mono">
-              Course Code: <strong className="text-cyan-300">{subject.code}</strong> • Sem {subject.semester} • {maxAvailable} Questions in Bank
+              Course Code: <strong className="text-cyan-300">{subject.code}</strong> • Sem {subject.semester} • {maxAvailable} Questions in Selection
             </div>
           </div>
 
@@ -114,54 +186,123 @@ export default function CbtExamConfigModal({
 
         <form onSubmit={handleSubmit} className="space-y-6">
           
-          {/* STEP 1: Question Count Selector */}
-          <div className="space-y-3">
+          {/* TOPIC SELECTION (If subject has structured topics) */}
+          {hasTopics && (
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between text-xs">
+                <label className="font-bold text-white flex items-center gap-1.5">
+                  <span>1. Choose Practice Topic</span>
+                </label>
+                <span className="text-[11px] text-cyan-300 font-mono">
+                  {selectedTopic === 'all' ? '🔀 Mix All Topics' : '🎯 Topic Practice'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {/* Mix All Topics Option */}
+                <button
+                  type="button"
+                  onClick={() => handleTopicChange('all')}
+                  className={`p-3 rounded-2xl text-left border transition-all cursor-pointer flex items-center justify-between ${
+                    selectedTopic === 'all'
+                      ? 'bg-prevu-accent/20 border-prevu-accent text-white shadow-md shadow-prevu-accent/20 ring-1 ring-prevu-accent'
+                      : 'bg-prevu-bg/60 border-prevu-surface-light text-prevu-text-muted hover:text-white hover:border-prevu-accent/40'
+                  }`}
+                >
+                  <div className="min-w-0 pr-2">
+                    <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <span>🔀 All Topics (Mix Attempt)</span>
+                    </div>
+                    <div className="text-[10px] text-prevu-text-muted mt-0.5">
+                      Comprehensive practice across all sets
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-prevu-bg border border-prevu-surface-light text-cyan-300 shrink-0">
+                    {subject.totalQuestions} Qs
+                  </span>
+                </button>
+
+                {/* Individual Topics */}
+                {subject.topicsList?.filter(t => t.id !== 'all').map(t => {
+                  const isSelected = selectedTopic === t.id
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => handleTopicChange(t.id)}
+                      className={`p-3 rounded-2xl text-left border transition-all cursor-pointer flex items-center justify-between ${
+                        isSelected
+                          ? 'bg-prevu-accent/20 border-prevu-accent text-white shadow-md shadow-prevu-accent/20 ring-1 ring-prevu-accent'
+                          : 'bg-prevu-bg/60 border-prevu-surface-light text-prevu-text-muted hover:text-white hover:border-cyan-500/40'
+                      }`}
+                    >
+                      <div className="min-w-0 pr-2">
+                        <div className="text-xs font-bold text-white truncate">
+                          {t.name}
+                        </div>
+                        <div className="text-[10px] text-prevu-text-muted truncate mt-0.5">
+                          Focused topic test
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-prevu-bg border border-prevu-surface-light text-cyan-300 shrink-0">
+                        {t.count} Qs
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* STEP: Question Count Selector */}
+          <div className={`space-y-3 ${hasTopics ? 'pt-2 border-t border-prevu-surface-light/40' : ''}`}>
             <div className="flex items-center justify-between text-xs">
               <label className="font-bold text-white flex items-center gap-1.5">
-                <span>1. Select Number of Questions</span>
+                <span>{hasTopics ? '2. Select Number of Questions' : '1. Select Number of Questions'}</span>
               </label>
               <span className="text-prevu-text-muted font-mono">
-                Bank Capacity: <strong className="text-white">{maxAvailable}</strong>
+                Available: <strong className="text-white">{maxAvailable}</strong>
               </span>
             </div>
 
             {/* Quick preset buttons */}
-            <div className="grid grid-cols-4 gap-2">
-              {[15, 25, 50, maxAvailable].map((count, idx) => {
-                const label = idx === 0 ? '15 (Quick)' : idx === 1 ? '25 (Std)' : idx === 2 ? '50 (Full)' : `All (${count})`
-                const isSelected = questionCount === count && !customInput
+            <div className={`grid gap-2 ${countPresets.length === 1 ? 'grid-cols-1' : countPresets.length === 2 ? 'grid-cols-2' : countPresets.length === 3 ? 'grid-cols-3' : 'grid-cols-4'}`}>
+              {countPresets.map((preset, idx) => {
+                const isSelected = questionCount === preset.count && !customInput
 
                 return (
                   <button
-                    key={`${count}-${idx}`}
+                    key={`${preset.count}-${idx}`}
                     type="button"
-                    onClick={() => handleSelectCount(count)}
+                    onClick={() => handleSelectCount(preset.count)}
                     className={`py-2 px-2 rounded-2xl text-xs font-bold transition-all cursor-pointer border text-center ${
                       isSelected
                         ? 'bg-prevu-accent text-white border-prevu-accent shadow-md shadow-prevu-accent/30 scale-[1.02]'
                         : 'bg-prevu-bg/60 border-prevu-surface-light text-prevu-text-muted hover:text-white hover:border-prevu-accent/40'
                     }`}
                   >
-                    {label}
+                    {preset.label}
                   </button>
                 )
               })}
             </div>
 
-            {/* Custom Input */}
-            <div className="flex items-center gap-2 pt-1">
-              <span className="text-xs text-prevu-text-muted">Or custom count:</span>
-              <input
-                type="number"
-                min={5}
-                max={maxAvailable}
-                value={customInput}
-                onChange={(e) => handleCustomCountChange(e.target.value)}
-                placeholder={`5 to ${maxAvailable}`}
-                className="w-28 px-3 py-1.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-white placeholder:text-prevu-text-muted/50 focus:border-prevu-accent focus:outline-none"
-              />
-              <span className="text-xs text-prevu-text-muted">questions</span>
-            </div>
+            {/* Custom Input (only shown if capacity > 5) */}
+            {maxAvailable > 5 && (
+              <div className="flex items-center gap-2 pt-1">
+                <span className="text-xs text-prevu-text-muted">Or custom count:</span>
+                <input
+                  type="number"
+                  min={3}
+                  max={maxAvailable}
+                  value={customInput}
+                  onChange={(e) => handleCustomCountChange(e.target.value)}
+                  placeholder={`3 to ${maxAvailable}`}
+                  className="w-28 px-3 py-1.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-white placeholder:text-prevu-text-muted/50 focus:border-prevu-accent focus:outline-none"
+                />
+                <span className="text-xs text-prevu-text-muted">questions</span>
+              </div>
+            )}
 
             {/* Exceeded Notification if student wants more than available */}
             {exceededNotice && (
@@ -177,7 +318,7 @@ export default function CbtExamConfigModal({
             <div className="flex items-center justify-between text-xs">
               <label className="font-bold text-white flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-cyan-400" />
-                <span>2. Exam Time Limit (Max 2 min/question)</span>
+                <span>{hasTopics ? '3. Exam Time Limit (Max 2 min/question)' : '2. Exam Time Limit (Max 2 min/question)'}</span>
               </label>
               <span className="font-mono text-cyan-300 font-bold text-sm">
                 {timeLimitMinutes} minutes

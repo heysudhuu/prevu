@@ -16,7 +16,12 @@ export default async function Header() {
   if (token) {
     try {
       const decoded = await authAdmin.verifyIdToken(token)
-      user = decoded
+      user = {
+        uid: decoded.uid,
+        email: decoded.email || null,
+        name: decoded.name || null,
+        displayName: decoded.name || decoded.email?.split('@')[0] || 'Student'
+      }
       isAdmin = await isUserAdmin(decoded.email, decoded.uid)
     } catch {
       user = null
@@ -24,7 +29,7 @@ export default async function Header() {
   }
 
   return (
-    <header className="border-b border-prevu-surface-light/80 bg-[#09090d]/85 backdrop-blur-2xl sticky top-0 z-50 animate-slide-down shadow-xl shadow-black/40">
+    <header className="border-b border-prevu-surface-light/80 bg-[#09090d]/85 backdrop-blur-2xl sticky top-0 z-50 shadow-xl shadow-black/40">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         
         {/* Brand Logo & Dynamic Semester Switcher */}

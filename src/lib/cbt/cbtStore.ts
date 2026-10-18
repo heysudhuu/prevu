@@ -88,6 +88,36 @@ export function getStoredLeaderboard(subjectCode: string): CbtLeaderboardEntry[]
 }
 
 /**
+ * Get all leaderboards grouped by subject code
+ */
+export function getAllStoredLeaderboards(): Record<string, CbtLeaderboardEntry[]> {
+  try {
+    ensureStore()
+    const content = fs.readFileSync(ATTEMPTS_FILE, 'utf8')
+    const data = JSON.parse(content) as Record<string, CbtLeaderboardEntry[]>
+    const result: Record<string, CbtLeaderboardEntry[]> = {}
+
+    for (const [code, list] of Object.entries(data)) {
+      const sorted = [...list].sort((a, b) => {
+        if (b.percentage !== a.percentage) {
+          return b.percentage - a.percentage
+        }
+        return a.timeSpentSeconds - b.timeSpentSeconds
+      })
+      result[code] = sorted.map((item, idx) => ({
+        ...item,
+        rank: idx + 1
+      }))
+    }
+
+    return result
+  } catch (err) {
+    console.warn('Error reading all stored leaderboards:', err)
+    return {}
+  }
+}
+
+/**
  * Save or update a student's attempt (upsert latest score)
  */
 export function saveStoredAttempt(entry: {

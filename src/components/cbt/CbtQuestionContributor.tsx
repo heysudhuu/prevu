@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   Sparkles, 
   PlusCircle, 
@@ -15,12 +15,20 @@ import {
   AlertCircle, 
   Trash2, 
   Check, 
-  ChevronRight,
-  Plus
+  ChevronRight, 
+  Plus,
+  UploadCloud,
+  Loader2,
+  FileCheck,
+  RefreshCw,
+  Edit3,
+  Tag,
+  FolderPlus
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { submitCommunityCbtQuestion, batchSubmitCommunityCbtQuestions, proposeNewCbtSubject } from '@/lib/cbt/actions'
 import { CBT_SUBJECTS } from '@/lib/cbt/cbtRegistry'
+import { CbtSubject } from '@/lib/cbt/types'
 import { parseMcqText, ParsedMcqItem } from '@/lib/cbt/pdfParser'
 import Link from 'next/link'
 
@@ -32,26 +40,63 @@ export default function CbtQuestionContributor({ initialSubject = '' }: CbtQuest
   // Mode selection: 'auto-parser' vs 'manual'
   const [activeTab, setActiveTab] = useState<'auto-parser' | 'manual'>('auto-parser')
 
-  // Subject Selection vs Propose New Subject
-  const [isProposingNewSubject, setIsProposingNewSubject] = useState<boolean>(false)
-  const [selectedSubjectCode, setSelectedSubjectCode] = useState<string>(initialSubject || 'FSO-307')
-  const [subjectName, setSubjectName] = useState(
-    initialSubject === 'FSO-307' ? 'Mobile Application & Device Security' : 'Mobile Application & Device Security'
-  )
-  const [semester, setSemester] = useState<number>(7)
-  const [category, setCategory] = useState<string>('open-elective')
+  // Subject List: Registered subjects + user-created subjects
+  const [customSubjects, setCustomSubjects] = useState<CbtSubject[]>([])
+  
+  // Load custom subjects from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('prevu_custom_cbt_subjects')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed)) {
+          setCustomSubjects(parsed)
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [])
 
-  // Propose New Subject Fields
+  const allSubjects = [...CBT_SUBJECTS, ...customSubjects]
+
+  // Subject Selection
+  const [selectedSubjectCode, setSelectedSubjectCode] = useState<string>(initialSubject || 'APT-301')
+  const currentSubjectObj = allSubjects.find(s => s.code === selectedSubjectCode) || allSubjects[0]
+
+  const [subjectName, setSubjectName] = useState(
+    currentSubjectObj ? currentSubjectObj.name : 'Campus Placement Aptitude & Logical Reasoning'
+  )
+  const [semester, setSemester] = useState<number>(currentSubjectObj ? currentSubjectObj.semester : 5)
+  const [category, setCategory] = useState<string>(currentSubjectObj ? currentSubjectObj.category : 'aptitude')
+
+  // Propose / Create New Subject Modal / Card State
+  const [isCreatingSubject, setIsCreatingSubject] = useState<boolean>(false)
   const [newSubjCode, setNewSubjCode] = useState('')
   const [newSubjName, setNewSubjName] = useState('')
-  const [newSubjSemester, setNewSubjSemester] = useState(1)
-  const [newSubjCategory, setNewSubjCategory] = useState('open-elective')
+  const [newSubjSemester, setNewSubjSemester] = useState(5)
+  const [newSubjCategory, setNewSubjCategory] = useState('aptitude')
+  const [newSubjInitialTopics, setNewSubjInitialTopics] = useState('')
+
+  // Topic Name (Prominently asked for every upload)
+  const [selectedTopic, setSelectedTopic] = useState<string>('Percentages')
+  const [customTopicName, setCustomTopicName] = useState<string>('')
+  const [isCustomTopicMode, setIsCustomTopicMode] = useState<boolean>(false)
 
   // Auto-Parser State
   const [rawText, setRawText] = useState('')
   const [parsedQuestions, setParsedQuestions] = useState<ParsedMcqItem[]>([])
   const [isParsing, setIsParsing] = useState(false)
+  const [isExtractingPdf, setIsExtractingPdf] = useState(false)
   const [parseNotice, setParseNotice] = useState<string | null>(null)
+  const [isDragOver, setIsDragOver] = useState(false)
+  const [uploadedFileInfo, setUploadedFileInfo] = useState<{
+    fileName: string
+    pages: number
+    size: string
+    count: number
+  } | null>(null)
+  const [showRawTextEditor, setShowRawTextEditor] = useState<boolean>(false)
 
   // Manual Question state
   const [manualQuestion, setManualQuestion] = useState('')
@@ -59,7 +104,6 @@ export default function CbtQuestionContributor({ initialSubject = '' }: CbtQuest
   const [manualOptions, setManualOptions] = useState<string[]>(['', '', '', ''])
   const [manualCorrect, setManualCorrect] = useState<string[]>([])
   const [manualExplanation, setManualExplanation] = useState('')
-  const [unitTag, setUnitTag] = useState('')
 
   // Submission State
   const [loading, setLoading] = useState(false)
@@ -68,34 +112,221 @@ export default function CbtQuestionContributor({ initialSubject = '' }: CbtQuest
 
   const optionLetters = ['A', 'B', 'C', 'D', 'E', 'F']
 
+  // Effective topic name helper
+  const getEffectiveTopicName = () => {
+    if (isCustomTopicMode) {
+      return customTopicName.trim()
+    }
+    return selectedTopic || 'General Aptitude'
+  }
+
   // Handle subject change from dropdown
   const handleSelectSubject = (code: string) => {
+    if (code === '__new__') {
+      setIsCreatingSubject(true)
+      return
+    }
+
+    setIsCreatingSubject(false)
     setSelectedSubjectCode(code)
-    const found = CBT_SUBJECTS.find(s => s.code === code)
+    const found = allSubjects.find(s => s.code === code)
     if (found) {
       setSubjectName(found.name)
       setSemester(found.semester)
       setCategory(found.category)
+      
+      // Auto-set first topic if available
+      if (found.topicsList && found.topicsList.length > 0) {
+        const firstTopic = found.topicsList.find(t => t.id !== 'all')?.name || found.topics[0] || ''
+        setSelectedTopic(firstTopic)
+        setIsCustomTopicMode(false)
+      } else if (found.topics && found.topics.length > 0) {
+        setSelectedTopic(found.topics[0])
+        setIsCustomTopicMode(false)
+      } else {
+        setSelectedTopic('')
+        setIsCustomTopicMode(true)
+      }
     }
   }
 
-  // Handle PDF / Text File Upload
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+  // Handle creating a new subject and instantly adding it to the list
+  const handleCreateNewSubject = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+
+    if (!newSubjCode.trim() || !newSubjName.trim()) {
+      setError('Please provide both subject code and subject name.')
+      return
+    }
+
+    const cleanedCode = newSubjCode.trim().toUpperCase()
+    const cleanedName = newSubjName.trim()
+
+    // Parse initial topics if provided
+    const topicsArr = newSubjInitialTopics
+      .split(/[,;\n]+/)
+      .map(t => t.trim())
+      .filter(t => t.length > 0)
+
+    const newSubject: CbtSubject = {
+      code: cleanedCode,
+      name: cleanedName,
+      semester: newSubjSemester,
+      year: Math.ceil(newSubjSemester / 2),
+      category: newSubjCategory as any,
+      categoryLabel: newSubjCategory === 'aptitude' 
+        ? 'Aptitude & Placements' 
+        : newSubjCategory === 'open-elective' 
+        ? 'Open Electives' 
+        : newSubjCategory === 'uhv' 
+        ? 'UHV' 
+        : 'Core Technical CBT',
+      totalQuestions: 0,
+      description: `Community question bank for ${cleanedName}`,
+      topics: topicsArr.length > 0 ? topicsArr : ['General'],
+      topicsList: topicsArr.map(t => ({
+        id: t.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        name: t,
+        count: 0
+      })),
+      isReady: true,
+      badgeColor: 'from-purple-600 to-cyan-600'
+    }
+
+    // Update state and localStorage
+    const updated = [...customSubjects, newSubject]
+    setCustomSubjects(updated)
+    try {
+      localStorage.setItem('prevu_custom_cbt_subjects', JSON.stringify(updated))
+    } catch {
+      // ignore
+    }
+
+    // Select the newly created subject
+    setSelectedSubjectCode(cleanedCode)
+    setSubjectName(cleanedName)
+    setSemester(newSubjSemester)
+    setCategory(newSubjCategory)
+    setIsCreatingSubject(false)
+
+    // Pre-select topic
+    if (topicsArr.length > 0) {
+      setSelectedTopic(topicsArr[0])
+      setIsCustomTopicMode(false)
+    } else {
+      setSelectedTopic('')
+      setIsCustomTopicMode(true)
+    }
+
+    setParseNotice(`Subject "${cleanedName} [${cleanedCode}]" created and added to your subject list! You can now upload or paste questions for it.`)
+
+    // Submit to server action in background for admin review
+    proposeNewCbtSubject({
+      code: cleanedCode,
+      name: cleanedName,
+      semester: newSubjSemester,
+      category: newSubjCategory
+    }).catch(err => console.warn('Background subject proposal notice:', err))
+  }
+
+  // Handle PDF or Text File Upload & Extraction
+  const processUploadedFile = async (file: File) => {
     if (!file) return
 
-    setParseNotice(`Reading file "${file.name}"...`)
-    const reader = new FileReader()
-    
-    // For text / md / transcripts
-    reader.onload = (event) => {
-      const text = event.target?.result as string
-      if (text) {
-        setRawText(text)
-        handleConvertText(text)
+    setError(null)
+    setSuccessMessage(null)
+
+    const effectiveTopic = getEffectiveTopicName()
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+
+    if (isPdf) {
+      setIsExtractingPdf(true)
+      setParseNotice(`Uploading & extracting text from PDF "${file.name}"...`)
+
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const res = await fetch('/api/cbt/extract-pdf', {
+          method: 'POST',
+          body: formData
+        })
+
+        const data = await res.json()
+
+        if (!res.ok || data.error) {
+          throw new Error(data.error || 'Failed to extract text from PDF document.')
+        }
+
+        const extracted = data.text || ''
+        setRawText(extracted)
+
+        // Convert the extracted text to structured MCQs
+        const results = parseMcqText(extracted)
+        
+        // Auto-assign chosen topic name to all extracted questions
+        const taggedResults = results.map(q => ({
+          ...q,
+          sectionName: effectiveTopic || q.sectionName
+        }))
+
+        setParsedQuestions(taggedResults)
+
+        setUploadedFileInfo({
+          fileName: file.name,
+          pages: data.pages || 1,
+          size: `${(file.size / 1024).toFixed(1)} KB`,
+          count: taggedResults.length
+        })
+
+        if (taggedResults.length === 0) {
+          setParseNotice(`Extracted text from ${data.pages} page(s), but could not auto-detect standard question patterns. You can view or adjust the text below.`)
+          setShowRawTextEditor(true)
+        } else {
+          setParseNotice(`Successfully extracted ${data.pages} page(s) and converted ${taggedResults.length} MCQs for topic "${effectiveTopic}" from "${file.name}"!`)
+        }
+      } catch (err: any) {
+        console.error('PDF extraction error:', err)
+        setError(err.message || 'Failed to process PDF document.')
+      } finally {
+        setIsExtractingPdf(false)
       }
+    } else {
+      // For text / md files
+      setParseNotice(`Reading text document "${file.name}"...`)
+      const reader = new FileReader()
+      
+      reader.onload = (event) => {
+        const text = event.target?.result as string
+        if (text) {
+          setRawText(text)
+          const results = parseMcqText(text)
+          const taggedResults = results.map(q => ({
+            ...q,
+            sectionName: effectiveTopic || q.sectionName
+          }))
+          setParsedQuestions(taggedResults)
+          setUploadedFileInfo({
+            fileName: file.name,
+            pages: 1,
+            size: `${(file.size / 1024).toFixed(1)} KB`,
+            count: taggedResults.length
+          })
+          setParseNotice(`Converted ${taggedResults.length} MCQs for topic "${effectiveTopic}" from "${file.name}"!`)
+        }
+      }
+      reader.readAsText(file)
     }
-    reader.readAsText(file)
+  }
+
+  // File input change handler
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      processUploadedFile(file)
+    }
+    e.target.value = ''
   }
 
   // Convert raw text into MCQ cards
@@ -106,6 +337,8 @@ export default function CbtQuestionContributor({ initialSubject = '' }: CbtQuest
       return
     }
 
+    const effectiveTopic = getEffectiveTopicName()
+
     setIsParsing(true)
     setError(null)
     setParseNotice(null)
@@ -115,8 +348,12 @@ export default function CbtQuestionContributor({ initialSubject = '' }: CbtQuest
       if (results.length === 0) {
         setError('Could not detect question patterns (e.g. "Q1. ...", "A. ..."). Please ensure the text contains question numbers and options.')
       } else {
-        setParsedQuestions(results)
-        setParseNotice(`Successfully detected and converted ${results.length} MCQ questions! You can review and edit each question below before submitting.`)
+        const taggedResults = results.map(q => ({
+          ...q,
+          sectionName: effectiveTopic || q.sectionName
+        }))
+        setParsedQuestions(taggedResults)
+        setParseNotice(`Successfully converted ${taggedResults.length} MCQ questions for topic "${effectiveTopic}"! Review and edit each question below before submitting.`)
       }
     } catch {
       setError('Failed to parse text. Please check the document format.')
@@ -143,59 +380,52 @@ export default function CbtQuestionContributor({ initialSubject = '' }: CbtQuest
     }))
   }
 
-  // Submit batch parsed questions
+  // Submit batch of questions
   const handleSubmitBatch = async () => {
     if (parsedQuestions.length === 0) {
       setError('No parsed questions to submit.')
       return
     }
 
-    setLoading(true)
-    setError(null)
-
-    const effectiveCode = isProposingNewSubject ? newSubjCode : selectedSubjectCode
-    const effectiveName = isProposingNewSubject ? newSubjName : subjectName
-    const effectiveSem = isProposingNewSubject ? newSubjSemester : semester
-    const effectiveCat = isProposingNewSubject ? newSubjCategory : category
-
-    if (!effectiveCode || !effectiveName) {
-      setError('Please select or specify a valid subject code and name.')
-      setLoading(false)
+    const effectiveTopic = getEffectiveTopicName()
+    if (!effectiveTopic) {
+      setError('Please provide a Topic Name for this question bank.')
       return
     }
 
+    if (!selectedSubjectCode || !subjectName) {
+      setError('Please select or specify a valid subject.')
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
     try {
-      // If student is also proposing a new subject, create the pending subject first
-      if (isProposingNewSubject) {
-        await proposeNewCbtSubject({
-          code: newSubjCode,
-          name: newSubjName,
-          semester: newSubjSemester,
-          category: newSubjCategory
-        })
-      }
+      const questionsWithTopic = parsedQuestions.map(q => ({
+        question: q.question,
+        questionType: q.type,
+        options: q.options,
+        correctAnswers: q.correctAnswers,
+        explanation: q.explanation,
+        sectionName: effectiveTopic
+      }))
 
       const res = await batchSubmitCommunityCbtQuestions({
-        subjectCode: effectiveCode,
-        subjectName: effectiveName,
-        semester: effectiveSem,
-        category: effectiveCat,
-        questions: parsedQuestions.map(q => ({
-          question: q.question,
-          questionType: q.type,
-          options: q.options,
-          correctAnswers: q.correctAnswers,
-          explanation: q.explanation,
-          sectionName: q.sectionName
-        }))
+        subjectCode: selectedSubjectCode,
+        subjectName: subjectName,
+        semester: semester,
+        category: category,
+        questions: questionsWithTopic
       })
 
       if (res.error) {
         setError(res.error)
       } else {
-        setSuccessMessage(`Successfully submitted ${parsedQuestions.length} questions for subject "${effectiveName}"! They are now pending admin review. You will earn +5 Karma for each approved question.`)
+        setSuccessMessage(`Successfully submitted ${parsedQuestions.length} questions for subject "${subjectName}" under topic "${effectiveTopic}"! They are now pending admin review. You will earn +5 Karma for each approved question.`)
         setParsedQuestions([])
         setRawText('')
+        setUploadedFileInfo(null)
       }
     } catch {
       setError('Submission failed. Please check network connection and try again.')
@@ -209,13 +439,14 @@ export default function CbtQuestionContributor({ initialSubject = '' }: CbtQuest
     e.preventDefault()
     setError(null)
 
-    const effectiveCode = isProposingNewSubject ? newSubjCode : selectedSubjectCode
-    const effectiveName = isProposingNewSubject ? newSubjName : subjectName
-    const effectiveSem = isProposingNewSubject ? newSubjSemester : semester
-    const effectiveCat = isProposingNewSubject ? newSubjCategory : category
+    const effectiveTopic = getEffectiveTopicName()
 
-    if (!effectiveCode || !effectiveName) {
-      setError('Please provide subject code and name.')
+    if (!selectedSubjectCode || !subjectName) {
+      setError('Please select or specify a valid subject.')
+      return
+    }
+    if (!effectiveTopic) {
+      setError('Please specify a Topic Name.')
       return
     }
     if (!manualQuestion.trim()) {
@@ -240,32 +471,23 @@ export default function CbtQuestionContributor({ initialSubject = '' }: CbtQuest
     setLoading(true)
 
     try {
-      if (isProposingNewSubject) {
-        await proposeNewCbtSubject({
-          code: newSubjCode,
-          name: newSubjName,
-          semester: newSubjSemester,
-          category: newSubjCategory
-        })
-      }
-
       const res = await submitCommunityCbtQuestion({
-        subjectCode: effectiveCode,
-        subjectName: effectiveName,
-        semester: effectiveSem,
-        category: effectiveCat,
+        subjectCode: selectedSubjectCode,
+        subjectName: subjectName,
+        semester: semester,
+        category: category,
         question: manualQuestion,
         questionType: manualType,
         options: filledOptions,
         correctAnswers: manualCorrect,
         explanation: manualExplanation,
-        unitTag
+        unitTag: effectiveTopic
       })
 
       if (res.error) {
         setError(res.error)
       } else {
-        setSuccessMessage('Question submitted successfully! It is now pending admin review. You will earn +5 Karma once approved.')
+        setSuccessMessage(`Question submitted successfully under topic "${effectiveTopic}"! It is now pending admin review. You will earn +5 Karma once approved.`)
         setManualQuestion('')
         setManualOptions(['', '', '', ''])
         setManualCorrect([])
@@ -277,6 +499,11 @@ export default function CbtQuestionContributor({ initialSubject = '' }: CbtQuest
       setLoading(false)
     }
   }
+
+  // Known topics for current subject
+  const currentSubjectTopics = currentSubjectObj?.topicsList?.filter(t => t.id !== 'all').map(t => t.name) 
+    || currentSubjectObj?.topics 
+    || []
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -305,7 +532,7 @@ export default function CbtQuestionContributor({ initialSubject = '' }: CbtQuest
             Contribute CBT Questions & Mock Exams
           </h1>
           <p className="text-xs text-prevu-text-muted">
-            Upload question banks, convert PDF/notes into MCQs, or propose new subjects. All submissions are verified by admin to maintain high exam standards.
+            Upload question bank PDFs, auto-convert notes into topic-wise MCQs, or add new subjects to the university list.
           </p>
         </div>
 
@@ -332,54 +559,36 @@ export default function CbtQuestionContributor({ initialSubject = '' }: CbtQuest
           </div>
         )}
 
-        {/* SECTION 1: Subject Selection & "+ Propose New Subject" Toggle */}
-        <div className="p-4 rounded-2xl bg-prevu-bg/50 border border-prevu-surface-light space-y-3">
+        {/* ========================================================================= */}
+        {/* STEP 1: SUBJECT & TOPIC CONFIGURATION */}
+        {/* ========================================================================= */}
+        <div className="p-5 rounded-2xl bg-prevu-bg/60 border border-prevu-surface-light space-y-4">
+          
           <div className="flex items-center justify-between text-xs">
             <label className="font-bold text-white flex items-center gap-1.5">
               <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Target Subject</span>
+              <span>1. Target Subject &amp; Topic Details</span>
             </label>
             <button
               type="button"
-              onClick={() => setIsProposingNewSubject(!isProposingNewSubject)}
-              className="text-[11px] text-cyan-400 hover:underline font-semibold flex items-center gap-1"
+              onClick={() => setIsCreatingSubject(!isCreatingSubject)}
+              className="text-[11px] text-cyan-400 hover:underline font-semibold flex items-center gap-1 cursor-pointer"
             >
-              {isProposingNewSubject ? '← Pick from existing subjects' : '+ Can\'t find your subject? Add New Subject'}
+              {isCreatingSubject ? '← Cancel & Pick Existing Subject' : '+ Can\'t find your subject? Create New Subject'}
             </button>
           </div>
 
-          {!isProposingNewSubject ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-[10px] uppercase font-mono text-prevu-text-muted block mb-1">
-                  Registered Subject
-                </label>
-                <select
-                  value={selectedSubjectCode}
-                  onChange={e => handleSelectSubject(e.target.value)}
-                  className="w-full px-3 py-2 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-white focus:border-prevu-accent focus:outline-none"
-                >
-                  {CBT_SUBJECTS.map(s => (
-                    <option key={s.code} value={s.code}>
-                      [{s.code}] {s.name} (Sem {s.semester})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-[10px] uppercase font-mono text-prevu-text-muted block mb-1">
-                  Category & Standing
-                </label>
-                <div className="px-3 py-2 bg-prevu-surface/40 border border-prevu-surface-light rounded-xl text-xs text-cyan-300 font-mono">
-                  {category.toUpperCase()} • Sem {semester}
+          {/* New Subject Creation Form (When user wants to create a new subject) */}
+          {isCreatingSubject ? (
+            <form onSubmit={handleCreateNewSubject} className="space-y-3.5 p-4 rounded-2xl bg-purple-950/30 border border-purple-500/30 animate-fade-in">
+              <div className="flex items-center justify-between">
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-300">
+                  <FolderPlus className="w-4 h-4 text-purple-400" />
+                  <span>Create New Subject for CBT Arena</span>
                 </div>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-3 pt-2 border-t border-prevu-surface-light/40">
-              <div className="p-2.5 rounded-xl bg-purple-950/40 border border-purple-500/30 text-purple-200 text-xs">
-                ✨ Propose a brand-new subject. It will be verified and added to the official CBT registry upon admin approval!
+                <span className="text-[10px] font-mono text-prevu-text-muted">
+                  Instantly adds to your subject list
+                </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -391,9 +600,9 @@ export default function CbtQuestionContributor({ initialSubject = '' }: CbtQuest
                     type="text"
                     value={newSubjCode}
                     onChange={e => setNewSubjCode(e.target.value)}
-                    placeholder="e.g. 23CSH-315, UHV-102"
+                    placeholder="e.g. 23CSH-401, APT-302"
                     required
-                    className="w-full px-3 py-2 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-white placeholder:text-prevu-text-muted/50 focus:border-prevu-accent focus:outline-none font-mono"
+                    className="w-full px-3 py-2 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-white placeholder:text-prevu-text-muted/50 focus:border-cyan-400 focus:outline-none font-mono"
                   />
                 </div>
 
@@ -405,9 +614,9 @@ export default function CbtQuestionContributor({ initialSubject = '' }: CbtQuest
                     type="text"
                     value={newSubjName}
                     onChange={e => setNewSubjName(e.target.value)}
-                    placeholder="e.g. Cloud Computing & DevOps"
+                    placeholder="e.g. Machine Learning &amp; AI, Network Security"
                     required
-                    className="w-full px-3 py-2 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-white placeholder:text-prevu-text-muted/50 focus:border-prevu-accent focus:outline-none"
+                    className="w-full px-3 py-2 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-white placeholder:text-prevu-text-muted/50 focus:border-cyan-400 focus:outline-none"
                   />
                 </div>
               </div>
@@ -420,7 +629,7 @@ export default function CbtQuestionContributor({ initialSubject = '' }: CbtQuest
                   <select
                     value={newSubjSemester}
                     onChange={e => setNewSubjSemester(parseInt(e.target.value))}
-                    className="w-full px-3 py-2 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-white focus:border-prevu-accent focus:outline-none"
+                    className="w-full px-3 py-2 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-white focus:border-cyan-400 focus:outline-none"
                   >
                     {[1, 2, 3, 4, 5, 6, 7, 8].map(s => (
                       <option key={s} value={s}>Semester {s}</option>
@@ -435,20 +644,153 @@ export default function CbtQuestionContributor({ initialSubject = '' }: CbtQuest
                   <select
                     value={newSubjCategory}
                     onChange={e => setNewSubjCategory(e.target.value)}
-                    className="w-full px-3 py-2 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-white focus:border-prevu-accent focus:outline-none"
+                    className="w-full px-3 py-2 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-white focus:border-cyan-400 focus:outline-none"
                   >
+                    <option value="aptitude">Aptitude &amp; Placements</option>
                     <option value="open-elective">Open Elective</option>
-                    <option value="aptitude">Aptitude & Placements</option>
+                    <option value="core">Core Technical MST</option>
                     <option value="uhv">UHV (Universal Human Values)</option>
-                    <option value="core">Core Technical CBT</option>
                   </select>
                 </div>
               </div>
+
+              <div>
+                <label className="text-[11px] font-semibold text-prevu-text-muted block mb-1">
+                  Initial Topics / Modules (Comma-separated, optional)
+                </label>
+                <input
+                  type="text"
+                  value={newSubjInitialTopics}
+                  onChange={e => setNewSubjInitialTopics(e.target.value)}
+                  placeholder="e.g. Neural Networks, Search Algorithms, Supervised Learning"
+                  className="w-full px-3 py-2 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-white placeholder:text-prevu-text-muted/50 focus:border-cyan-400 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsCreatingSubject(false)}
+                  className="h-8 text-xs border-prevu-surface-light text-prevu-text-muted"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="h-8 px-4 text-xs font-bold bg-cyan-600 hover:bg-cyan-500 text-white"
+                >
+                  Save &amp; Select Subject
+                </Button>
+              </div>
+            </form>
+          ) : (
+            /* Standard Subject & Topic Row */
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Subject Dropdown */}
+                <div>
+                  <label className="text-[10px] uppercase font-mono text-prevu-text-muted block mb-1">
+                    Select Subject *
+                  </label>
+                  <select
+                    value={selectedSubjectCode}
+                    onChange={e => handleSelectSubject(e.target.value)}
+                    className="w-full px-3 py-2 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-white focus:border-prevu-accent focus:outline-none font-medium cursor-pointer"
+                  >
+                    <optgroup label="Registered Exam Subjects">
+                      {allSubjects.map(s => (
+                        <option key={s.code} value={s.code}>
+                          [{s.code}] {s.name} (Sem {s.semester})
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Actions">
+                      <option value="__new__">➕ + Add / Create New Subject...</option>
+                    </optgroup>
+                  </select>
+                </div>
+
+                {/* Category & Semester Standing */}
+                <div>
+                  <label className="text-[10px] uppercase font-mono text-prevu-text-muted block mb-1">
+                    Category &amp; Standing
+                  </label>
+                  <div className="px-3 py-2 bg-prevu-surface/40 border border-prevu-surface-light rounded-xl text-xs text-cyan-300 font-mono">
+                    {category.toUpperCase()} • Sem {semester}
+                  </div>
+                </div>
+              </div>
+
+              {/* Topic Selector / Creator */}
+              <div className="p-3.5 rounded-xl bg-prevu-surface/40 border border-prevu-surface-light space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <label className="font-semibold text-white flex items-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Topic / Module Name *</span>
+                  </label>
+                  
+                  {currentSubjectTopics.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCustomTopicMode(!isCustomTopicMode)
+                        if (!isCustomTopicMode) setCustomTopicName('')
+                      }}
+                      className="text-[11px] text-cyan-400 hover:underline font-semibold cursor-pointer"
+                    >
+                      {isCustomTopicMode ? '← Pick from known topics' : '+ Add Custom Topic Name'}
+                    </button>
+                  )}
+                </div>
+
+                {/* Either Dropdown of Known Topics or Custom Input */}
+                {!isCustomTopicMode && currentSubjectTopics.length > 0 ? (
+                  <select
+                    value={selectedTopic}
+                    onChange={e => {
+                      if (e.target.value === '__custom__') {
+                        setIsCustomTopicMode(true)
+                        setCustomTopicName('')
+                      } else {
+                        setSelectedTopic(e.target.value)
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-prevu-bg border border-cyan-500/30 hover:border-cyan-400 rounded-xl text-xs text-white focus:outline-none cursor-pointer"
+                  >
+                    {currentSubjectTopics.map(topic => (
+                      <option key={topic} value={topic}>
+                        {topic}
+                      </option>
+                    ))}
+                    <option value="__custom__">➕ + Add / Type New Topic Name...</option>
+                  </select>
+                ) : (
+                  <div className="space-y-1">
+                    <input
+                      type="text"
+                      value={customTopicName}
+                      onChange={e => setCustomTopicName(e.target.value)}
+                      placeholder="e.g. Percentages, Profit &amp; Loss, Normalization, Set Theory"
+                      required
+                      className="w-full px-3 py-2 bg-prevu-bg border border-cyan-500/40 rounded-xl text-xs text-white placeholder:text-prevu-text-muted/50 focus:border-cyan-400 focus:outline-none font-medium"
+                    />
+                    <p className="text-[10px] text-prevu-text-muted">
+                      Every question in this batch will be organized under this topic module.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
+
         </div>
 
-        {/* SECTION 2: CONTRIBUTION METHOD TABS */}
+        {/* ========================================================================= */}
+        {/* STEP 2: CONTRIBUTION METHOD TABS */}
+        {/* ========================================================================= */}
         <div className="flex items-center gap-2 border-b border-prevu-surface-light pb-2">
           <button
             type="button"
@@ -460,7 +802,7 @@ export default function CbtQuestionContributor({ initialSubject = '' }: CbtQuest
             }`}
           >
             <FileUp className="w-3.5 h-3.5" />
-            <span>Smart PDF & Text Auto-Converter</span>
+            <span>Bulk PDF &amp; Document Auto-Converter</span>
           </button>
 
           <button
@@ -477,33 +819,145 @@ export default function CbtQuestionContributor({ initialSubject = '' }: CbtQuest
           </button>
         </div>
 
-        {/* TAB 1: SMART PDF & TEXT AUTO-CONVERTER */}
+        {/* ========================================================================= */}
+        {/* TAB 1: BULK PDF & AUTO-CONVERTER */}
+        {/* ========================================================================= */}
         {activeTab === 'auto-parser' && (
           <div className="space-y-5">
             
-            <div className="p-4 rounded-2xl bg-prevu-bg/60 border border-prevu-surface-light space-y-3">
-              <div className="flex items-center justify-between text-xs">
-                <label className="font-semibold text-white flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5 text-prevu-accent" />
-                  <span>Paste Question Bank Text or Upload Document</span>
-                </label>
-                <label className="cursor-pointer text-[11px] text-cyan-400 hover:underline font-semibold flex items-center gap-1">
-                  <FileUp className="w-3 h-3" />
-                  <span>Browse .txt / document file</span>
+            {/* DEDICATED DRAG & DROP PDF UPLOAD BOX */}
+            <div
+              onDragOver={(e) => {
+                e.preventDefault()
+                setIsDragOver(true)
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault()
+                setIsDragOver(false)
+              }}
+              onDrop={(e) => {
+                e.preventDefault()
+                setIsDragOver(false)
+                if (e.dataTransfer.files?.[0]) {
+                  processUploadedFile(e.dataTransfer.files[0])
+                }
+              }}
+              className={`relative p-6 sm:p-8 rounded-3xl border-2 border-dashed transition-all duration-200 text-center flex flex-col items-center justify-center space-y-3.5 ${
+                isDragOver
+                  ? 'border-cyan-400 bg-cyan-950/30 scale-[1.01]'
+                  : 'border-purple-500/35 hover:border-purple-400/70 bg-purple-950/15 hover:bg-purple-950/25'
+              }`}
+            >
+              {isExtractingPdf ? (
+                <div className="space-y-3 py-4 flex flex-col items-center animate-pulse">
+                  <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-cyan-400" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold text-white">
+                      Extracting Text &amp; Parsing MCQs...
+                    </h3>
+                    <p className="text-xs text-cyan-300 font-mono">
+                      Extracting pages, options, and solutions for &quot;{getEffectiveTopicName()}&quot;...
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600 to-cyan-500 text-white flex items-center justify-center shadow-lg shadow-purple-600/20">
+                    <UploadCloud className="w-7 h-7" />
+                  </div>
+
+                  <div className="space-y-1">
+                    <h3 className="text-base font-bold text-white tracking-tight">
+                      Upload Question Bank PDF for Bulk MCQ Conversion
+                    </h3>
+                    <p className="text-xs text-prevu-text-muted max-w-md">
+                      Drag &amp; drop your question bank PDF here, or browse files. MCQs will be auto-categorized under <strong className="text-cyan-300">&quot;{getEffectiveTopicName()}&quot;</strong>.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-center gap-2 pt-1 font-mono text-[11px]">
+                    <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-bold">
+                      ⚡ .pdf (Auto-Extract)
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                      📄 .txt / .md / .text
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                      ✨ Auto-Detect Keys &amp; Solutions
+                    </span>
+                  </div>
+
+                  <label className="cursor-pointer inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-prevu-accent hover:bg-prevu-accent-hover text-white shadow-lg shadow-prevu-accent/25 transition-all mt-2">
+                    <FileUp className="w-4 h-4" />
+                    <span>Select Question Bank PDF / Document</span>
+                    <input
+                      type="file"
+                      accept=".pdf,.txt,.md,.text,application/pdf"
+                      onChange={handleFileInputChange}
+                      className="sr-only"
+                    />
+                  </label>
+                </>
+              )}
+            </div>
+
+            {/* Uploaded File Meta Ribbon (If file parsed) */}
+            {uploadedFileInfo && (
+              <div className="p-3.5 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 flex items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                    <FileCheck className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-bold text-white truncate text-xs">
+                      {uploadedFileInfo.fileName}
+                    </div>
+                    <div className="text-[10px] font-mono text-prevu-text-muted">
+                      {uploadedFileInfo.pages} Page(s) • {uploadedFileInfo.size} • Converted {uploadedFileInfo.count} MCQs for topic &quot;{getEffectiveTopicName()}&quot;
+                    </div>
+                  </div>
+                </div>
+
+                <label className="cursor-pointer text-[11px] font-bold text-cyan-400 hover:text-cyan-300 hover:underline shrink-0 flex items-center gap-1">
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Replace File</span>
                   <input
                     type="file"
-                    accept=".txt,.md,.text"
-                    onChange={handleFileUpload}
+                    accept=".pdf,.txt,.md,.text,application/pdf"
+                    onChange={handleFileInputChange}
                     className="sr-only"
                   />
                 </label>
               </div>
+            )}
 
-              <textarea
-                rows={6}
-                value={rawText}
-                onChange={e => setRawText(e.target.value)}
-                placeholder={`Paste questions from PDF or notes here, e.g.:
+            {/* Collapsible Extracted Raw Text & Manual Paste Box */}
+            <div className="p-4 rounded-2xl bg-prevu-bg/60 border border-prevu-surface-light space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <label className="font-semibold text-white flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5 text-prevu-accent" />
+                  <span>Extracted Text / Manual Question Input</span>
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() => setShowRawTextEditor(!showRawTextEditor)}
+                  className="text-[11px] text-cyan-400 hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+                >
+                  <Edit3 className="w-3 h-3" />
+                  <span>{showRawTextEditor ? 'Collapse Text Editor' : 'View / Edit Raw Text'}</span>
+                </button>
+              </div>
+
+              {showRawTextEditor && (
+                <div className="space-y-3 animate-fade-in">
+                  <textarea
+                    rows={6}
+                    value={rawText}
+                    onChange={e => setRawText(e.target.value)}
+                    placeholder={`Paste questions from PDF or notes here, e.g.:
 
 Q1. Which of the following are major risks associated with mobile application security?
 ■ A. Weak server-side controls
@@ -511,29 +965,32 @@ Q1. Which of the following are major risks associated with mobile application se
 ■ C. Slow application performance
 Correct answer: A, B
 
-Q2. Which protocol family is commonly used to protect communications?
-■ A. FTP
-■ B. Plain HTTP
-■ C. TLS
-Correct answer: C`}
-                className="w-full p-3 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-white placeholder:text-prevu-text-muted/40 focus:border-prevu-accent focus:outline-none font-mono leading-relaxed"
-              />
+Q2. What is the value of 12% of 5000?
+(A) 600
+(B) 620
+(C) 680
+(D) 720
+Answer: 600 | (12/100) * 5000 = 600.`}
+                    className="w-full p-3 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-white placeholder:text-prevu-text-muted/40 focus:border-prevu-accent focus:outline-none font-mono leading-relaxed"
+                  />
 
-              <div className="flex items-center justify-between pt-1">
-                <span className="text-[10px] text-prevu-text-muted">
-                  Supports "Q1.", "■ A.", "Answer: A, B", and "Answer Key & Explanations" sections.
-                </span>
-                <Button
-                  type="button"
-                  size="sm"
-                  disabled={isParsing || !rawText.trim()}
-                  onClick={() => handleConvertText()}
-                  className="h-8 px-4 text-xs font-bold bg-cyan-600 hover:bg-cyan-500 text-white shadow-md flex items-center gap-1.5"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>{isParsing ? 'Converting...' : 'Auto-Convert to MCQs'}</span>
-                </Button>
-              </div>
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[10px] text-prevu-text-muted">
+                      Supports &quot;Q1.&quot;, &quot;• A.&quot;, &quot;(A) ... (B) ...&quot;, &quot;Answer: B&quot;, and &quot;Answer Key &amp; Explanations&quot;.
+                    </span>
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={isParsing || !rawText.trim()}
+                      onClick={() => handleConvertText()}
+                      className="h-8 px-4 text-xs font-bold bg-cyan-600 hover:bg-cyan-500 text-white shadow-md flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>{isParsing ? 'Converting...' : 'Auto-Convert to MCQs'}</span>
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {parseNotice && (
@@ -547,15 +1004,18 @@ Correct answer: C`}
             {parsedQuestions.length > 0 && (
               <div className="space-y-4 pt-2">
                 <div className="flex items-center justify-between border-b border-prevu-surface-light/60 pb-2">
-                  <h3 className="text-xs font-bold text-white uppercase tracking-wider font-mono">
-                    Extracted MCQs ({parsedQuestions.length} Questions)
+                  <h3 className="text-xs font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
+                    <span>Extracted MCQs ({parsedQuestions.length} Questions)</span>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-cyan-500/20 text-cyan-300 font-sans normal-case">
+                      Topic: {getEffectiveTopicName()}
+                    </span>
                   </h3>
                   <Button
                     type="button"
                     size="sm"
                     disabled={loading}
                     onClick={handleSubmitBatch}
-                    className="h-8 px-5 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 flex items-center gap-1.5"
+                    className="h-8 px-5 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 flex items-center gap-1.5 cursor-pointer"
                   >
                     <Send className="w-3.5 h-3.5" />
                     <span>{loading ? 'Submitting Batch...' : `Submit All ${parsedQuestions.length} Questions (+${parsedQuestions.length * 5} Karma)`}</span>
@@ -576,12 +1036,15 @@ Correct answer: C`}
                           <span className="text-[10px] font-mono text-prevu-text-muted">
                             {q.type === 'multiple' ? 'Multi-Select' : 'Single Choice'}
                           </span>
+                          <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/40 px-2 py-0.5 rounded-md border border-cyan-500/20">
+                            {q.sectionName || getEffectiveTopicName()}
+                          </span>
                         </div>
 
                         <button
                           type="button"
                           onClick={() => handleRemoveParsed(q.id)}
-                          className="text-prevu-text-muted hover:text-rose-400 p-1"
+                          className="text-prevu-text-muted hover:text-rose-400 p-1 cursor-pointer"
                           title="Remove question"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -639,7 +1102,7 @@ Correct answer: C`}
                     type="button"
                     disabled={loading}
                     onClick={handleSubmitBatch}
-                    className="h-9 px-6 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 flex items-center gap-2"
+                    className="h-9 px-6 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 flex items-center gap-2 cursor-pointer"
                   >
                     <Send className="w-3.5 h-3.5" />
                     <span>{loading ? 'Submitting...' : `Submit All ${parsedQuestions.length} Questions for Admin Review`}</span>
@@ -651,9 +1114,20 @@ Correct answer: C`}
           </div>
         )}
 
+        {/* ========================================================================= */}
         {/* TAB 2: MANUAL QUESTION FORM */}
+        {/* ========================================================================= */}
         {activeTab === 'manual' && (
           <form onSubmit={handleSubmitManual} className="space-y-4">
+            <div className="p-3 rounded-xl bg-cyan-950/20 border border-cyan-500/25 flex items-center justify-between text-xs font-mono">
+              <span className="text-cyan-300">
+                Subject: <strong className="text-white">{subjectName} [{selectedSubjectCode}]</strong>
+              </span>
+              <span className="text-cyan-300">
+                Topic: <strong className="text-white">{getEffectiveTopicName()}</strong>
+              </span>
+            </div>
+
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-[11px] font-semibold text-prevu-text-muted">
@@ -696,7 +1170,7 @@ Correct answer: C`}
             {/* Options */}
             <div className="space-y-2">
               <label className="text-[11px] font-semibold text-prevu-text-muted block">
-                Options & Correct Answer Key * (Click letter to toggle correct answer)
+                Options &amp; Correct Answer Key * (Click letter to toggle correct answer)
               </label>
 
               <div className="space-y-2">
@@ -745,7 +1219,7 @@ Correct answer: C`}
             {/* Explanation */}
             <div>
               <label className="text-[11px] font-semibold text-prevu-text-muted block mb-1">
-                Solution & Explanation
+                Solution &amp; Explanation
               </label>
               <textarea
                 rows={2}
@@ -760,7 +1234,7 @@ Correct answer: C`}
               <Button
                 type="submit"
                 disabled={loading}
-                className="h-9 px-6 text-xs font-bold bg-prevu-accent text-white hover:bg-prevu-accent-hover shadow-lg"
+                className="h-9 px-6 text-xs font-bold bg-prevu-accent text-white hover:bg-prevu-accent-hover shadow-lg cursor-pointer"
               >
                 {loading ? 'Submitting...' : 'Submit Question (+5 Karma)'}
               </Button>

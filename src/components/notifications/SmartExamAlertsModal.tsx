@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { 
   Bell, 
@@ -43,6 +44,7 @@ export default function SmartExamAlertsModal({
   onClose,
   onUpdateUnreadCount
 }: SmartExamAlertsModalProps) {
+  const [mounted, setMounted] = useState(false)
   const [activeTab, setActiveTab] = useState<'activity' | 'settings'>('activity')
   const [notifications, setNotifications] = useState<StudentNotification[]>([])
   const [loadingNotifications, setLoadingNotifications] = useState(false)
@@ -53,6 +55,21 @@ export default function SmartExamAlertsModal({
   const [batchmateQueryAlerts, setBatchmateQueryAlerts] = useState(true)
   const [selectedSemester, setSelectedSemester] = useState(4)
   const [savedSuccess, setSavedSuccess] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown)
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
 
   useEffect(() => {
     if (isOpen) {
@@ -86,7 +103,7 @@ export default function SmartExamAlertsModal({
     }
   }, [isOpen])
 
-  if (!isOpen) return null
+  if (!mounted || !isOpen) return null
 
   const handleMarkAsRead = async (id: string) => {
     setNotifications(prev => {
@@ -156,25 +173,34 @@ export default function SmartExamAlertsModal({
 
   const unreadCount = notifications.filter(n => !n.is_read).length
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+  return createPortal(
+    <div 
+      className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fade-in"
+      onClick={onClose}
+    >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md p-6 rounded-3xl bg-[#11111a] border border-purple-500/40 shadow-2xl space-y-5 relative overflow-hidden"
+        className="w-full max-w-lg max-h-[90vh] rounded-3xl bg-[#11111a] border border-purple-500/40 shadow-2xl flex flex-col relative overflow-hidden my-auto"
       >
-        <div className="absolute top-0 right-0 w-36 h-36 bg-purple-600/15 blur-2xl rounded-full pointer-events-none" />
+        <div className="absolute top-0 right-0 w-44 h-44 bg-purple-600/15 blur-3xl rounded-full pointer-events-none" />
 
-        {/* Modal Header */}
-        <div className="flex items-start justify-between gap-3">
+        {/* Modal Header (Pinned at Top) */}
+        <div className="p-5 sm:p-6 border-b border-prevu-surface-light shrink-0 flex items-start justify-between gap-3 relative z-10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-purple-600/30 shrink-0">
               <BellRing className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white flex items-center gap-1.5">
-                <span>Student Notification Center</span>
-                <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold text-white tracking-tight">
+                  Student Notification Center
+                </h3>
+                {unreadCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    {unreadCount} new
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-prevu-text-muted mt-0.5">
                 Batchmate queries, peer requests & verified academic updates.
               </p>
@@ -183,80 +209,83 @@ export default function SmartExamAlertsModal({
 
           <button
             onClick={onClose}
-            className="p-1.5 text-prevu-text-muted hover:text-white rounded-xl hover:bg-prevu-surface-light transition-colors cursor-pointer"
+            className="p-2 text-prevu-text-muted hover:text-white rounded-xl hover:bg-prevu-surface transition-colors cursor-pointer shrink-0"
+            title="Close notifications"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Tab switcher */}
-        <div className="flex items-center bg-prevu-surface border border-prevu-surface-light rounded-xl p-1 gap-1">
-          <button
-            onClick={() => setActiveTab('activity')}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              activeTab === 'activity'
-                ? 'bg-purple-600 text-white shadow-md'
-                : 'text-prevu-text-muted hover:text-white'
-            }`}
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
-            <span>Community Alerts</span>
-            {unreadCount > 0 && (
-              <span className="w-4 h-4 rounded-full bg-amber-400 text-black text-[9px] font-bold flex items-center justify-center ml-0.5">
-                {unreadCount}
-              </span>
-            )}
-          </button>
+        {/* Tab switcher (Pinned) */}
+        <div className="px-5 sm:px-6 pt-4 pb-2 shrink-0">
+          <div className="flex items-center bg-prevu-surface border border-prevu-surface-light rounded-xl p-1 gap-1">
+            <button
+              onClick={() => setActiveTab('activity')}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                activeTab === 'activity'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'text-prevu-text-muted hover:text-white'
+              }`}
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>Community Alerts</span>
+              {unreadCount > 0 && (
+                <span className="w-4 h-4 rounded-full bg-amber-400 text-black text-[9px] font-bold flex items-center justify-center ml-0.5">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
 
-          <button
-            onClick={() => setActiveTab('settings')}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              activeTab === 'settings'
-                ? 'bg-purple-600 text-white shadow-md'
-                : 'text-prevu-text-muted hover:text-white'
-            }`}
-          >
-            <Bell className="w-3.5 h-3.5" />
-            <span>Push Settings</span>
-          </button>
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                activeTab === 'settings'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'text-prevu-text-muted hover:text-white'
+              }`}
+            >
+              <Bell className="w-3.5 h-3.5" />
+              <span>Push Settings</span>
+            </button>
+          </div>
         </div>
 
-        {/* ============================================================ */}
-        {/* TAB 1: COMMUNITY ALERTS & ADMIN APPROVAL UPDATES */}
-        {/* ============================================================ */}
-        {activeTab === 'activity' && (
-          <div className="space-y-3">
-            {unreadCount > 0 && (
-              <div className="flex items-center justify-between pb-1 px-1">
-                <span className="text-[11px] text-prevu-text-muted font-medium">
-                  {unreadCount} unread update{unreadCount > 1 ? 's' : ''}
-                </span>
-                <button
-                  onClick={handleMarkAllAsRead}
-                  className="text-[11px] font-bold text-purple-400 hover:text-purple-300 flex items-center gap-1 cursor-pointer transition-colors"
-                >
-                  <CheckCheck className="w-3.5 h-3.5" />
-                  <span>Mark all as read</span>
-                </button>
-              </div>
-            )}
+        {/* Scrollable Content Body */}
+        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-3 space-y-3 min-h-0 scrollbar-thin">
+          
+          {/* TAB 1: COMMUNITY ALERTS & NOTIFICATIONS */}
+          {activeTab === 'activity' && (
+            <div className="space-y-2.5">
+              {unreadCount > 0 && (
+                <div className="flex items-center justify-between pb-1 px-1">
+                  <span className="text-[11px] text-prevu-text-muted font-medium">
+                    {unreadCount} unread update{unreadCount > 1 ? 's' : ''}
+                  </span>
+                  <button
+                    onClick={handleMarkAllAsRead}
+                    className="text-[11px] font-bold text-purple-400 hover:text-purple-300 flex items-center gap-1 cursor-pointer transition-colors"
+                  >
+                    <CheckCheck className="w-3.5 h-3.5" />
+                    <span>Mark all as read</span>
+                  </button>
+                </div>
+              )}
 
-            <div className="space-y-2.5 max-h-[330px] overflow-y-auto pr-1">
               {loadingNotifications ? (
-                <div className="p-8 text-center text-xs text-prevu-text-muted animate-pulse">
-                  Loading notification updates...
+                <div className="p-10 text-center text-xs text-prevu-text-muted animate-pulse">
+                  Loading notifications...
                 </div>
               ) : notifications.length === 0 ? (
-                <div className="p-8 text-center rounded-2xl bg-prevu-surface/40 border border-prevu-surface-light space-y-2">
+                <div className="p-8 text-center rounded-2xl bg-prevu-surface/40 border border-prevu-surface-light space-y-2.5 my-2">
                   <CheckCircle className="w-8 h-8 text-emerald-400 mx-auto" />
                   <p className="text-xs font-bold text-white">All Caught Up!</p>
-                  <p className="text-[11px] text-prevu-text-muted">
+                  <p className="text-[11px] text-prevu-text-muted leading-relaxed max-w-xs mx-auto">
                     When batchmates in your semester ask doubts or request materials, peer alerts will appear right here.
                   </p>
                   <Button
                     size="sm"
                     asChild
-                    className="mt-2 text-xs bg-purple-600 text-white font-bold h-7"
+                    className="mt-2 text-xs bg-purple-600 text-white font-bold h-8 px-4"
                   >
                     <Link href="/requests" onClick={onClose}>
                       Explore Community Board
@@ -275,47 +304,47 @@ export default function SmartExamAlertsModal({
                     <div
                       key={notif.id}
                       onClick={() => handleMarkAsRead(notif.id)}
-                      className={`p-3 rounded-2xl border text-xs space-y-1.5 transition-all ${
+                      className={`p-3.5 rounded-2xl border text-xs space-y-2 transition-all cursor-pointer ${
                         notif.is_read
-                          ? 'bg-prevu-surface/50 border-prevu-surface-light opacity-80'
+                          ? 'bg-prevu-surface/50 border-prevu-surface-light opacity-80 hover:opacity-100 hover:border-purple-500/30'
                           : isWelcome
-                            ? 'bg-amber-950/25 border-amber-500/50 shadow-sm shadow-amber-500/10'
+                            ? 'bg-amber-950/20 border-amber-500/50 shadow-sm shadow-amber-500/10'
                             : isQuery
                               ? 'bg-cyan-950/20 border-cyan-500/40 shadow-sm shadow-cyan-500/5'
                               : 'bg-purple-950/20 border-purple-500/40 shadow-sm shadow-purple-500/5'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5 font-bold text-white min-w-0">
+                        <div className="flex items-center gap-2 font-bold text-white min-w-0">
                           {isWelcome ? (
-                            <div className="w-5 h-5 rounded-lg bg-gradient-to-tr from-amber-500 to-purple-600 flex items-center justify-center text-white shrink-0 shadow-sm shadow-amber-500/20">
-                              <Sparkles className="w-3 h-3 text-amber-200" />
+                            <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-amber-500 to-purple-600 flex items-center justify-center text-white shrink-0 shadow-sm shadow-amber-500/20">
+                              <Sparkles className="w-3.5 h-3.5 text-amber-200" />
                             </div>
                           ) : isQuery ? (
-                            <div className="w-5 h-5 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shrink-0 shadow-sm shadow-cyan-500/20">
-                              <HelpCircle className="w-3 h-3" />
+                            <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shrink-0 shadow-sm shadow-cyan-500/20">
+                              <HelpCircle className="w-3.5 h-3.5" />
                             </div>
                           ) : isApproved ? (
-                            <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
                           ) : isPending ? (
-                            <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                            <Clock className="w-4 h-4 text-amber-400 shrink-0" />
                           ) : isHelped ? (
-                            <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                            <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
                           ) : (
-                            <Bell className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                            <Bell className="w-4 h-4 text-purple-400 shrink-0" />
                           )}
                           <div className="flex items-center gap-1.5 truncate">
                             {isWelcome && (
-                              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-md font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+                              <span className="text-[9px] font-mono px-2 py-0.5 rounded-md font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
                                 Prevu Family
                               </span>
                             )}
                             {isQuery && (
-                              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-md font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shrink-0">
+                              <span className="text-[9px] font-mono px-2 py-0.5 rounded-md font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shrink-0">
                                 Peer Query
                               </span>
                             )}
-                            <span className="truncate">{notif.title}</span>
+                            <span className="truncate font-semibold">{notif.title}</span>
                           </div>
                         </div>
                         {!notif.is_read && (
@@ -323,11 +352,11 @@ export default function SmartExamAlertsModal({
                         )}
                       </div>
 
-                      <p className="text-[11px] text-prevu-text-muted leading-relaxed">
+                      <p className="text-[11px] text-prevu-text-muted leading-relaxed pl-8">
                         {notif.message}
                       </p>
 
-                      <div className="flex items-center justify-between pt-1 text-[10px] font-mono text-prevu-text-muted">
+                      <div className="flex items-center justify-between pt-1 pl-8 text-[10px] font-mono text-prevu-text-muted">
                         <span>{new Date(notif.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                         {notif.link && (
                           <Link
@@ -351,135 +380,151 @@ export default function SmartExamAlertsModal({
                 })
               )}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* ============================================================ */}
-        {/* TAB 2: EXAM PUSH SETTINGS */}
-        {/* ============================================================ */}
-        {activeTab === 'settings' && (
-          <div className="space-y-4">
-            {/* Browser Permission Status */}
-            <div className="p-3.5 rounded-2xl bg-prevu-surface border border-prevu-surface-light flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${permission === 'granted' ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-                <span className="text-xs font-semibold text-white">
-                  Status: {permission === 'granted' ? 'Notifications Active' : 'Permission Required'}
-                </span>
+          {/* TAB 2: EXAM PUSH SETTINGS */}
+          {activeTab === 'settings' && (
+            <div className="space-y-4">
+              {/* Browser Permission Status */}
+              <div className="p-3.5 rounded-2xl bg-prevu-surface border border-prevu-surface-light flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${permission === 'granted' ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+                  <span className="text-xs font-semibold text-white">
+                    Status: {permission === 'granted' ? 'Notifications Active' : 'Permission Required'}
+                  </span>
+                </div>
+
+                {permission !== 'granted' && (
+                  <Button
+                    size="sm"
+                    onClick={handleRequestPermission}
+                    className="text-xs font-bold bg-purple-600 hover:bg-purple-500 text-white h-7"
+                  >
+                    Enable Alerts
+                  </Button>
+                )}
               </div>
 
-              {permission !== 'granted' && (
+              {/* Preferences */}
+              <div className="space-y-2.5">
+                <label className="p-3 rounded-2xl bg-prevu-bg/70 border border-prevu-surface-light flex items-start gap-3 cursor-pointer hover:border-purple-500/30 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={batchmateQueryAlerts}
+                    onChange={(e) => setBatchmateQueryAlerts(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 accent-cyan-500 rounded"
+                  />
+                  <div>
+                    <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <HelpCircle className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Batchmate Academic Queries & Doubts</span>
+                    </div>
+                    <p className="text-[11px] text-prevu-text-muted mt-0.5">
+                      Get notified whenever a batchmate in your semester asks a question or requests materials.
+                    </p>
+                  </div>
+                </label>
+
+                <label className="p-3 rounded-2xl bg-prevu-bg/70 border border-prevu-surface-light flex items-start gap-3 cursor-pointer hover:border-purple-500/30 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={examAlerts}
+                    onChange={(e) => setExamAlerts(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 accent-purple-600 rounded"
+                  />
+                  <div>
+                    <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-purple-400" />
+                      <span>CU Exam Countdown Reminders</span>
+                    </div>
+                    <p className="text-[11px] text-prevu-text-muted mt-0.5">
+                      Pings 7 days and 24 hours before MST1, MST2, and EST exams.
+                    </p>
+                  </div>
+                </label>
+
+                <label className="p-3 rounded-2xl bg-prevu-bg/70 border border-prevu-surface-light flex items-start gap-3 cursor-pointer hover:border-purple-500/30 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={newPaperAlerts}
+                    onChange={(e) => setNewPaperAlerts(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 accent-purple-600 rounded"
+                  />
+                  <div>
+                    <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Missing Papers & Requests Updates</span>
+                    </div>
+                    <p className="text-[11px] text-prevu-text-muted mt-0.5">
+                      Instant alerts when a requested paper or note is uploaded.
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-white block">
+                  Primary Semester For Alerts
+                </label>
+                <select
+                  value={selectedSemester}
+                  onChange={(e) => setSelectedSemester(Number(e.target.value))}
+                  className="w-full p-2.5 rounded-xl bg-prevu-bg border border-prevu-surface-light text-white text-xs focus:outline-none focus:border-purple-500 cursor-pointer"
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+                    <option key={sem} value={sem}>
+                      Semester {sem} (BE-CSE)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pt-2 flex items-center justify-between gap-3 border-t border-prevu-surface-light">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleTestNotification}
+                  className="text-xs text-purple-400 hover:text-purple-300"
+                >
+                  Send Test Ping
+                </Button>
+
                 <Button
                   size="sm"
-                  onClick={handleRequestPermission}
-                  className="text-xs font-bold bg-purple-600 hover:bg-purple-500 text-white h-7"
+                  onClick={handleSavePreferences}
+                  className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs"
                 >
-                  Enable Alerts
+                  {savedSuccess ? (
+                    <span className="flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5" /> Saved
+                    </span>
+                  ) : (
+                    'Save Settings'
+                  )}
                 </Button>
-              )}
+              </div>
             </div>
+          )}
 
-            {/* Preferences */}
-            <div className="space-y-2.5">
-              <label className="p-3 rounded-2xl bg-prevu-bg/70 border border-prevu-surface-light flex items-start gap-3 cursor-pointer hover:border-purple-500/30 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={batchmateQueryAlerts}
-                  onChange={(e) => setBatchmateQueryAlerts(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 accent-cyan-500 rounded"
-                />
-                <div>
-                  <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <HelpCircle className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>Batchmate Academic Queries & Doubts</span>
-                  </div>
-                  <p className="text-[11px] text-prevu-text-muted mt-0.5">
-                    Get notified whenever a batchmate in your semester asks a question or requests materials.
-                  </p>
-                </div>
-              </label>
+        </div>
 
-              <label className="p-3 rounded-2xl bg-prevu-bg/70 border border-prevu-surface-light flex items-start gap-3 cursor-pointer hover:border-purple-500/30 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={examAlerts}
-                  onChange={(e) => setExamAlerts(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 accent-purple-600 rounded"
-                />
-                <div>
-                  <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-purple-400" />
-                    <span>CU Exam Countdown Reminders</span>
-                  </div>
-                  <p className="text-[11px] text-prevu-text-muted mt-0.5">
-                    Pings 7 days and 24 hours before MST1, MST2, and EST exams.
-                  </p>
-                </div>
-              </label>
-
-              <label className="p-3 rounded-2xl bg-prevu-bg/70 border border-prevu-surface-light flex items-start gap-3 cursor-pointer hover:border-purple-500/30 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={newPaperAlerts}
-                  onChange={(e) => setNewPaperAlerts(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 accent-purple-600 rounded"
-                />
-                <div>
-                  <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Missing Papers & Requests Updates</span>
-                  </div>
-                  <p className="text-[11px] text-prevu-text-muted mt-0.5">
-                    Instant alerts when a requested paper or note is uploaded.
-                  </p>
-                </div>
-              </label>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-white block">
-                Primary Semester For Alerts
-              </label>
-              <select
-                value={selectedSemester}
-                onChange={(e) => setSelectedSemester(Number(e.target.value))}
-                className="w-full p-2.5 rounded-xl bg-prevu-bg border border-prevu-surface-light text-white text-xs focus:outline-none focus:border-purple-500 cursor-pointer"
-              >
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
-                  <option key={sem} value={sem}>
-                    Semester {sem} (BE-CSE)
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="pt-2 flex items-center justify-between gap-3 border-t border-prevu-surface-light">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleTestNotification}
-                className="text-xs text-purple-400 hover:text-purple-300"
-              >
-                Send Test Ping
-              </Button>
-
-              <Button
-                size="sm"
-                onClick={handleSavePreferences}
-                className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs"
-              >
-                {savedSuccess ? (
-                  <span className="flex items-center gap-1">
-                    <Check className="w-3.5 h-3.5" /> Saved
-                  </span>
-                ) : (
-                  'Save Settings'
-                )}
-              </Button>
-            </div>
+        {/* Pinned Bottom Footer */}
+        <div className="px-5 sm:px-6 py-3 border-t border-prevu-surface-light/80 bg-prevu-bg/60 flex items-center justify-between text-xs shrink-0">
+          <div className="text-[11px] text-prevu-text-muted flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Prevu Live Academic Feed</span>
           </div>
-        )}
+
+          <button
+            onClick={onClose}
+            className="text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors cursor-pointer"
+          >
+            Done
+          </button>
+        </div>
+
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

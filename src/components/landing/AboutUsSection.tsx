@@ -41,27 +41,29 @@ export default function AboutUsSection() {
   ]
 
   return (
-    <section className="py-24 bg-prevu-bg border-b border-prevu-surface-light relative overflow-hidden">
+    <section className="py-28 border-b border-prevu-surface-light relative overflow-hidden" style={{ background: '#07070c' }}>
       
-      {/* Subtle ambient lighting */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-purple-600/10 blur-[140px] rounded-full pointer-events-none" />
+      {/* Background */}
+      <div className="absolute inset-0 grid-pattern opacity-20 pointer-events-none" />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 pointer-events-none"
+           style={{ width: '600px', height: '300px', background: 'radial-gradient(ellipse, rgba(139,92,246,0.10), transparent)', filter: 'blur(100px)' }} />
 
       <div className="container mx-auto px-4 max-w-5xl space-y-20 relative z-10">
         
         {/* Story & Mission Hero */}
-        <div className="text-center max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-prevu-accent/15 text-prevu-accent border border-prevu-accent/30 uppercase tracking-wider">
+        <div className="text-center max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-prevu-accent/10 text-prevu-accent border border-prevu-accent/25 uppercase tracking-wider mb-4">
             <Heart className="w-3.5 h-3.5" />
             <span>Our Story &amp; Mission</span>
           </div>
 
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
-            Built by CU students, <br className="hidden sm:block" />
+          <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight mb-5">
+            Built by CU students,{' '}
             <span className="text-gradient-purple">for CU students.</span>
           </h2>
 
           <p className="text-sm sm:text-base text-prevu-text-muted leading-relaxed">
-            Every exam week, thousands of engineering students scramble across ephemeral WhatsApp groups, expired Google Drive links, and blurry handheld photos moments before an assessment. We engineered <strong>Prevu</strong> to permanently solve information fragmentation at Chandigarh University.
+            Every exam week, thousands of engineering students scramble across ephemeral WhatsApp groups, expired Google Drive links, and blurry handheld photos moments before an assessment. We engineered <strong className="text-white/90">Prevu</strong> to permanently solve information fragmentation at Chandigarh University.
           </p>
         </div>
 
@@ -72,25 +74,29 @@ export default function AboutUsSection() {
               icon: Zap,
               title: "100% Free Forever",
               desc: "No subscriptions, coin systems, or pay-to-unlock gates. Pure open academic knowledge for all students.",
-              color: "text-purple-400 bg-purple-500/15 border-purple-500/30"
+              iconBg: "bg-purple-500/15 border-purple-500/25",
+              iconColor: "text-purple-400"
             },
             {
               icon: ShieldCheck,
               title: "Audited Quality",
               desc: "Every PDF is reviewed for clarity, correct subject codes, and complete page sequences before going live.",
-              color: "text-emerald-400 bg-emerald-500/15 border-emerald-500/30"
+              iconBg: "bg-emerald-500/15 border-emerald-500/25",
+              iconColor: "text-emerald-400"
             },
             {
               icon: BookOpen,
               title: "Exact CU Pattern",
-              desc: "Strictly aligned with Chandigarh University’s MST 1, MST 2, and EST marking schemes and course weightage.",
-              color: "text-amber-400 bg-amber-500/15 border-amber-500/30"
+              desc: "Strictly aligned with Chandigarh University's MST 1, MST 2, and EST marking schemes and course weightage.",
+              iconBg: "bg-amber-500/15 border-amber-500/25",
+              iconColor: "text-amber-400"
             },
             {
               icon: Users,
               title: "Peer Community",
               desc: "Crowdsourced and validated by high-scoring seniors and active peers across all CSE specializations.",
-              color: "text-cyan-400 bg-cyan-500/15 border-cyan-500/30"
+              iconBg: "bg-cyan-500/15 border-cyan-500/25",
+              iconColor: "text-cyan-400"
             }
           ].map((item, idx) => {
             const Icon = item.icon
@@ -101,39 +107,40 @@ export default function AboutUsSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.45, delay: idx * 0.08 }}
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                className="p-5 sm:p-6 rounded-3xl bg-prevu-surface/85 border border-prevu-surface-light hover:border-prevu-accent/40 transition-all shadow-xl space-y-3 flex flex-col justify-between"
+                className="p-5 sm:p-6 rounded-3xl bg-prevu-surface/70 border border-prevu-surface-light hover:border-prevu-accent/40 transition-all duration-300 shadow-xl flex flex-col gap-3 card-hover-lift"
               >
-                <div>
-                  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${item.color} mb-3`}>
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-base font-bold text-white mb-1.5">{item.title}</h3>
-                  <p className="text-xs text-prevu-text-muted leading-relaxed">{item.desc}</p>
+                <div className={`w-11 h-11 rounded-2xl border flex items-center justify-center ${item.iconBg} ${item.iconColor} mb-1`}>
+                  <Icon className="w-5 h-5" />
                 </div>
+                <h3 className="text-sm font-bold text-white">{item.title}</h3>
+                <p className="text-xs text-prevu-text-muted leading-relaxed">{item.desc}</p>
               </motion.div>
             )
           })}
         </div>
 
         {/* Interactive FAQ Section */}
-        <div className="space-y-6 max-w-3xl mx-auto pt-6">
-          <div className="text-center space-y-1">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-prevu-surface border border-prevu-surface-light text-prevu-accent mb-2">
+        <div className="space-y-6 max-w-3xl mx-auto">
+          <div className="text-center">
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-prevu-surface border border-prevu-surface-light text-prevu-accent mb-4">
               <HelpCircle className="w-3.5 h-3.5" />
               <span>Got Questions?</span>
             </div>
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-white">
+            <h3 className="text-2xl sm:text-4xl font-extrabold text-white mb-2">
               Frequently Asked Questions
             </h3>
-            <p className="text-xs text-prevu-text-muted">Everything you need to know about navigating and contributing to Prevu.</p>
+            <p className="text-sm text-prevu-text-muted">Everything you need to know about navigating and contributing to Prevu.</p>
           </div>
 
           <div className="space-y-3">
             {faqs.map((faq, idx) => (
               <div 
                 key={idx}
-                className="rounded-2xl border border-prevu-surface-light bg-prevu-surface/90 overflow-hidden transition-all shadow-md"
+                className={`rounded-2xl border transition-all duration-300 shadow-md overflow-hidden ${
+                  openFaq === idx
+                    ? 'border-prevu-accent/30 bg-prevu-surface/90'
+                    : 'border-prevu-surface-light bg-prevu-surface/60 hover:border-prevu-surface-elevated'
+                }`}
               >
                 <button
                   type="button"
@@ -141,7 +148,7 @@ export default function AboutUsSection() {
                   className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-3 text-sm font-bold text-white hover:text-prevu-accent transition-colors cursor-pointer"
                 >
                   <span>{faq.q}</span>
-                  <ChevronDown className={`w-4 h-4 text-prevu-text-muted shrink-0 transition-transform duration-200 ${openFaq === idx ? 'rotate-180 text-prevu-accent' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-300 ${openFaq === idx ? 'rotate-180 text-prevu-accent' : 'text-prevu-text-muted'}`} />
                 </button>
 
                 <AnimatePresence initial={false}>
@@ -150,10 +157,10 @@ export default function AboutUsSection() {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] as const }}
+                      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] as const }}
                       className="overflow-hidden"
                     >
-                      <div className="px-4 sm:px-5 pb-5 pt-0 text-xs text-prevu-text-muted leading-relaxed border-t border-prevu-surface-light/40">
+                      <div className="px-5 pb-5 pt-0 text-sm text-prevu-text-muted leading-relaxed border-t border-prevu-surface-light/30">
                         {faq.a}
                       </div>
                     </motion.div>

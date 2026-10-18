@@ -20,7 +20,8 @@ import {
   BookmarkCheck,
   ShieldAlert,
   Layers,
-  HelpCircle
+  HelpCircle,
+  BookOpen
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { recordCbtAttempt, getCbtLeaderboard } from '@/lib/cbt/actions'
@@ -418,7 +419,7 @@ export default function CbtExamRunner({
                           {idx + 1}
                         </span>
                         <div className="text-[11px] text-prevu-text-muted font-mono">
-                          {q.sectionName || q.partName}
+                          {q.topicName || q.sectionName || q.partName}
                         </div>
                       </div>
 
@@ -434,6 +435,19 @@ export default function CbtExamRunner({
                         )}
                       </div>
                     </div>
+
+                    {/* Common Passage in Review if present */}
+                    {q.passage && (
+                      <div className="p-3.5 rounded-2xl bg-cyan-950/20 border border-cyan-500/30 space-y-1.5">
+                        <div className="text-[10px] font-bold text-cyan-300 font-mono flex items-center gap-1.5 uppercase tracking-wide">
+                          <BookOpen className="w-3 h-3" />
+                          <span>Reference Context & Rules:</span>
+                        </div>
+                        <div className="text-xs text-zinc-300 font-mono whitespace-pre-wrap leading-relaxed bg-black/40 p-2.5 rounded-xl border border-cyan-500/20">
+                          {q.passage}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Question Text */}
                     <h4 className="text-sm font-semibold text-white leading-relaxed">
@@ -628,7 +642,7 @@ export default function CbtExamRunner({
                   Question {currentIndex + 1}
                 </span>
                 <span className="text-[11px] text-prevu-text-muted font-medium">
-                  {currentQ?.sectionName || currentQ?.partName}
+                  {currentQ?.topicName || currentQ?.sectionName || currentQ?.partName}
                 </span>
               </div>
 
@@ -642,6 +656,19 @@ export default function CbtExamRunner({
                 </span>
               </div>
             </div>
+
+            {/* Common Directions / Passage / Data Context (if present) */}
+            {currentQ?.passage && (
+              <div className="p-4 rounded-2xl bg-cyan-950/20 border border-cyan-500/30 space-y-2">
+                <div className="flex items-center gap-2 text-[11px] font-bold text-cyan-300 uppercase tracking-wider font-mono">
+                  <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Common Directions & Reference Data</span>
+                </div>
+                <div className="text-xs text-zinc-200 leading-relaxed font-mono whitespace-pre-wrap bg-black/45 p-3.5 rounded-xl border border-cyan-500/20">
+                  {currentQ.passage}
+                </div>
+              </div>
+            )}
 
             {/* Question Title */}
             <h3 className="text-base sm:text-lg font-bold text-white leading-relaxed">

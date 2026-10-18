@@ -39,5 +39,20 @@
       "attemptsCount": 1,
       "updatedAt": "2026-10-16T11:11:24.820Z"
     }
+  ],
+  "APT-301": [
+    {
+      "userId": "ulPFdjy9zlTAArZnIpD4WiPzsHm2",
+      "username": "26bai34543",
+      "userName": "nisha",
+      "cuVerified": false,
+      "subjectCode": "APT-301",
+      "score": 5,
+      "totalQuestions": 15,
+      "percentage": 33.3,
+      "timeSpentSeconds": 79,
+      "attemptsCount": 1,
+      "updatedAt": "2026-10-18T05:04:09.684Z"
+    }
   ]
 }

@@ -37,21 +37,24 @@ export function parseMcqText(rawText: string): ParsedMcqItem[] {
   const answerKeyMap: Record<string, { correct: string[]; explanation: string }> = {}
 
   // Regex patterns
-  const sectionHeaderRegex = /^(?:Section|Part|Set)\s+([A-Z0-9]+)[:\s]+(.*)/i
-  const questionStartRegex = /^(?:Q|Question)\s*(\d+)[\.:\s]+(.*)/i
-  const optionRegex = /^[■\u25A0\u2022\-\*]?\s*([A-F])[\.:\)\s]+(.*)/i
-  const inlineAnswerRegex = /(?:Correct\s+answer|Answer|Ans)[\s:]+([A-F,\s]+)/i
-  const quickAnswerKeyRegex = /Q(\d+)\s+([A-F,\s]+)/gi
+  const sectionHeaderRegex = /^(?:Section|Part|Set|Topic)\s*([A-Z0-9]+)?[:\s\-]+(.*)/i
+  const questionStartRegex = /^(?:Q|Question|Q#)\s*(\d+)[\.:\s]+(.*)/i
+  const numberedQuestionRegex = /^(\d+)[\.:\)]\s+(.*)/i
+  const multiOptionLineRegex = /(?:\(([A-Fa-f])\)|(?<=\s|^)([A-Fa-f])[\.:\)])\s*([^()\n]+?)(?=(?:\s*\([A-Fa-f]\)|\s*[A-Fa-f][\.:\)])|$)/g
+  const singleOptionRegex = /^[■\u25A0\u2022\-\*]?\s*(?:\(([A-Fa-f])\)|([A-Fa-f])[\.:\)])\s+(.*)/i
+  const bulletOptionRegex = /^[■\u25A0\u2022\-\*]\s+(.*)/i
+  const answerLineRegex = /^(?:Correct\s+answer|Answer|Ans)[\s:]+(.*)/i
+  const explanationLineRegex = /^(?:Working|Explanation|Solution|Sol|Hint)[\s:]+(.*)/i
 
   // Pre-pass: Extract Answer Keys if there's a dedicated Answer Key section
-  const answerKeySectionIdx = lines.findIndex(l => /Answer\s+Key\s+&\s+Explanations/i.test(l))
+  const answerKeySectionIdx = lines.findIndex(l => /Answer\s+Key|MASTER\s+ANSWER\s+KEY/i.test(l))
   if (answerKeySectionIdx !== -1) {
     let currentKeyQ: string | null = null
     let currentExplLines: string[] = []
 
     for (let i = answerKeySectionIdx; i < lines.length; i++) {
       const line = lines[i].trim()
-      const keyMatch = line.match(/^(?:Q|Question)\s*(\d+)[\.:\s]+(?:Correct\s+answer|Ans|Answer)?[\s:]*([A-F,\s]+)/i)
+      const keyMatch = line.match(/^(?:Q|Question|Q#)?\s*(\d+)[\.:\s]+(?:Correct\s+answer|Ans|Answer)?[\s:]*([A-F,\s]+)/i)
       
       if (keyMatch) {
         if (currentKeyQ && answerKeyMap[currentKeyQ]) {
@@ -116,18 +119,33 @@ export function parseMcqText(rawText: string): ParsedMcqItem[] {
 
     // Check for Section Header
     const secMatch = line.match(sectionHeaderRegex)
-    if (secMatch) {
-      currentSection = `${secMatch[1]}: ${secMatch[2].trim()}`
+    if (secMatch && !currentQ) {
+      currentSection = secMatch[2] ? `${secMatch[1] || ''}: ${secMatch[2].trim()}` : line
       continue
     }
 
-    // Check for Question start: e.g. "Q1. Which of the following..."
+    // Check for Question start: "Q1. ...", "Question 1: ...", "1. ..."
+    let qNumber: string | null = null
+    let qContent: string | null = null
+
     const qMatch = line.match(questionStartRegex)
     if (qMatch) {
+      qNumber = qMatch[1]
+      qContent = qMatch[2]
+    } else if (!currentQ || currentQ.options.length >= 2) {
+      const numMatch = line.match(numberedQuestionRegex)
+      // Verify it's not an option number or table
+      if (numMatch && parseInt(numMatch[1]) > 0 && parseInt(numMatch[1]) <= 1000 && !/\b(?:kg|litres|days|hours|min|m|cm|Rs)\b/i.test(numMatch[2].slice(0, 15))) {
+        qNumber = numMatch[1]
+        qContent = numMatch[2]
+      }
+    }
+
+    if (qNumber !== null && qContent !== null) {
       flushCurrentQuestion()
       currentQ = {
-        number: qMatch[1],
-        text: qMatch[2],
+        number: qNumber,
+        text: qContent.replace(/QID:\s*\d+/i, '').trim(),
         options: [],
         correctAnswers: [],
         explanation: '',
@@ -136,37 +154,120 @@ export function parseMcqText(rawText: string): ParsedMcqItem[] {
       continue
     }
 
-    // Check for Options: e.g. "■ A. Weak server-side controls" or "A. ..."
-    const optMatch = line.match(optionRegex)
-    if (optMatch && currentQ) {
-      const letter = optMatch[1].toUpperCase()
-      const text = optMatch[2].trim()
-      currentQ.options.push({
-        id: letter,
-        text
-      })
-      continue
-    }
-
-    // Check for Inline Answer key: e.g. "Answer: A, B"
-    const ansMatch = line.match(inlineAnswerRegex)
-    if (ansMatch && currentQ) {
-      const keys = ansMatch[1]
-        .split(/[,;\s]+/)
-        .map(k => k.trim().toUpperCase())
-        .filter(k => /^[A-F]$/.test(k))
-      currentQ.correctAnswers = keys
-      continue
-    }
-
-    // Append multi-line question text or option text
+    // If active question, check for Answer lines: e.g. "Answer: 4% | Let CP = 100..." or "Answer: B - 3:2"
     if (currentQ) {
+      const ansMatch = line.match(answerLineRegex)
+      if (ansMatch) {
+        const fullAns = ansMatch[1].trim()
+        
+        // Split by pipe if solution follows: "Answer: 4% | Let CP = 100..."
+        const parts = fullAns.split('|')
+        const ansTarget = parts[0].trim()
+        if (parts[1]) {
+          currentQ.explanation = parts.slice(1).join('|').trim()
+        }
+
+        // Check if explicit letter is given: "Answer: B - 3:2" or "Ans: B"
+        const letterMatch = ansTarget.match(/^([A-F])\b/i)
+        if (letterMatch) {
+          const l = letterMatch[1].toUpperCase()
+          if (!currentQ.correctAnswers.includes(l)) {
+            currentQ.correctAnswers.push(l)
+          }
+        } else {
+          // Match by text comparison to options: e.g. answer is "4%" and option B is "4%"
+          const cleanTarget = ansTarget.replace(/[✓✔\s]/g, '').toLowerCase()
+          for (const opt of currentQ.options) {
+            const cleanOpt = opt.text.replace(/[✓✔\s]/g, '').toLowerCase()
+            if (cleanOpt === cleanTarget || cleanOpt.startsWith(cleanTarget)) {
+              if (!currentQ.correctAnswers.includes(opt.id)) {
+                currentQ.correctAnswers.push(opt.id)
+              }
+              break
+            }
+          }
+        }
+        continue
+      }
+
+      // Check for Explanation / Working lines
+      const explMatch = line.match(explanationLineRegex)
+      if (explMatch) {
+        currentQ.explanation = currentQ.explanation 
+          ? `${currentQ.explanation} | ${explMatch[1].trim()}` 
+          : explMatch[1].trim()
+        continue
+      }
+
+      // Check for multi-option lines: e.g. "(A) 2%  (B) 4% ✓"
+      const multiMatches = [...line.matchAll(multiOptionLineRegex)]
+      if (multiMatches.length >= 2) {
+        for (const m of multiMatches) {
+          const letter = (m[1] || m[2]).toUpperCase()
+          let optText = m[3].trim()
+          
+          // Check for checkmark
+          if (/[✓✔]|\(Official Key\)/i.test(optText)) {
+            if (!currentQ.correctAnswers.includes(letter)) {
+              currentQ.correctAnswers.push(letter)
+            }
+            optText = optText.replace(/[✓✔]|\(Official Key\)/gi, '').trim()
+          }
+
+          currentQ.options.push({
+            id: letter,
+            text: optText
+          })
+        }
+        continue
+      }
+
+      // Check for single option: e.g. "(A) 2%" or "A. 2%"
+      const singleMatch = line.match(singleOptionRegex)
+      if (singleMatch) {
+        const letter = (singleMatch[1] || singleMatch[2]).toUpperCase()
+        let optText = singleMatch[3].trim()
+
+        if (/[✓✔]|\(Official Key\)/i.test(optText)) {
+          if (!currentQ.correctAnswers.includes(letter)) {
+            currentQ.correctAnswers.push(letter)
+          }
+          optText = optText.replace(/[✓✔]|\(Official Key\)/gi, '').trim()
+        }
+
+        currentQ.options.push({
+          id: letter,
+          text: optText
+        })
+        continue
+      }
+
+      // Check for bullet option: e.g. "• 10 days"
+      const bulletMatch = line.match(bulletOptionRegex)
+      if (bulletMatch && currentQ.options.length < 6) {
+        const letters = ['A', 'B', 'C', 'D', 'E', 'F']
+        const nextLetter = letters[currentQ.options.length]
+        let optText = bulletMatch[1].trim()
+
+        if (/[✓✔]|\(Official Key\)/i.test(optText)) {
+          if (!currentQ.correctAnswers.includes(nextLetter)) {
+            currentQ.correctAnswers.push(nextLetter)
+          }
+          optText = optText.replace(/[✓✔]|\(Official Key\)/gi, '').trim()
+        }
+
+        currentQ.options.push({
+          id: nextLetter,
+          text: optText
+        })
+        continue
+      }
+
+      // Append multi-line question text or option text
       if (currentQ.options.length > 0) {
-        // Append to last option
         const lastOpt = currentQ.options[currentQ.options.length - 1]
         lastOpt.text = `${lastOpt.text} ${line}`
       } else {
-        // Append to question text
         currentQ.text = `${currentQ.text} ${line}`
       }
     }

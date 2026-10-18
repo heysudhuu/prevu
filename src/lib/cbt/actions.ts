@@ -5,7 +5,7 @@ import { authAdmin } from '@/lib/firebase/server'
 import { getSupabaseAdmin } from '@/utils/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { CbtLeaderboardEntry, CbtUserAnswer } from './types'
-import { saveStoredAttempt, getStoredLeaderboard } from './cbtStore'
+import { saveStoredAttempt, getStoredLeaderboard, getAllStoredLeaderboards } from './cbtStore'
 
 /**
  * Helper to get authenticated user or return null
@@ -174,6 +174,15 @@ export async function getCbtLeaderboard(subjectCode: string): Promise<CbtLeaderb
   } catch {
     return stored || []
   }
+}
+
+/**
+ * Get all subject leaderboards grouped by subject code
+ */
+export async function getAllCbtLeaderboards(): Promise<Record<string, CbtLeaderboardEntry[]>> {
+  // 1. Get stored leaderboards
+  const stored = getAllStoredLeaderboards()
+  return stored || {}
 }
 
 /**

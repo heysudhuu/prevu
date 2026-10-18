@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { authAdmin } from '@/lib/firebase/server'
 import Header from '@/components/Header'
 import CbtArenaHub from '@/components/cbt/CbtArenaHub'
+import { getAllStoredLeaderboards } from '@/lib/cbt/cbtStore'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,12 +25,31 @@ export default async function CbtPage() {
     }
   }
 
+  let initialLeaderboards = {}
+  try {
+    initialLeaderboards = getAllStoredLeaderboards() || {}
+  } catch {
+    initialLeaderboards = {}
+  }
+
   return (
-    <div className="min-h-screen flex flex-col bg-prevu-bg text-prevu-text">
+    <div className="min-h-screen flex flex-col bg-[#07070c] text-prevu-text relative overflow-hidden">
+      {/* Ambient background glows */}
+      <div 
+        className="fixed top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[550px] pointer-events-none z-0 opacity-40 blur-[140px]" 
+        style={{
+          background: 'radial-gradient(ellipse 60% 40% at 50% 10%, rgba(139, 92, 246, 0.25), rgba(6, 182, 212, 0.12), transparent)'
+        }}
+      />
+      <div className="fixed inset-0 grid-pattern-sm pointer-events-none opacity-20 z-0" />
+
       <Header />
-      <main className="flex-1 py-8 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <CbtArenaHub isAuthenticated={isAuthenticated} />
+      <main className="flex-1 py-8 sm:py-12 px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="container mx-auto max-w-7xl">
+          <CbtArenaHub 
+            isAuthenticated={isAuthenticated} 
+            initialLeaderboards={JSON.parse(JSON.stringify(initialLeaderboards || {}))}
+          />
         </div>
       </main>
     </div>

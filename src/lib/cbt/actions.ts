@@ -15,6 +15,7 @@ import {
   saveStoredContributedSubject,
   getStoredContributedSubjects,
   updateStoredContributedQuestionStatus,
+  updateStoredBatchContributedQuestionsStatus,
   updateStoredContributedSubjectStatus,
   updateStoredContributedQuestionDetails
 } from './cbtStore'
@@ -308,6 +309,40 @@ export async function getPendingCbtQuestions() {
 }
 
 /**
+ * Retrieve all approved CBT questions for student mock exams
+ */
+export async function getApprovedContributedQuestions(subjectCode?: string) {
+  // 1. Try Supabase
+  try {
+    const supabase = getSupabaseAdmin()
+    let query = supabase
+      .from('cbt_questions_contributed')
+      .select('*')
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false })
+
+    if (subjectCode) {
+      query = query.eq('subject_code', subjectCode.toUpperCase())
+    }
+
+    const { data, error } = await query
+    if (!error && data && data.length > 0) {
+      return data
+    }
+  } catch {
+    // fallback to store
+  }
+
+  // 2. Fallback to local persistent store
+  const stored = getStoredContributedQuestions() || []
+  let filtered = stored.filter((q: any) => q.status === 'approved')
+  if (subjectCode) {
+    filtered = filtered.filter((q: any) => q.subject_code?.toUpperCase() === subjectCode.toUpperCase())
+  }
+  return filtered
+}
+
+/**
  * Robust admin authorization checker
  */
 async function verifyAdminCaller(): Promise<boolean> {
@@ -395,10 +430,10 @@ export async function batchApproveCbtQuestionsAdmin(questionIds: (number | strin
     return { error: 'Unauthorized. Admin access required.' }
   }
 
-  for (const id of questionIds) {
-    updateStoredContributedQuestionStatus(id, 'approved')
-  }
+  // 1. Batch update local store (instant single-write, safe on serverless)
+  const updatedCount = updateStoredBatchContributedQuestionsStatus(questionIds, 'approved')
 
+  // 2. Also batch update Supabase if table exists
   try {
     const supabase = getSupabaseAdmin()
     await supabase
@@ -415,7 +450,7 @@ export async function batchApproveCbtQuestionsAdmin(questionIds: (number | strin
   revalidatePath('/admin/requests')
   revalidatePath('/admin/cbt-moderation')
   revalidatePath('/cbt')
-  return { success: true, count: questionIds.length }
+  return { success: true, count: updatedCount || questionIds.length }
 }
 
 /**

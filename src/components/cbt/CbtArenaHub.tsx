@@ -686,7 +686,7 @@ export default function CbtArenaHub({
                 asChild
                 className="w-full h-11 text-xs font-bold bg-prevu-accent text-white hover:bg-prevu-accent-hover shadow-lg rounded-2xl cursor-pointer"
               >
-                <Link href="/auth/register" className="flex items-center justify-center gap-2">
+                <Link href="/signup?redirect=/cbt" className="flex items-center justify-center gap-2">
                   <span>Create Free Account</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
@@ -697,7 +697,7 @@ export default function CbtArenaHub({
                 asChild
                 className="w-full h-11 text-xs font-bold border-prevu-surface-light text-prevu-text-muted hover:text-white rounded-2xl cursor-pointer"
               >
-                <Link href="/auth/login">
+                <Link href="/login?redirect=/cbt">
                   <span>Already Registered? Sign In</span>
                 </Link>
               </Button>

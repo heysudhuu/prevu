@@ -24,6 +24,20 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Redirect legacy /auth routes to standard /signup and /login
+  if (request.nextUrl.pathname === '/auth/register' || request.nextUrl.pathname === '/register') {
+    const url = new URL('/signup', request.url)
+    const redirectParam = request.nextUrl.searchParams.get('redirect')
+    if (redirectParam) url.searchParams.set('redirect', redirectParam)
+    return NextResponse.redirect(url, 301)
+  }
+  if (request.nextUrl.pathname === '/auth/login' || request.nextUrl.pathname === '/signin') {
+    const url = new URL('/login', request.url)
+    const redirectParam = request.nextUrl.searchParams.get('redirect')
+    if (redirectParam) url.searchParams.set('redirect', redirectParam)
+    return NextResponse.redirect(url, 301)
+  }
+
   // If already logged in, redirect away from /login and /signup to dashboard or requested redirect
   if (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup')) {
     if (isValidToken) {

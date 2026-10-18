@@ -46,6 +46,10 @@ export default function DashboardClient({ initialData, systemHealth }: Dashboard
         if (res.ok) {
           const data = await res.json()
           if (active) setTraffic(data)
+        } else if (res.status === 401) {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('auth-refresh-needed'))
+          }
         }
       } catch {
         // silent fail

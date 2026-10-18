@@ -55,6 +55,10 @@ export function AdminHeader({
           if (isMounted && typeof data.liveVisitorsCount === 'number') {
             setLiveCount(data.liveVisitorsCount)
           }
+        } else if (res.status === 401) {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('auth-refresh-needed'))
+          }
         }
       } catch {
         // silent fail

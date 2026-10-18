@@ -57,6 +57,10 @@ export default function AnalyticsClient({
       if (res.ok) {
         const data = await res.json()
         setTraffic(data)
+      } else if (res.status === 401) {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('auth-refresh-needed'))
+        }
       }
     } catch (err) {
       console.error('Failed to refresh live traffic analytics:', err)

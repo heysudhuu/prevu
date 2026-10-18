@@ -576,26 +576,36 @@ export default function RequestsClient({
     }
   }
 
+  const getOptionsList = (optionsJson: any): Array<{ id: string; text: string }> => {
+    if (Array.isArray(optionsJson)) {
+      const seenIds = new Set<string>()
+      return optionsJson.map((opt, i) => {
+        let optId = String(opt.id || opt.key || '').trim().toUpperCase()
+        if (!optId || seenIds.has(optId)) {
+          optId = String.fromCharCode(65 + i)
+        }
+        seenIds.add(optId)
+        return {
+          id: optId,
+          text: String(opt.text || opt.label || '')
+        }
+      })
+    }
+    if (optionsJson && typeof optionsJson === 'object') {
+      return Object.entries(optionsJson).map(([k, v]) => ({
+        id: k,
+        text: String(v)
+      }))
+    }
+    return []
+  }
+
   const openEditCbtModal = (q: CbtQuestionItem) => {
     setCbtEditModalItem(q)
     setCbtEditQuestion(q.question || '')
     setCbtEditExplanation(q.explanation || '')
     setCbtEditUnitTag(q.unit_tag || '')
-    
-    // Format options
-    let opts: Array<{ id: string; text: string }> = []
-    if (Array.isArray(q.options_json)) {
-      opts = q.options_json.map((opt: any) => ({
-        id: String(opt.id || opt.key || ''),
-        text: String(opt.text || opt.label || '')
-      }))
-    } else if (q.options_json && typeof q.options_json === 'object') {
-      opts = Object.entries(q.options_json).map(([k, v]) => ({
-        id: k,
-        text: String(v)
-      }))
-    }
-    setCbtEditOptions(opts)
+    setCbtEditOptions(getOptionsList(q.options_json))
     setCbtEditCorrectAnswers(q.correct_answers || [])
   }
 
@@ -649,22 +659,6 @@ export default function RequestsClient({
     } finally {
       setActionLoading(false)
     }
-  }
-
-  const getOptionsList = (optionsJson: any): Array<{ id: string; text: string }> => {
-    if (Array.isArray(optionsJson)) {
-      return optionsJson.map(opt => ({
-        id: String(opt.id || opt.key || ''),
-        text: String(opt.text || opt.label || '')
-      }))
-    }
-    if (optionsJson && typeof optionsJson === 'object') {
-      return Object.entries(optionsJson).map(([k, v]) => ({
-        id: k,
-        text: String(v)
-      }))
-    }
-    return []
   }
 
   const requestColumns: Column<PaperRequestItem>[] = [
@@ -1256,7 +1250,7 @@ export default function RequestsClient({
 
                 return (
                   <div
-                    key={q.id || idx}
+                    key={`cbt-q-${q.id || idx}-${idx}`}
                     className={`p-5 rounded-2xl border transition-all ${
                       isPending
                         ? 'bg-prevu-surface border-purple-500/30 shadow-lg shadow-purple-950/20'
@@ -1346,11 +1340,11 @@ export default function RequestsClient({
                             Options (Correct Answer Highlighted in Emerald):
                           </span>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {options.map((opt) => {
+                            {options.map((opt, optIdx) => {
                               const isCorrect = q.correct_answers.includes(opt.id)
                               return (
                                 <div
-                                  key={opt.id}
+                                  key={`cbt-opt-${q.id || idx}-${opt.id}-${optIdx}`}
                                   className={`p-2.5 rounded-xl border text-xs flex items-center gap-2.5 transition-all ${
                                     isCorrect
                                       ? 'bg-emerald-950/30 border-emerald-500/50 text-emerald-200 shadow-sm'
@@ -2013,7 +2007,7 @@ export default function RequestsClient({
                     const isCorrect = cbtEditCorrectAnswers.includes(opt.id)
                     return (
                       <div
-                        key={opt.id || i}
+                        key={`cbt-edit-opt-${opt.id || i}-${i}`}
                         className={`flex items-center gap-2.5 p-2 rounded-xl border transition-all ${
                           isCorrect
                             ? 'bg-emerald-950/20 border-emerald-500/50'

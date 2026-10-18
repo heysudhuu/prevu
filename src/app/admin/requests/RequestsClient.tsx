@@ -16,7 +16,12 @@ import {
   Edit3,
   Trash2,
   Save,
-  PenLine
+  PenLine,
+  Search,
+  Check,
+  Lightbulb,
+  Layers,
+  BookOpen
 } from 'lucide-react'
 import { DataTable, Column } from '@/components/admin/ui/DataTable'
 import { StatusBadge } from '@/components/admin/ui/StatusBadge'
@@ -29,6 +34,11 @@ import {
   deletePaperRequest,
   updateCommunityHelpSubmissionDetails
 } from '../actions'
+import {
+  reviewCbtQuestion,
+  batchApproveCbtQuestionsAdmin,
+  updateCbtQuestionDetailsAdmin
+} from '@/lib/cbt/actions'
 
 interface PaperRequestItem {
   id: number
@@ -89,21 +99,66 @@ export interface CommunityHelpSubmissionItem {
   }
 }
 
+export interface CbtQuestionItem {
+  id: number
+  user_id?: string
+  user_name?: string
+  username?: string
+  subject_code: string
+  subject_name: string
+  semester: number
+  category?: string
+  unit_tag?: string
+  question: string
+  question_type?: 'single' | 'multiple'
+  options_json: Array<{ id: string; text: string }> | Record<string, string>
+  correct_answers: string[]
+  explanation?: string
+  status: 'pending' | 'approved' | 'rejected'
+  admin_feedback?: string | null
+  created_at: string
+  users?: {
+    id: string
+    name: string
+    username?: string
+    cu_verified?: boolean
+  }
+}
+
 interface RequestsClientProps {
   initialRequests: PaperRequestItem[]
   initialSubmissions?: CommunityHelpSubmissionItem[]
+  initialCbtQuestions?: CbtQuestionItem[]
 }
 
 export default function RequestsClient({ 
   initialRequests,
-  initialSubmissions = []
+  initialSubmissions = [],
+  initialCbtQuestions = []
 }: RequestsClientProps) {
-  const [activeTab, setActiveTab] = useState<'submissions' | 'requests'>('submissions')
+  const [activeTab, setActiveTab] = useState<'submissions' | 'requests' | 'cbt'>('submissions')
   const [requests, setRequests] = useState<PaperRequestItem[]>(initialRequests)
   const [submissions, setSubmissions] = useState<CommunityHelpSubmissionItem[]>(initialSubmissions)
+  const [cbtQuestions, setCbtQuestions] = useState<CbtQuestionItem[]>(initialCbtQuestions)
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [submissionFilter, setSubmissionFilter] = useState<'pending' | 'approved' | 'rejected' | 'ALL'>('pending')
+  const [cbtStatusFilter, setCbtStatusFilter] = useState<'pending' | 'approved' | 'rejected' | 'ALL'>('pending')
+  const [cbtSubjectFilter, setCbtSubjectFilter] = useState('ALL')
+  const [cbtSearchQuery, setCbtSearchQuery] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
+
+  // CBT Question Rejection Modal state
+  const [cbtRejectModalId, setCbtRejectModalId] = useState<number | null>(null)
+  const [cbtRejectReason, setCbtRejectReason] = useState('')
+
+  // CBT Question Edit Modal state
+  const [cbtEditModalItem, setCbtEditModalItem] = useState<CbtQuestionItem | null>(null)
+  const [cbtEditQuestion, setCbtEditQuestion] = useState('')
+  const [cbtEditExplanation, setCbtEditExplanation] = useState('')
+  const [cbtEditUnitTag, setCbtEditUnitTag] = useState('')
+  const [cbtEditOptions, setCbtEditOptions] = useState<Array<{ id: string; text: string }>>([])
+  const [cbtEditCorrectAnswers, setCbtEditCorrectAnswers] = useState<string[]>([])
+
   
   // Rejection modal state
   const [rejectModalId, setRejectModalId] = useState<string | null>(null)
@@ -420,6 +475,198 @@ export default function RequestsClient({
     }
   }
 
+  // Read URL tab param on mount
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const tabParam = params.get('tab')
+      if (tabParam === 'cbt') {
+        setActiveTab('cbt')
+      } else if (tabParam === 'requests') {
+        setActiveTab('requests')
+      } else if (tabParam === 'submissions') {
+        setActiveTab('submissions')
+      }
+    }
+  }, [])
+
+  const pendingCbtCount = useMemo(() => {
+    return cbtQuestions.filter(q => q.status === 'pending').length
+  }, [cbtQuestions])
+
+  const cbtSubjectsList = useMemo(() => {
+    const set = new Set<string>()
+    cbtQuestions.forEach(q => {
+      if (q.subject_name) set.add(q.subject_name)
+    })
+    return Array.from(set)
+  }, [cbtQuestions])
+
+  const filteredCbtQuestions = useMemo(() => {
+    return cbtQuestions.filter(q => {
+      if (cbtStatusFilter !== 'ALL' && q.status !== cbtStatusFilter) {
+        return false
+      }
+      if (cbtSubjectFilter !== 'ALL' && q.subject_name !== cbtSubjectFilter) {
+        return false
+      }
+      if (cbtSearchQuery.trim()) {
+        const query = cbtSearchQuery.toLowerCase()
+        const matchQuestion = q.question?.toLowerCase().includes(query)
+        const matchSubj = q.subject_name?.toLowerCase().includes(query) || q.subject_code?.toLowerCase().includes(query)
+        const matchUnit = q.unit_tag?.toLowerCase().includes(query)
+        const matchStudent = q.user_name?.toLowerCase().includes(query) || q.username?.toLowerCase().includes(query) || q.users?.name?.toLowerCase().includes(query)
+        return matchQuestion || matchSubj || matchUnit || matchStudent
+      }
+      return true
+    })
+  }, [cbtQuestions, cbtStatusFilter, cbtSubjectFilter, cbtSearchQuery])
+
+  const handleReviewCbt = async (questionId: number, action: 'approved' | 'rejected', feedback?: string) => {
+    setActionLoading(true)
+    try {
+      const res = await reviewCbtQuestion(questionId, action, feedback)
+      if (res.success) {
+        setCbtQuestions(prev =>
+          prev.map(q => q.id === questionId ? { ...q, status: action, admin_feedback: feedback || null } : q)
+        )
+        if (action === 'approved') {
+          alert('CBT Question approved and published to the student CBT Arena!')
+        } else {
+          alert('CBT Question rejected with feedback recorded.')
+          setCbtRejectModalId(null)
+          setCbtRejectReason('')
+        }
+      } else {
+        alert(res.error || 'Failed to review question')
+      }
+    } catch {
+      alert('Error reviewing question')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleBatchApprovePendingCbt = async () => {
+    const pendingIds = filteredCbtQuestions.filter(q => q.status === 'pending').map(q => q.id)
+    if (pendingIds.length === 0) {
+      alert('No pending questions in the current view to approve.')
+      return
+    }
+
+    if (!confirm(`Approve all ${pendingIds.length} pending CBT questions in this filtered view and publish to the CBT Arena?`)) {
+      return
+    }
+
+    setActionLoading(true)
+    try {
+      const res = await batchApproveCbtQuestionsAdmin(pendingIds)
+      if (res.success) {
+        setCbtQuestions(prev =>
+          prev.map(q => pendingIds.includes(q.id) ? { ...q, status: 'approved' } : q)
+        )
+        alert(`Successfully approved ${res.count} CBT questions! They are now live for student mock practice.`)
+      } else {
+        alert(res.error || 'Failed to batch approve')
+      }
+    } catch {
+      alert('Error batch approving questions')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const openEditCbtModal = (q: CbtQuestionItem) => {
+    setCbtEditModalItem(q)
+    setCbtEditQuestion(q.question || '')
+    setCbtEditExplanation(q.explanation || '')
+    setCbtEditUnitTag(q.unit_tag || '')
+    
+    // Format options
+    let opts: Array<{ id: string; text: string }> = []
+    if (Array.isArray(q.options_json)) {
+      opts = q.options_json.map((opt: any) => ({
+        id: String(opt.id || opt.key || ''),
+        text: String(opt.text || opt.label || '')
+      }))
+    } else if (q.options_json && typeof q.options_json === 'object') {
+      opts = Object.entries(q.options_json).map(([k, v]) => ({
+        id: k,
+        text: String(v)
+      }))
+    }
+    setCbtEditOptions(opts)
+    setCbtEditCorrectAnswers(q.correct_answers || [])
+  }
+
+  const handleSaveCbtEdit = async (approveImmediately = false) => {
+    if (!cbtEditModalItem) return
+    if (!cbtEditQuestion.trim()) {
+      alert('Question text cannot be empty')
+      return
+    }
+    if (cbtEditCorrectAnswers.length === 0) {
+      alert('Please select at least one correct answer key (e.g. A, B, C, or D).')
+      return
+    }
+
+    setActionLoading(true)
+    try {
+      const newStatus = approveImmediately ? 'approved' : cbtEditModalItem.status
+      const res = await updateCbtQuestionDetailsAdmin(cbtEditModalItem.id, {
+        question: cbtEditQuestion.trim(),
+        explanation: cbtEditExplanation.trim(),
+        unit_tag: cbtEditUnitTag.trim() || undefined,
+        options_json: cbtEditOptions,
+        correct_answers: cbtEditCorrectAnswers,
+        status: newStatus
+      })
+
+      if (res.success) {
+        setCbtQuestions(prev =>
+          prev.map(q => {
+            if (q.id === cbtEditModalItem.id) {
+              return {
+                ...q,
+                question: cbtEditQuestion.trim(),
+                explanation: cbtEditExplanation.trim(),
+                unit_tag: cbtEditUnitTag.trim() || undefined,
+                options_json: cbtEditOptions,
+                correct_answers: cbtEditCorrectAnswers,
+                status: newStatus
+              }
+            }
+            return q
+          })
+        )
+        setCbtEditModalItem(null)
+        alert(approveImmediately ? 'Question updated & published to CBT Arena!' : 'Question details updated successfully!')
+      } else {
+        alert(res.error || 'Failed to update question')
+      }
+    } catch {
+      alert('Error updating question')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const getOptionsList = (optionsJson: any): Array<{ id: string; text: string }> => {
+    if (Array.isArray(optionsJson)) {
+      return optionsJson.map(opt => ({
+        id: String(opt.id || opt.key || ''),
+        text: String(opt.text || opt.label || '')
+      }))
+    }
+    if (optionsJson && typeof optionsJson === 'object') {
+      return Object.entries(optionsJson).map(([k, v]) => ({
+        id: k,
+        text: String(v)
+      }))
+    }
+    return []
+  }
+
   const requestColumns: Column<PaperRequestItem>[] = [
     {
       key: 'subject_name',
@@ -541,23 +788,50 @@ export default function RequestsClient({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-extrabold text-prevu-text tracking-tight">
               Community Requests & Verification
             </h1>
+            {pendingCbtCount > 0 && (
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40 animate-pulse flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-purple-300" />
+                {pendingCbtCount} CBT MCQs Pending
+              </span>
+            )}
             {pendingSubmissionsCount > 0 && (
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse">
-                {pendingSubmissionsCount} Pending Review
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                {pendingSubmissionsCount} Shared Notes Pending
               </span>
             )}
           </div>
           <p className="text-xs text-prevu-text-muted mt-1">
-            Review batchmate-shared PYQs, notes, edit solutions/remarks, and verify materials before publishing them to the student community.
+            Review batchmate-shared PYQs, notes, edit solutions/remarks, and verify student-contributed CBT Arena MCQs before publishing them.
           </p>
         </div>
 
         {/* Tab navigation buttons */}
-        <div className="flex items-center bg-prevu-surface border border-prevu-surface-light rounded-xl p-1 gap-1">
+        <div className="flex flex-wrap items-center bg-prevu-surface border border-prevu-surface-light rounded-xl p-1 gap-1">
+          <button
+            onClick={() => setActiveTab('cbt')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              activeTab === 'cbt'
+                ? 'bg-purple-600 text-white shadow-md'
+                : 'text-prevu-text-muted hover:text-white'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-purple-300" />
+            <span>CBT Arena MCQs</span>
+            {pendingCbtCount > 0 ? (
+              <span className="w-5 h-5 rounded-full bg-purple-400 text-black text-[10px] font-bold flex items-center justify-center ml-1 animate-pulse">
+                {pendingCbtCount}
+              </span>
+            ) : (
+              <span className="text-[10px] text-prevu-text-muted ml-0.5 font-mono">
+                ({cbtQuestions.length})
+              </span>
+            )}
+          </button>
+
           <button
             onClick={() => setActiveTab('submissions')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
@@ -879,6 +1153,360 @@ export default function RequestsClient({
             emptyTitle="No paper requests found"
             emptyDescription="There are currently no community requests matching your criteria."
           />
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* TAB 3: CBT ARENA MCQ REQUESTS & VERIFICATION */}
+      {/* ============================================================ */}
+      {activeTab === 'cbt' && (
+        <div className="space-y-4">
+          {/* Controls Bar 1: Status Filters & Batch Actions */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-prevu-surface/60 p-3 rounded-2xl border border-prevu-surface-light">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-purple-400" />
+                Filter Status:
+              </span>
+              {(['pending', 'approved', 'rejected', 'ALL'] as const).map(st => (
+                <button
+                  key={st}
+                  onClick={() => setCbtStatusFilter(st)}
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition-all ${
+                    cbtStatusFilter === st
+                      ? 'bg-purple-600 text-white shadow-md'
+                      : 'bg-prevu-bg text-prevu-text-muted hover:text-white border border-prevu-surface-light'
+                  }`}
+                >
+                  {st === 'ALL' ? 'All' : st}
+                  {st === 'pending' && pendingCbtCount > 0 && (
+                    <span className="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] bg-amber-400 text-black font-extrabold">
+                      {pendingCbtCount}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Batch Approve Action */}
+            {cbtStatusFilter === 'pending' && filteredCbtQuestions.length > 0 && (
+              <Button
+                size="sm"
+                onClick={handleBatchApprovePendingCbt}
+                disabled={actionLoading}
+                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-950/40 shrink-0"
+              >
+                <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+                Approve All ({filteredCbtQuestions.length}) Pending
+              </Button>
+            )}
+          </div>
+
+          {/* Controls Bar 2: Search Query & Subject Filter */}
+          <div className="flex flex-col md:flex-row items-center gap-3">
+            <div className="relative flex-1 w-full">
+              <Search className="w-4 h-4 text-prevu-text-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={cbtSearchQuery}
+                onChange={e => setCbtSearchQuery(e.target.value)}
+                placeholder="Search question text, topic tag, subject code, or student..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-prevu-surface border border-prevu-surface-light text-xs text-white placeholder-prevu-text-muted focus:outline-none focus:border-purple-500/60"
+              />
+            </div>
+
+            {cbtSubjectsList.length > 1 && (
+              <select
+                value={cbtSubjectFilter}
+                onChange={e => setCbtSubjectFilter(e.target.value)}
+                className="w-full md:w-auto px-3 py-2.5 bg-prevu-surface border border-prevu-surface-light rounded-xl text-xs text-white focus:outline-none focus:border-purple-500 cursor-pointer"
+              >
+                <option value="ALL">All Subjects ({cbtSubjectsList.length})</option>
+                {cbtSubjectsList.map(subj => (
+                  <option key={subj} value={subj}>{subj}</option>
+                ))}
+              </select>
+            )}
+
+            <div className="flex items-center gap-2 self-end md:self-center">
+              <span className="text-xs font-mono text-purple-300 bg-purple-950/30 px-3 py-1.5 rounded-xl border border-purple-500/20">
+                {filteredCbtQuestions.length} MCQ{filteredCbtQuestions.length !== 1 ? 's' : ''} listed
+              </span>
+            </div>
+          </div>
+
+          {/* Empty State */}
+          {filteredCbtQuestions.length === 0 ? (
+            <div className="p-12 text-center rounded-2xl bg-prevu-surface/40 border border-prevu-surface-light space-y-3">
+              <CheckCircle className="w-10 h-10 text-purple-400 mx-auto" />
+              <h3 className="text-sm font-bold text-white">No CBT Arena Questions Found</h3>
+              <p className="text-xs text-prevu-text-muted max-w-md mx-auto">
+                {cbtStatusFilter === 'pending'
+                  ? 'All student-contributed MCQs have been reviewed! New submissions from the CBT contribute portal will appear here for verification.'
+                  : 'No CBT Arena MCQs match this filter or search query.'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {filteredCbtQuestions.map((q, idx) => {
+                const isPending = q.status === 'pending'
+                const isApproved = q.status === 'approved'
+                const isRejected = q.status === 'rejected'
+                const options = getOptionsList(q.options_json)
+
+                return (
+                  <div
+                    key={q.id || idx}
+                    className={`p-5 rounded-2xl border transition-all ${
+                      isPending
+                        ? 'bg-prevu-surface border-purple-500/30 shadow-lg shadow-purple-950/20'
+                        : isApproved
+                        ? 'bg-prevu-surface/80 border-emerald-500/20'
+                        : 'bg-prevu-surface/40 border-red-500/20 opacity-80'
+                    }`}
+                  >
+                    <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                      {/* Left: Question details & Options */}
+                      <div className="space-y-3 flex-1 min-w-0">
+                        {/* Subject, Topic & Status Tags */}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                            {q.subject_code}
+                          </span>
+                          <span className="text-sm sm:text-base font-bold text-white">
+                            {q.subject_name}
+                          </span>
+                          <span className="text-xs text-prevu-text-muted font-mono">
+                            • Sem {q.semester} • {q.category || 'General'}
+                          </span>
+                          {q.unit_tag && (
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 flex items-center gap-1">
+                              <BookOpen className="w-3 h-3" />
+                              {q.unit_tag}
+                            </span>
+                          )}
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-mono uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                            {q.question_type === 'multiple' ? 'Multiple Choice' : 'Single MCQ'}
+                          </span>
+                          {isPending && (
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse">
+                              Pending Review
+                            </span>
+                          )}
+                          {isApproved && (
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                              ✓ Live in Arena
+                            </span>
+                          )}
+                          {isRejected && (
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-red-500/20 text-red-300 border border-red-500/40">
+                              ✕ Rejected
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Contributor Profile */}
+                        <div className="flex items-center gap-3 text-xs text-prevu-text-muted bg-prevu-bg/60 p-2.5 rounded-xl border border-prevu-surface-light/60">
+                          <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shrink-0">
+                            {q.user_name?.charAt(0) || q.users?.name?.charAt(0) || 'S'}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-white">
+                                {q.user_name || q.users?.name || 'Student Contributor'}
+                              </span>
+                              <span className="font-mono text-[11px] text-purple-300">
+                                @{q.username || q.users?.username || 'student'}
+                              </span>
+                              {(q.users?.cu_verified || true) && (
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                                  CU Student
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-prevu-text-muted">
+                              Submitted {new Date(q.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Question Text */}
+                        <div className="p-3.5 rounded-xl bg-prevu-bg/90 border border-prevu-surface-light">
+                          <span className="text-[10px] font-mono font-bold uppercase text-purple-300 block mb-1">
+                            Question Statement:
+                          </span>
+                          <p className="text-sm font-medium text-white whitespace-pre-wrap leading-relaxed">
+                            {q.question}
+                          </p>
+                        </div>
+
+                        {/* Options List with Highlighted Correct Answer */}
+                        <div className="space-y-1.5">
+                          <span className="text-[10px] font-mono font-bold uppercase text-prevu-text-muted block">
+                            Options (Correct Answer Highlighted in Emerald):
+                          </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {options.map((opt) => {
+                              const isCorrect = q.correct_answers.includes(opt.id)
+                              return (
+                                <div
+                                  key={opt.id}
+                                  className={`p-2.5 rounded-xl border text-xs flex items-center gap-2.5 transition-all ${
+                                    isCorrect
+                                      ? 'bg-emerald-950/30 border-emerald-500/50 text-emerald-200 shadow-sm'
+                                      : 'bg-prevu-bg/50 border-prevu-surface-light text-prevu-text'
+                                  }`}
+                                >
+                                  <div
+                                    className={`w-6 h-6 rounded-lg font-bold font-mono text-xs flex items-center justify-center shrink-0 ${
+                                      isCorrect
+                                        ? 'bg-emerald-500 text-black font-extrabold shadow-sm'
+                                        : 'bg-prevu-surface-light text-prevu-text-muted'
+                                    }`}
+                                  >
+                                    {opt.id}
+                                  </div>
+                                  <span className="flex-1 min-w-0 font-medium">
+                                    {opt.text}
+                                  </span>
+                                  {isCorrect && (
+                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1 shrink-0">
+                                      <Check className="w-2.5 h-2.5" />
+                                      Answer Key
+                                    </span>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Explanation (if provided) */}
+                        {q.explanation && (
+                          <div className="p-3 rounded-xl bg-purple-950/20 border border-purple-500/30 text-xs text-purple-200 flex items-start gap-2">
+                            <Lightbulb className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                            <div className="space-y-0.5">
+                              <span className="text-[10px] font-mono font-bold uppercase text-purple-300 block">
+                                Solution Explanation:
+                              </span>
+                              <p className="whitespace-pre-wrap">{q.explanation}</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Admin Rejection Feedback */}
+                        {isRejected && q.admin_feedback && (
+                          <div className="p-3 rounded-xl bg-red-950/20 border border-red-500/30 text-xs text-red-200 flex items-start gap-2">
+                            <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                            <div>
+                              <span className="text-[10px] font-mono font-bold uppercase text-red-400 block">
+                                Rejection Note:
+                              </span>
+                              <p>{q.admin_feedback}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right: Moderation Actions */}
+                      <div className="lg:w-48 flex lg:flex-col items-center gap-2 shrink-0 border-t lg:border-t-0 lg:border-l border-prevu-surface-light pt-3 lg:pt-0 lg:pl-4">
+                        {isPending ? (
+                          <>
+                            <Button
+                              size="sm"
+                              onClick={() => handleReviewCbt(q.id, 'approved')}
+                              disabled={actionLoading}
+                              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs h-8 shadow-md"
+                            >
+                              <CheckCircle className="w-3.5 h-3.5 mr-1" /> Approve & Publish
+                            </Button>
+
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openEditCbtModal(q)}
+                              disabled={actionLoading}
+                              className="w-full border-purple-500/40 text-purple-300 hover:bg-purple-500/10 font-bold text-xs h-8"
+                            >
+                              <Edit3 className="w-3.5 h-3.5 mr-1" /> Edit Question
+                            </Button>
+
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setCbtRejectModalId(q.id)
+                                setCbtRejectReason('')
+                              }}
+                              disabled={actionLoading}
+                              className="w-full border-red-500/40 text-red-300 hover:bg-red-500/10 font-bold text-xs h-8"
+                            >
+                              <XCircle className="w-3.5 h-3.5 mr-1" /> Reject
+                            </Button>
+                          </>
+                        ) : isApproved ? (
+                          <>
+                            <div className="w-full p-2 rounded-xl bg-emerald-950/30 border border-emerald-500/30 text-center">
+                              <span className="text-[11px] font-bold text-emerald-300 flex items-center justify-center gap-1">
+                                <Check className="w-3.5 h-3.5" /> Live in CBT
+                              </span>
+                            </div>
+
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openEditCbtModal(q)}
+                              disabled={actionLoading}
+                              className="w-full border-purple-500/40 text-purple-300 hover:bg-purple-500/10 font-bold text-xs h-8"
+                            >
+                              <Edit3 className="w-3.5 h-3.5 mr-1" /> Edit Details
+                            </Button>
+
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleReviewCbt(q.id, 'rejected', 'Revoked by admin')}
+                              disabled={actionLoading}
+                              className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs h-7"
+                            >
+                              Revoke
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <div className="w-full p-2 rounded-xl bg-red-950/30 border border-red-500/30 text-center">
+                              <span className="text-[11px] font-bold text-red-300">
+                                ✕ Rejected
+                              </span>
+                            </div>
+
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openEditCbtModal(q)}
+                              disabled={actionLoading}
+                              className="w-full border-purple-500/40 text-purple-300 hover:bg-purple-500/10 font-bold text-xs h-8"
+                            >
+                              <Edit3 className="w-3.5 h-3.5 mr-1" /> Edit & Fix
+                            </Button>
+
+                            <Button
+                              size="sm"
+                              onClick={() => handleReviewCbt(q.id, 'approved')}
+                              disabled={actionLoading}
+                              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs h-8"
+                            >
+                              <CheckCircle className="w-3.5 h-3.5 mr-1" /> Re-approve
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -1265,6 +1893,217 @@ export default function RequestsClient({
                 className="bg-red-600 hover:bg-red-500 text-white font-bold"
               >
                 Confirm Rejection
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL 5: CBT QUESTION REJECTION */}
+      {/* ============================================================ */}
+      {cbtRejectModalId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-md p-6 rounded-3xl bg-[#12121a] border border-prevu-surface-light shadow-2xl space-y-4">
+            <div className="flex items-center gap-2 text-red-400">
+              <AlertCircle className="w-5 h-5" />
+              <h3 className="text-base font-bold text-white">Reject CBT Arena MCQ</h3>
+            </div>
+            <p className="text-xs text-prevu-text-muted">
+              Please provide feedback explaining why this question cannot be accepted into the CBT Arena (e.g., incorrect answer key, ambiguous wording, duplicate question).
+            </p>
+            <textarea
+              value={cbtRejectReason}
+              onChange={e => setCbtRejectReason(e.target.value)}
+              placeholder="e.g. Option B was marked correct, but the standard solution indicates Option A is correct..."
+              rows={3}
+              className="w-full p-3 rounded-xl bg-prevu-bg border border-prevu-surface-light text-xs text-white placeholder-prevu-text-muted focus:outline-none focus:border-red-500"
+            />
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCbtRejectModalId(null)}
+                disabled={actionLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => handleReviewCbt(cbtRejectModalId, 'rejected', cbtRejectReason.trim())}
+                disabled={actionLoading || !cbtRejectReason.trim()}
+                className="bg-red-600 hover:bg-red-500 text-white font-bold"
+              >
+                Confirm Rejection
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL 6: CBT QUESTION EDIT & INSPECT */}
+      {/* ============================================================ */}
+      {cbtEditModalItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in overflow-y-auto">
+          <div className="w-full max-w-2xl my-8 p-6 rounded-3xl bg-[#12121a] border border-purple-500/30 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-prevu-surface-light pb-3">
+              <div className="flex items-center gap-2 text-purple-400">
+                <Edit3 className="w-5 h-5" />
+                <h3 className="text-base font-bold text-white">
+                  Inspect & Edit CBT Question
+                </h3>
+              </div>
+              <button
+                onClick={() => setCbtEditModalItem(null)}
+                className="text-prevu-text-muted hover:text-white text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs">
+              <span className="px-2 py-0.5 rounded font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                {cbtEditModalItem.subject_code}
+              </span>
+              <span className="font-semibold text-white truncate">
+                {cbtEditModalItem.subject_name}
+              </span>
+              <span className="text-prevu-text-muted font-mono">
+                Sem {cbtEditModalItem.semester}
+              </span>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              {/* Topic / Unit Tag */}
+              <div className="space-y-1">
+                <label className="font-semibold text-white">Unit / Topic Tag</label>
+                <input
+                  type="text"
+                  value={cbtEditUnitTag}
+                  onChange={e => setCbtEditUnitTag(e.target.value)}
+                  placeholder="e.g. Ratio & Proportion, Network Layer, Memory Management..."
+                  className="w-full p-2.5 rounded-xl bg-prevu-bg border border-prevu-surface-light text-white focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              {/* Question Text */}
+              <div className="space-y-1">
+                <label className="font-semibold text-white">Question Statement *</label>
+                <textarea
+                  value={cbtEditQuestion}
+                  onChange={e => setCbtEditQuestion(e.target.value)}
+                  rows={4}
+                  placeholder="Enter the full question text..."
+                  className="w-full p-3 rounded-xl bg-prevu-bg border border-prevu-surface-light text-white focus:outline-none focus:border-purple-500 leading-relaxed font-sans"
+                />
+              </div>
+
+              {/* Options & Correct Answer Selector */}
+              <div className="space-y-2">
+                <label className="font-semibold text-white flex items-center justify-between">
+                  <span>Options & Answer Key</span>
+                  <span className="text-[11px] text-purple-300 font-mono">
+                    Click an option&apos;s key badge to toggle it as correct
+                  </span>
+                </label>
+
+                <div className="space-y-2">
+                  {cbtEditOptions.map((opt, i) => {
+                    const isCorrect = cbtEditCorrectAnswers.includes(opt.id)
+                    return (
+                      <div
+                        key={opt.id || i}
+                        className={`flex items-center gap-2.5 p-2 rounded-xl border transition-all ${
+                          isCorrect
+                            ? 'bg-emerald-950/20 border-emerald-500/50'
+                            : 'bg-prevu-bg border-prevu-surface-light'
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (isCorrect) {
+                              setCbtEditCorrectAnswers(prev => prev.filter(k => k !== opt.id))
+                            } else {
+                              setCbtEditCorrectAnswers([opt.id])
+                            }
+                          }}
+                          className={`w-8 h-8 rounded-lg font-bold font-mono text-xs flex items-center justify-center shrink-0 transition-all ${
+                            isCorrect
+                              ? 'bg-emerald-500 text-black shadow-md shadow-emerald-500/30'
+                              : 'bg-prevu-surface-light text-prevu-text-muted hover:text-white hover:bg-prevu-surface'
+                          }`}
+                          title="Click to mark as correct answer"
+                        >
+                          {opt.id}
+                        </button>
+
+                        <input
+                          type="text"
+                          value={opt.text}
+                          onChange={e => {
+                            const newText = e.target.value
+                            setCbtEditOptions(prev =>
+                              prev.map((o, idx) => (idx === i ? { ...o, text: newText } : o))
+                            )
+                          }}
+                          className="flex-1 p-2 rounded-lg bg-transparent text-white focus:outline-none text-xs"
+                          placeholder={`Option ${opt.id} text...`}
+                        />
+
+                        {isCorrect && (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
+                            ✓ Correct Key
+                          </span>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Explanation */}
+              <div className="space-y-1">
+                <label className="font-semibold text-white">Solution / Explanation</label>
+                <textarea
+                  value={cbtEditExplanation}
+                  onChange={e => setCbtEditExplanation(e.target.value)}
+                  rows={3}
+                  placeholder="Detailed step-by-step reasoning or formula..."
+                  className="w-full p-2.5 rounded-xl bg-prevu-bg border border-prevu-surface-light text-white focus:outline-none focus:border-purple-500"
+                />
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-prevu-surface-light">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCbtEditModalItem(null)}
+                disabled={actionLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleSaveCbtEdit(false)}
+                disabled={actionLoading}
+                className="border-purple-500/40 text-purple-300 hover:bg-purple-500/10 font-bold"
+              >
+                <Save className="w-3.5 h-3.5 mr-1" />
+                Save Changes
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => handleSaveCbtEdit(true)}
+                disabled={actionLoading}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
+              >
+                <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                Save & Approve Now
               </Button>
             </div>
           </div>

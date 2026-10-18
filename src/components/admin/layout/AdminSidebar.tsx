@@ -29,6 +29,7 @@ export interface AdminNavBadgeCounts {
   pendingReview?: number
   openReports?: number
   openRequests?: number
+  pendingCbt?: number
 }
 
 interface AdminSidebarProps {
@@ -71,6 +72,13 @@ const NAV_ITEMS: NavItem[] = [
     icon: Inbox,
     badgeKey: 'openRequests',
     badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+  },
+  {
+    name: 'CBT Arena MCQs',
+    href: '/admin/requests?tab=cbt',
+    icon: Sparkles,
+    badgeKey: 'pendingCbt',
+    badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30'
   },
   { name: 'Academic Data', href: '/admin/academic', icon: GraduationCap },
   { name: 'Calendar', href: '/admin/calendar', icon: Calendar },

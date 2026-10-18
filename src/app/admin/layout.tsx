@@ -60,6 +60,15 @@ export default async function AdminLayout({
     student_uid: u.student_uid
   }))
 
+  let pendingCbtCount = 0
+  try {
+    const { getPendingCbtQuestions } = await import('@/lib/cbt/actions')
+    const pendingQuestions = await getPendingCbtQuestions()
+    pendingCbtCount = pendingQuestions?.length || 0
+  } catch {
+    pendingCbtCount = 0
+  }
+
   return (
     <AdminLayoutShell
       adminEmail={session.email}
@@ -67,7 +76,8 @@ export default async function AdminLayout({
       badgeCounts={{
         pendingReview: stats?.pendingCount || 0,
         openReports: stats?.openReportsCount || 0,
-        openRequests: stats?.openRequestsCount || 0
+        openRequests: stats?.openRequestsCount || 0,
+        pendingCbt: pendingCbtCount
       }}
       searchPapers={searchPapers}
       searchUsers={searchUsers}

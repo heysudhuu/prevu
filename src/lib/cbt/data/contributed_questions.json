@@ -1,0 +1,550 @@
+[
+  {
+    "user_id": "ulPFdjy9zlTAArZnIpD4WiPzsHm2",
+    "user_name": "nisha",
+    "username": "26bai34543",
+    "subject_code": "APT-301",
+    "subject_name": "Campus Placement Aptitude & Logical Reasoning",
+    "semester": 5,
+    "category": "aptitude",
+    "question": "If 10% of \\(x\\) is equal to 20% of \\(y\\), then \\(x:y\\) is:",
+    "question_type": "single",
+    "options_json": [
+      {
+        "id": "A",
+        "text": "1 : 2"
+      },
+      {
+        "id": "B",
+        "text": "2 : 1"
+      },
+      {
+        "id": "C",
+        "text": "3 : 2"
+      },
+      {
+        "id": "D",
+        "text": "2 : 3"
+      }
+    ],
+    "correct_answers": [
+      "A"
+    ],
+    "explanation": "",
+    "unit_tag": "Ratio & Proportion",
+    "status": "pending",
+    "id": 1792321744142,
+    "created_at": "2026-10-18T11:09:04.142Z",
+    "updated_at": "2026-10-18T11:09:04.142Z"
+  },
+  {
+    "user_id": "ulPFdjy9zlTAArZnIpD4WiPzsHm2",
+    "user_name": "nisha",
+    "username": "26bai34543",
+    "subject_code": "APT-301",
+    "subject_name": "Campus Placement Aptitude & Logical Reasoning",
+    "semester": 5,
+    "category": "aptitude",
+    "question": "If \\(7:x = 17.5:22.5\\), find \\(x\\).",
+    "question_type": "single",
+    "options_json": [
+      {
+        "id": "A",
+        "text": "7"
+      },
+      {
+        "id": "B",
+        "text": "8"
+      },
+      {
+        "id": "C",
+        "text": "9"
+      },
+      {
+        "id": "D",
+        "text": "10"
+      }
+    ],
+    "correct_answers": [
+      "A"
+    ],
+    "explanation": "",
+    "unit_tag": "Ratio & Proportion",
+    "status": "pending",
+    "id": 1792321744143,
+    "created_at": "2026-10-18T11:09:04.142Z",
+    "updated_at": "2026-10-18T11:09:04.142Z"
+  },
+  {
+    "user_id": "ulPFdjy9zlTAArZnIpD4WiPzsHm2",
+    "user_name": "nisha",
+    "username": "26bai34543",
+    "subject_code": "APT-301",
+    "subject_name": "Campus Placement Aptitude & Logical Reasoning",
+    "semester": 5,
+    "category": "aptitude",
+    "question": "If \\(20\\%\\) of \\((P+Q)=50\\%\\) of \\((P-Q)\\), then \\(P:Q\\) is:",
+    "question_type": "single",
+    "options_json": [
+      {
+        "id": "A",
+        "text": "3 : 7"
+      },
+      {
+        "id": "B",
+        "text": "7 : 3"
+      },
+      {
+        "id": "C",
+        "text": "5 : 2"
+      },
+      {
+        "id": "D",
+        "text": "2 : 5"
+      }
+    ],
+    "correct_answers": [
+      "A"
+    ],
+    "explanation": "",
+    "unit_tag": "Ratio & Proportion",
+    "status": "pending",
+    "id": 1792321744144,
+    "created_at": "2026-10-18T11:09:04.142Z",
+    "updated_at": "2026-10-18T11:09:04.142Z"
+  },
+  {
+    "user_id": "ulPFdjy9zlTAArZnIpD4WiPzsHm2",
+    "user_name": "nisha",
+    "username": "26bai34543",
+    "subject_code": "APT-301",
+    "subject_name": "Campus Placement Aptitude & Logical Reasoning",
+    "semester": 5,
+    "category": "aptitude",
+    "question": "If \\(30\\%\\) of \\(A=0.25\\) of \\(B=\\frac15\\) of \\(C\\), then \\(A:B:C\\) is:",
+    "question_type": "single",
+    "options_json": [
+      {
+        "id": "A",
+        "text": "10 : 12 : 15"
+      },
+      {
+        "id": "B",
+        "text": "10 : 15 : 12"
+      },
+      {
+        "id": "C",
+        "text": "12 : 10 : 15"
+      },
+      {
+        "id": "D",
+        "text": "15 : 12 : 10"
+      }
+    ],
+    "correct_answers": [
+      "A"
+    ],
+    "explanation": "",
+    "unit_tag": "Ratio & Proportion",
+    "status": "pending",
+    "id": 1792321744145,
+    "created_at": "2026-10-18T11:09:04.142Z",
+    "updated_at": "2026-10-18T11:09:04.142Z"
+  },
+  {
+    "user_id": "ulPFdjy9zlTAArZnIpD4WiPzsHm2",
+    "user_name": "nisha",
+    "username": "26bai34543",
+    "subject_code": "APT-301",
+    "subject_name": "Campus Placement Aptitude & Logical Reasoning",
+    "semester": 5,
+    "category": "aptitude",
+    "question": "If \\(2x^2-7xy+3y^2=0\\), then \\(x:y\\) is:",
+    "question_type": "single",
+    "options_json": [
+      {
+        "id": "A",
+        "text": "3 : 1 only"
+      },
+      {
+        "id": "B",
+        "text": "1 : 2 only"
+      },
+      {
+        "id": "C",
+        "text": "3 : 1 or 1 : 2"
+      },
+      {
+        "id": "D",
+        "text": "2 : 1 or 1 : 3"
+      }
+    ],
+    "correct_answers": [
+      "A"
+    ],
+    "explanation": "",
+    "unit_tag": "Ratio & Proportion",
+    "status": "pending",
+    "id": 1792321744146,
+    "created_at": "2026-10-18T11:09:04.142Z",
+    "updated_at": "2026-10-18T11:09:04.142Z"
+  },
+  {
+    "user_id": "ulPFdjy9zlTAArZnIpD4WiPzsHm2",
+    "user_name": "nisha",
+    "username": "26bai34543",
+    "subject_code": "APT-301",
+    "subject_name": "Campus Placement Aptitude & Logical Reasoning",
+    "semester": 5,
+    "category": "aptitude",
+    "question": "If \\(A:B=3:4\\), \\(B:C=5:7\\), and \\(C:D=8:9\\), then \\(A:B:C:D\\) is:",
+    "question_type": "single",
+    "options_json": [
+      {
+        "id": "A",
+        "text": "30 : 40 : 56 : 63"
+      },
+      {
+        "id": "B",
+        "text": "15 : 20 : 28 : 36"
+      },
+      {
+        "id": "C",
+        "text": "30 : 45 : 56 : 63"
+      },
+      {
+        "id": "D",
+        "text": "30 : 40 : 54 : 63 7. If \\(m:n=3:2\\), then \\((4m+5n):(4m-5n)\\) is:"
+      },
+      {
+        "id": "A",
+        "text": "11 : 1"
+      },
+      {
+        "id": "B",
+        "text": "1 : 11"
+      },
+      {
+        "id": "C",
+        "text": "5 : 2"
+      },
+      {
+        "id": "D",
+        "text": "2 : 5"
+      }
+    ],
+    "correct_answers": [
+      "A"
+    ],
+    "explanation": "",
+    "unit_tag": "Ratio & Proportion",
+    "status": "pending",
+    "id": 1792321744147,
+    "created_at": "2026-10-18T11:09:04.142Z",
+    "updated_at": "2026-10-18T11:09:04.142Z"
+  },
+  {
+    "user_id": "ulPFdjy9zlTAArZnIpD4WiPzsHm2",
+    "user_name": "nisha",
+    "username": "26bai34543",
+    "subject_code": "APT-301",
+    "subject_name": "Campus Placement Aptitude & Logical Reasoning",
+    "semester": 5,
+    "category": "aptitude",
+    "question": "If \\((2x+3y):(3x+5y)=18:29\\), then \\(x:y\\) is:",
+    "question_type": "single",
+    "options_json": [
+      {
+        "id": "A",
+        "text": "2 : 3"
+      },
+      {
+        "id": "B",
+        "text": "3 : 4"
+      },
+      {
+        "id": "C",
+        "text": "4 : 3"
+      },
+      {
+        "id": "D",
+        "text": "5 : 4"
+      }
+    ],
+    "correct_answers": [
+      "A"
+    ],
+    "explanation": "",
+    "unit_tag": "Ratio & Proportion",
+    "status": "pending",
+    "id": 1792321744148,
+    "created_at": "2026-10-18T11:09:04.142Z",
+    "updated_at": "2026-10-18T11:09:04.142Z"
+  },
+  {
+    "user_id": "ulPFdjy9zlTAArZnIpD4WiPzsHm2",
+    "user_name": "nisha",
+    "username": "26bai34543",
+    "subject_code": "APT-301",
+    "subject_name": "Campus Placement Aptitude & Logical Reasoning",
+    "semester": 5,
+    "category": "aptitude",
+    "question": "If \\((x+y):(x-y)=7:3\\), then \\(x:y\\) is:",
+    "question_type": "single",
+    "options_json": [
+      {
+        "id": "A",
+        "text": "5 : 2"
+      },
+      {
+        "id": "B",
+        "text": "2 : 5"
+      },
+      {
+        "id": "C",
+        "text": "7 : 3"
+      },
+      {
+        "id": "D",
+        "text": "3 : 7"
+      }
+    ],
+    "correct_answers": [
+      "A"
+    ],
+    "explanation": "",
+    "unit_tag": "Ratio & Proportion",
+    "status": "pending",
+    "id": 1792321744149,
+    "created_at": "2026-10-18T11:09:04.142Z",
+    "updated_at": "2026-10-18T11:09:04.142Z"
+  },
+  {
+    "user_id": "ulPFdjy9zlTAArZnIpD4WiPzsHm2",
+    "user_name": "nisha",
+    "username": "26bai34543",
+    "subject_code": "APT-301",
+    "subject_name": "Campus Placement Aptitude & Logical Reasoning",
+    "semester": 5,
+    "category": "aptitude",
+    "question": "The fourth proportional to 4, 9 and 12 is:",
+    "question_type": "single",
+    "options_json": [
+      {
+        "id": "A",
+        "text": "18"
+      },
+      {
+        "id": "B",
+        "text": "24"
+      },
+      {
+        "id": "C",
+        "text": "27"
+      },
+      {
+        "id": "D",
+        "text": "36"
+      }
+    ],
+    "correct_answers": [
+      "A"
+    ],
+    "explanation": "",
+    "unit_tag": "Ratio & Proportion",
+    "status": "pending",
+    "id": 1792321744150,
+    "created_at": "2026-10-18T11:09:04.142Z",
+    "updated_at": "2026-10-18T11:09:04.142Z"
+  },
+  {
+    "user_id": "ulPFdjy9zlTAArZnIpD4WiPzsHm2",
+    "user_name": "nisha",
+    "username": "26bai34543",
+    "subject_code": "APT-301",
+    "subject_name": "Campus Placement Aptitude & Logical Reasoning",
+    "semester": 5,
+    "category": "aptitude",
+    "question": "The third proportional to 16 and 36 is:",
+    "question_type": "single",
+    "options_json": [
+      {
+        "id": "A",
+        "text": "64"
+      },
+      {
+        "id": "B",
+        "text": "72"
+      },
+      {
+        "id": "C",
+        "text": "81"
+      },
+      {
+        "id": "D",
+        "text": "96"
+      }
+    ],
+    "correct_answers": [
+      "A"
+    ],
+    "explanation": "",
+    "unit_tag": "Ratio & Proportion",
+    "status": "pending",
+    "id": 1792321744151,
+    "created_at": "2026-10-18T11:09:04.142Z",
+    "updated_at": "2026-10-18T11:09:04.142Z"
+  },
+  {
+    "user_id": "ulPFdjy9zlTAArZnIpD4WiPzsHm2",
+    "user_name": "nisha",
+    "username": "26bai34543",
+    "subject_code": "APT-301",
+    "subject_name": "Campus Placement Aptitude & Logical Reasoning",
+    "semester": 5,
+    "category": "aptitude",
+    "question": "The mean proportional between 0.08 and 0.18 is:",
+    "question_type": "single",
+    "options_json": [
+      {
+        "id": "A",
+        "text": "0.10"
+      },
+      {
+        "id": "B",
+        "text": "0.12"
+      },
+      {
+        "id": "C",
+        "text": "0.14"
+      },
+      {
+        "id": "D",
+        "text": "0.16"
+      }
+    ],
+    "correct_answers": [
+      "A"
+    ],
+    "explanation": "",
+    "unit_tag": "Ratio & Proportion",
+    "status": "pending",
+    "id": 1792321744152,
+    "created_at": "2026-10-18T11:09:04.142Z",
+    "updated_at": "2026-10-18T11:09:04.142Z"
+  },
+  {
+    "user_id": "ulPFdjy9zlTAArZnIpD4WiPzsHm2",
+    "user_name": "nisha",
+    "username": "26bai34543",
+    "subject_code": "APT-301",
+    "subject_name": "Campus Placement Aptitude & Logical Reasoning",
+    "semester": 5,
+    "category": "aptitude",
+    "question": "The ratio of female students to male students in a class is 16 : 9. What percentage of the class is female?",
+    "question_type": "single",
+    "options_json": [
+      {
+        "id": "A",
+        "text": "54%"
+      },
+      {
+        "id": "B",
+        "text": "60%"
+      },
+      {
+        "id": "C",
+        "text": "64%"
+      },
+      {
+        "id": "D",
+        "text": "72%"
+      }
+    ],
+    "correct_answers": [
+      "A"
+    ],
+    "explanation": "",
+    "unit_tag": "Ratio & Proportion",
+    "status": "pending",
+    "id": 1792321744153,
+    "created_at": "2026-10-18T11:09:04.142Z",
+    "updated_at": "2026-10-18T11:09:04.142Z"
+  },
+  {
+    "user_id": "ulPFdjy9zlTAArZnIpD4WiPzsHm2",
+    "user_name": "nisha",
+    "username": "26bai34543",
+    "subject_code": "APT-301",
+    "subject_name": "Campus Placement Aptitude & Logical Reasoning",
+    "semester": 5,
+    "category": "aptitude",
+    "question": "Divide 455 in the ratio 4 : 3.",
+    "question_type": "single",
+    "options_json": [
+      {
+        "id": "A",
+        "text": "260 and 195"
+      },
+      {
+        "id": "B",
+        "text": "250 and 205"
+      },
+      {
+        "id": "C",
+        "text": "280 and 175"
+      },
+      {
+        "id": "D",
+        "text": "240 and 215"
+      }
+    ],
+    "correct_answers": [
+      "A"
+    ],
+    "explanation": "",
+    "unit_tag": "Ratio & Proportion",
+    "status": "pending",
+    "id": 1792321744154,
+    "created_at": "2026-10-18T11:09:04.142Z",
+    "updated_at": "2026-10-18T11:09:04.142Z"
+  },
+  {
+    "user_id": "ulPFdjy9zlTAArZnIpD4WiPzsHm2",
+    "user_name": "nisha",
+    "username": "26bai34543",
+    "subject_code": "APT-301",
+    "subject_name": "Campus Placement Aptitude & Logical Reasoning",
+    "semester": 5,
+    "category": "aptitude",
+    "question": "The ratio of milk to water in 64 litres of a mixture is 5 : 3. How much water must be added to make the ratio 3 : 5?",
+    "question_type": "single",
+    "options_json": [
+      {
+        "id": "A",
+        "text": "40 litres"
+      },
+      {
+        "id": "B",
+        "text": "\\(42\\frac23\\) litres"
+      },
+      {
+        "id": "C",
+        "text": "45 litres"
+      },
+      {
+        "id": "D",
+        "text": "48 litres"
+      }
+    ],
+    "correct_answers": [
+      "A"
+    ],
+    "explanation": "",
+    "unit_tag": "Ratio & Proportion",
+    "status": "pending",
+    "id": 1792321744155,
+    "created_at": "2026-10-18T11:09:04.142Z",
+    "updated_at": "2026-10-18T11:09:04.142Z"
+  }
+]

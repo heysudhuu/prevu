@@ -1,23 +1,27 @@
 import { getPaperRequestsList, getAdminCommunityHelpSubmissions } from '../actions'
+import { getAllCbtQuestionsAdmin } from '@/lib/cbt/actions'
 import RequestsClient from './RequestsClient'
 
 export const dynamic = 'force-dynamic'
 
 export const metadata = {
-  title: 'Community Paper Requests & Batchmate Help | Prevu Studio',
-  description: 'Manage missing paper requests requested by students and verify batchmate contributions.'
+  title: 'Community Requests & CBT Arena MCQs | Prevu Studio',
+  description: 'Manage missing paper requests, batchmate help contributions, and student-submitted CBT Arena MCQs.'
 }
 
 export default async function AdminRequestsPage() {
-  const [requests, submissions] = await Promise.all([
+  const [requests, submissions, cbtQuestions] = await Promise.all([
     getPaperRequestsList(),
-    getAdminCommunityHelpSubmissions('pending')
+    getAdminCommunityHelpSubmissions('pending'),
+    getAllCbtQuestionsAdmin()
   ])
 
   return (
     <RequestsClient 
       initialRequests={requests} 
       initialSubmissions={submissions}
+      initialCbtQuestions={JSON.parse(JSON.stringify(cbtQuestions || []))}
     />
   )
 }
+

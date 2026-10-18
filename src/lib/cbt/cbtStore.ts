@@ -283,3 +283,97 @@ export function getStoredContributedSubjects(): any[] {
   }
 }
 
+/**
+ * Update the moderation status of a stored contributed question
+ */
+export function updateStoredContributedQuestionStatus(
+  id: number | string,
+  status: 'approved' | 'rejected',
+  feedback?: string
+): boolean {
+  try {
+    ensureStore()
+    if (!fs.existsSync(QUESTIONS_FILE)) return false
+    const content = fs.readFileSync(QUESTIONS_FILE, 'utf8')
+    const list = JSON.parse(content || '[]') as any[]
+    const idx = list.findIndex(q => String(q.id) === String(id))
+    if (idx !== -1) {
+      list[idx].status = status
+      list[idx].admin_feedback = feedback || null
+      list[idx].updated_at = new Date().toISOString()
+      fs.writeFileSync(QUESTIONS_FILE, JSON.stringify(list, null, 2), 'utf8')
+      return true
+    }
+    return false
+  } catch (err) {
+    console.warn('Error updating stored question status:', err)
+    return false
+  }
+}
+
+/**
+ * Update the moderation status of a stored proposed subject
+ */
+export function updateStoredContributedSubjectStatus(
+  code: string,
+  status: 'approved' | 'rejected',
+  feedback?: string
+): boolean {
+  try {
+    ensureStore()
+    if (!fs.existsSync(SUBJECTS_FILE)) return false
+    const content = fs.readFileSync(SUBJECTS_FILE, 'utf8')
+    const list = JSON.parse(content || '[]') as any[]
+    const idx = list.findIndex(s => s.code?.toUpperCase() === code.toUpperCase())
+    if (idx !== -1) {
+      list[idx].status = status
+      list[idx].admin_feedback = feedback || null
+      list[idx].updated_at = new Date().toISOString()
+      fs.writeFileSync(SUBJECTS_FILE, JSON.stringify(list, null, 2), 'utf8')
+      return true
+    }
+    return false
+  } catch (err) {
+    console.warn('Error updating stored subject status:', err)
+    return false
+  }
+}
+
+/**
+ * Update the details of a stored contributed question (text, options, answers, explanation)
+ */
+export function updateStoredContributedQuestionDetails(
+  id: number | string,
+  updates: {
+    question?: string
+    options_json?: any
+    correct_answers?: string[]
+    explanation?: string
+    unit_tag?: string
+    status?: 'pending' | 'approved' | 'rejected'
+    admin_feedback?: string
+  }
+): boolean {
+  try {
+    ensureStore()
+    if (!fs.existsSync(QUESTIONS_FILE)) return false
+    const content = fs.readFileSync(QUESTIONS_FILE, 'utf8')
+    const list = JSON.parse(content || '[]') as any[]
+    const idx = list.findIndex(q => String(q.id) === String(id))
+    if (idx !== -1) {
+      list[idx] = {
+        ...list[idx],
+        ...updates,
+        updated_at: new Date().toISOString()
+      }
+      fs.writeFileSync(QUESTIONS_FILE, JSON.stringify(list, null, 2), 'utf8')
+      return true
+    }
+    return false
+  } catch (err) {
+    console.warn('Error updating stored question details:', err)
+    return false
+  }
+}
+
+

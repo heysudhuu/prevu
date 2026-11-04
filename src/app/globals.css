@@ -94,6 +94,96 @@ html.theme-dracula-pro body {
   color: #f8f8f2 !important;
 }
 
+html.theme-tokyo-night {
+  --color-prevu-bg: #1a1b26;
+  --color-prevu-surface: #24283b;
+  --color-prevu-surface-light: #2f354d;
+  --color-prevu-surface-elevated: #3b4261;
+  --color-prevu-text: #c0caf5;
+  --color-prevu-text-muted: #7982a9;
+  --color-prevu-accent: #7aa2f7;
+  --color-prevu-accent-hover: #89ddff;
+  --color-prevu-accent-light: #b4f9f8;
+  --color-prevu-cyan: #7dcfff;
+  --color-prevu-approved: #9ece6a;
+}
+html.theme-tokyo-night body {
+  background-color: #1a1b26 !important;
+  color: #c0caf5 !important;
+}
+
+html.theme-nord-frost {
+  --color-prevu-bg: #242933;
+  --color-prevu-surface: #2e3440;
+  --color-prevu-surface-light: #3b4252;
+  --color-prevu-surface-elevated: #434c5e;
+  --color-prevu-text: #eceff4;
+  --color-prevu-text-muted: #d8dee9;
+  --color-prevu-accent: #88c0d0;
+  --color-prevu-accent-hover: #81a1c1;
+  --color-prevu-accent-light: #8fbcbb;
+  --color-prevu-cyan: #8fbcbb;
+  --color-prevu-approved: #a3be8c;
+}
+html.theme-nord-frost body {
+  background-color: #242933 !important;
+  color: #eceff4 !important;
+}
+
+html.theme-catppuccin-mocha {
+  --color-prevu-bg: #11111b;
+  --color-prevu-surface: #181825;
+  --color-prevu-surface-light: #1e1e2e;
+  --color-prevu-surface-elevated: #313244;
+  --color-prevu-text: #cdd6f4;
+  --color-prevu-text-muted: #a6adc8;
+  --color-prevu-accent: #cba6f7;
+  --color-prevu-accent-hover: #b4befe;
+  --color-prevu-accent-light: #f5c2e7;
+  --color-prevu-cyan: #89dceb;
+  --color-prevu-approved: #a6e3a1;
+}
+html.theme-catppuccin-mocha body {
+  background-color: #11111b !important;
+  color: #cdd6f4 !important;
+}
+
+html.theme-monokai-pro {
+  --color-prevu-bg: #19181a;
+  --color-prevu-surface: #221f22;
+  --color-prevu-surface-light: #2d2a2e;
+  --color-prevu-surface-elevated: #403e41;
+  --color-prevu-text: #fcfcfa;
+  --color-prevu-text-muted: #939293;
+  --color-prevu-accent: #ffd866;
+  --color-prevu-accent-hover: #fc9867;
+  --color-prevu-accent-light: #ffe599;
+  --color-prevu-cyan: #78dce8;
+  --color-prevu-approved: #a9dc76;
+}
+html.theme-monokai-pro body {
+  background-color: #19181a !important;
+  color: #fcfcfa !important;
+}
+
+html.theme-solarized-dark {
+  --color-prevu-bg: #00212b;
+  --color-prevu-surface: #002b36;
+  --color-prevu-surface-light: #073642;
+  --color-prevu-surface-elevated: #094959;
+  --color-prevu-text: #eee8d5;
+  --color-prevu-text-muted: #839496;
+  --color-prevu-accent: #2aa198;
+  --color-prevu-accent-hover: #b58900;
+  --color-prevu-accent-light: #859900;
+  --color-prevu-cyan: #268bd2;
+  --color-prevu-approved: #859900;
+}
+html.theme-solarized-dark body {
+  background-color: #00212b !important;
+  color: #eee8d5 !important;
+}
+
 /* -------------------------------------------------------------
    THEME 0: TERMINAL GIT (DEFAULT OFFICIAL)
    ------------------------------------------------------------- */
@@ -325,6 +415,281 @@ html.theme-dracula-pro [role="button"][class*="bg-[#238636]"]:hover {
 html.theme-dracula-pro [class*="text-emerald-400"],
 html.theme-dracula-pro [class*="text-emerald-300"] {
   color: #50fa7b !important;
+}
+
+/* -------------------------------------------------------------
+   THEME 5: TOKYO NIGHT OVERRIDES
+   ------------------------------------------------------------- */
+html.theme-tokyo-night,
+html.theme-tokyo-night body,
+html.theme-tokyo-night main,
+html.theme-tokyo-night section,
+html.theme-tokyo-night footer,
+html.theme-tokyo-night header,
+html.theme-tokyo-night div[class*="min-h-screen"],
+html.theme-tokyo-night [class*="bg-[#010409]"] {
+  background-color: #1a1b26 !important;
+  color: #c0caf5 !important;
+}
+
+html.theme-tokyo-night [class*="bg-[#0d1117]"] {
+  background-color: #1f2335 !important;
+}
+
+html.theme-tokyo-night [class*="bg-[#161b22]"] {
+  background-color: #24283b !important;
+}
+
+html.theme-tokyo-night [class*="bg-[#21262d]"] {
+  background-color: #2f354d !important;
+}
+
+html.theme-tokyo-night [class*="border-[#30363d]"] {
+  border-color: rgba(122, 162, 247, 0.28) !important;
+}
+
+html.theme-tokyo-night button[class*="bg-[#238636]"],
+html.theme-tokyo-night a[class*="bg-[#238636]"],
+html.theme-tokyo-night span[class*="rounded-full"][class*="bg-[#238636]"],
+html.theme-tokyo-night div[class*="rounded-xl"][class*="bg-[#238636]"],
+html.theme-tokyo-night [role="button"][class*="bg-[#238636]"] {
+  background-color: #7aa2f7 !important;
+  border-color: #565f89 !important;
+  color: #15161e !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 20px rgba(122, 162, 247, 0.4) !important;
+}
+
+html.theme-tokyo-night button[class*="bg-[#238636]"]:hover,
+html.theme-tokyo-night a[class*="bg-[#238636]"]:hover,
+html.theme-tokyo-night [role="button"][class*="bg-[#238636]"]:hover {
+  background-color: #89ddff !important;
+  color: #15161e !important;
+}
+
+html.theme-tokyo-night [class*="text-emerald-400"],
+html.theme-tokyo-night [class*="text-emerald-300"] {
+  color: #7dcfff !important;
+}
+
+/* -------------------------------------------------------------
+   THEME 6: NORD FROST OVERRIDES
+   ------------------------------------------------------------- */
+html.theme-nord-frost,
+html.theme-nord-frost body,
+html.theme-nord-frost main,
+html.theme-nord-frost section,
+html.theme-nord-frost footer,
+html.theme-nord-frost header,
+html.theme-nord-frost div[class*="min-h-screen"],
+html.theme-nord-frost [class*="bg-[#010409]"] {
+  background-color: #242933 !important;
+  color: #eceff4 !important;
+}
+
+html.theme-nord-frost [class*="bg-[#0d1117]"] {
+  background-color: #2e3440 !important;
+}
+
+html.theme-nord-frost [class*="bg-[#161b22]"] {
+  background-color: #3b4252 !important;
+}
+
+html.theme-nord-frost [class*="bg-[#21262d]"] {
+  background-color: #434c5e !important;
+}
+
+html.theme-nord-frost [class*="border-[#30363d]"] {
+  border-color: rgba(136, 192, 208, 0.28) !important;
+}
+
+html.theme-nord-frost button[class*="bg-[#238636]"],
+html.theme-nord-frost a[class*="bg-[#238636]"],
+html.theme-nord-frost span[class*="rounded-full"][class*="bg-[#238636]"],
+html.theme-nord-frost div[class*="rounded-xl"][class*="bg-[#238636]"],
+html.theme-nord-frost [role="button"][class*="bg-[#238636]"] {
+  background-color: #88c0d0 !important;
+  border-color: #81a1c1 !important;
+  color: #242933 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 20px rgba(136, 192, 208, 0.4) !important;
+}
+
+html.theme-nord-frost button[class*="bg-[#238636]"]:hover,
+html.theme-nord-frost a[class*="bg-[#238636]"]:hover,
+html.theme-nord-frost [role="button"][class*="bg-[#238636]"]:hover {
+  background-color: #8fbcbb !important;
+  color: #242933 !important;
+}
+
+html.theme-nord-frost [class*="text-emerald-400"],
+html.theme-nord-frost [class*="text-emerald-300"] {
+  color: #88c0d0 !important;
+}
+
+/* -------------------------------------------------------------
+   THEME 7: CATPPUCCIN MOCHA OVERRIDES
+   ------------------------------------------------------------- */
+html.theme-catppuccin-mocha,
+html.theme-catppuccin-mocha body,
+html.theme-catppuccin-mocha main,
+html.theme-catppuccin-mocha section,
+html.theme-catppuccin-mocha footer,
+html.theme-catppuccin-mocha header,
+html.theme-catppuccin-mocha div[class*="min-h-screen"],
+html.theme-catppuccin-mocha [class*="bg-[#010409]"] {
+  background-color: #11111b !important;
+  color: #cdd6f4 !important;
+}
+
+html.theme-catppuccin-mocha [class*="bg-[#0d1117]"] {
+  background-color: #181825 !important;
+}
+
+html.theme-catppuccin-mocha [class*="bg-[#161b22]"] {
+  background-color: #1e1e2e !important;
+}
+
+html.theme-catppuccin-mocha [class*="bg-[#21262d]"] {
+  background-color: #313244 !important;
+}
+
+html.theme-catppuccin-mocha [class*="border-[#30363d]"] {
+  border-color: rgba(203, 166, 247, 0.28) !important;
+}
+
+html.theme-catppuccin-mocha button[class*="bg-[#238636]"],
+html.theme-catppuccin-mocha a[class*="bg-[#238636]"],
+html.theme-catppuccin-mocha span[class*="rounded-full"][class*="bg-[#238636]"],
+html.theme-catppuccin-mocha div[class*="rounded-xl"][class*="bg-[#238636]"],
+html.theme-catppuccin-mocha [role="button"][class*="bg-[#238636]"] {
+  background-color: #cba6f7 !important;
+  border-color: #b4befe !important;
+  color: #11111b !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 20px rgba(203, 166, 247, 0.4) !important;
+}
+
+html.theme-catppuccin-mocha button[class*="bg-[#238636]"]:hover,
+html.theme-catppuccin-mocha a[class*="bg-[#238636]"]:hover,
+html.theme-catppuccin-mocha [role="button"][class*="bg-[#238636]"]:hover {
+  background-color: #b4befe !important;
+  color: #11111b !important;
+}
+
+html.theme-catppuccin-mocha [class*="text-emerald-400"],
+html.theme-catppuccin-mocha [class*="text-emerald-300"] {
+  color: #cba6f7 !important;
+}
+
+/* -------------------------------------------------------------
+   THEME 8: MONOKAI PRO OVERRIDES
+   ------------------------------------------------------------- */
+html.theme-monokai-pro,
+html.theme-monokai-pro body,
+html.theme-monokai-pro main,
+html.theme-monokai-pro section,
+html.theme-monokai-pro footer,
+html.theme-monokai-pro header,
+html.theme-monokai-pro div[class*="min-h-screen"],
+html.theme-monokai-pro [class*="bg-[#010409]"] {
+  background-color: #19181a !important;
+  color: #fcfcfa !important;
+}
+
+html.theme-monokai-pro [class*="bg-[#0d1117]"] {
+  background-color: #221f22 !important;
+}
+
+html.theme-monokai-pro [class*="bg-[#161b22]"] {
+  background-color: #2d2a2e !important;
+}
+
+html.theme-monokai-pro [class*="bg-[#21262d]"] {
+  background-color: #403e41 !important;
+}
+
+html.theme-monokai-pro [class*="border-[#30363d]"] {
+  border-color: rgba(255, 216, 102, 0.3) !important;
+}
+
+html.theme-monokai-pro button[class*="bg-[#238636]"],
+html.theme-monokai-pro a[class*="bg-[#238636]"],
+html.theme-monokai-pro span[class*="rounded-full"][class*="bg-[#238636]"],
+html.theme-monokai-pro div[class*="rounded-xl"][class*="bg-[#238636]"],
+html.theme-monokai-pro [role="button"][class*="bg-[#238636]"] {
+  background-color: #ffd866 !important;
+  border-color: #fc9867 !important;
+  color: #19181a !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 20px rgba(255, 216, 102, 0.35) !important;
+}
+
+html.theme-monokai-pro button[class*="bg-[#238636]"]:hover,
+html.theme-monokai-pro a[class*="bg-[#238636]"]:hover,
+html.theme-monokai-pro [role="button"][class*="bg-[#238636]"]:hover {
+  background-color: #fc9867 !important;
+  color: #19181a !important;
+}
+
+html.theme-monokai-pro [class*="text-emerald-400"],
+html.theme-monokai-pro [class*="text-emerald-300"] {
+  color: #ffd866 !important;
+}
+
+/* -------------------------------------------------------------
+   THEME 9: SOLARIZED DARK OVERRIDES
+   ------------------------------------------------------------- */
+html.theme-solarized-dark,
+html.theme-solarized-dark body,
+html.theme-solarized-dark main,
+html.theme-solarized-dark section,
+html.theme-solarized-dark footer,
+html.theme-solarized-dark header,
+html.theme-solarized-dark div[class*="min-h-screen"],
+html.theme-solarized-dark [class*="bg-[#010409]"] {
+  background-color: #00212b !important;
+  color: #eee8d5 !important;
+}
+
+html.theme-solarized-dark [class*="bg-[#0d1117]"] {
+  background-color: #002b36 !important;
+}
+
+html.theme-solarized-dark [class*="bg-[#161b22]"] {
+  background-color: #073642 !important;
+}
+
+html.theme-solarized-dark [class*="bg-[#21262d]"] {
+  background-color: #094959 !important;
+}
+
+html.theme-solarized-dark [class*="border-[#30363d]"] {
+  border-color: rgba(42, 161, 152, 0.3) !important;
+}
+
+html.theme-solarized-dark button[class*="bg-[#238636]"],
+html.theme-solarized-dark a[class*="bg-[#238636]"],
+html.theme-solarized-dark span[class*="rounded-full"][class*="bg-[#238636]"],
+html.theme-solarized-dark div[class*="rounded-xl"][class*="bg-[#238636]"],
+html.theme-solarized-dark [role="button"][class*="bg-[#238636]"] {
+  background-color: #2aa198 !important;
+  border-color: #268bd2 !important;
+  color: #00212b !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 20px rgba(42, 161, 152, 0.4) !important;
+}
+
+html.theme-solarized-dark button[class*="bg-[#238636]"]:hover,
+html.theme-solarized-dark a[class*="bg-[#238636]"]:hover,
+html.theme-solarized-dark [role="button"][class*="bg-[#238636]"]:hover {
+  background-color: #b58900 !important;
+  color: #00212b !important;
+}
+
+html.theme-solarized-dark [class*="text-emerald-400"],
+html.theme-solarized-dark [class*="text-emerald-300"] {
+  color: #2aa198 !important;
 }
 
 /* Custom Scrollbar */

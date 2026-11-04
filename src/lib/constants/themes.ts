@@ -105,6 +105,93 @@ export const PREVU_THEMES: ThemeDefinition[] = [
       border: 'rgba(189, 147, 249, 0.3)'
     },
     tag: 'Dev Favorite'
+  },
+  {
+    id: 'tokyo-night',
+    name: 'Tokyo Night',
+    description: 'Midnight deep navy inspired by Tokyo neon city lights with electric cobalt blues and cyan glow.',
+    category: 'Vibrant',
+    colors: {
+      bg: '#1a1b26',
+      surface: '#24283b',
+      surfaceLight: '#2f354d',
+      accent: '#7aa2f7',
+      accentHover: '#89ddff',
+      text: '#c0caf5',
+      textMuted: '#7982a9',
+      border: 'rgba(122, 162, 247, 0.35)'
+    },
+    tag: 'VS Code Trend',
+    isPopular: true
+  },
+  {
+    id: 'nord-frost',
+    name: 'Nord Frost',
+    description: 'Arctic crystalline palette featuring calm polar slates, icy fjord teals, and clean snow-storm typography.',
+    category: 'Minimalist',
+    colors: {
+      bg: '#242933',
+      surface: '#2e3440',
+      surfaceLight: '#3b4252',
+      accent: '#88c0d0',
+      accentHover: '#81a1c1',
+      text: '#eceff4',
+      textMuted: '#d8dee9',
+      border: 'rgba(136, 192, 208, 0.35)'
+    },
+    tag: 'Nordic Clean'
+  },
+  {
+    id: 'catppuccin-mocha',
+    name: 'Catppuccin Mocha',
+    description: 'Warm soothing pastel developer theme with velvet crust, soothing lavender mauve accents, and pastel cyan.',
+    category: 'Modern',
+    colors: {
+      bg: '#11111b',
+      surface: '#181825',
+      surfaceLight: '#1e1e2e',
+      accent: '#cba6f7',
+      accentHover: '#b4befe',
+      text: '#cdd6f4',
+      textMuted: '#a6adc8',
+      border: 'rgba(203, 166, 247, 0.35)'
+    },
+    tag: 'Community #1',
+    isNew: true
+  },
+  {
+    id: 'monokai-pro',
+    name: 'Monokai Pro',
+    description: 'Classic Sublime & IDE engineering suite with obsidian charcoal, incandescent amber accents, and coral warmth.',
+    category: 'Engineering',
+    colors: {
+      bg: '#19181a',
+      surface: '#221f22',
+      surfaceLight: '#2d2a2e',
+      accent: '#ffd866',
+      accentHover: '#fc9867',
+      text: '#fcfcfa',
+      textMuted: '#939293',
+      border: 'rgba(255, 216, 102, 0.35)'
+    },
+    tag: 'Legendary IDE'
+  },
+  {
+    id: 'solarized-dark',
+    name: 'Solarized Dark',
+    description: 'Precision-calibrated contrast palette for long research sessions with deep oceanic teal and warm solar highlights.',
+    category: 'Academic',
+    colors: {
+      bg: '#00212b',
+      surface: '#002b36',
+      surfaceLight: '#073642',
+      accent: '#2aa198',
+      accentHover: '#b58900',
+      text: '#eee8d5',
+      textMuted: '#839496',
+      border: 'rgba(42, 161, 152, 0.35)'
+    },
+    tag: 'Research Grade'
   }
 ]
 

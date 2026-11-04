@@ -23,11 +23,11 @@
    HACKER TERMINAL THEME (Matrix Green / Cybersec Mode)
    ========================================================================== */
 html.theme-hacker {
-  --color-prevu-bg: #030704;
-  --color-prevu-surface: #061409;
-  --color-prevu-surface-light: #0d2814;
-  --color-prevu-surface-elevated: #12381c;
-  --color-prevu-text: #e2fee9;
+  --color-prevu-bg: #000000;
+  --color-prevu-surface: #040905;
+  --color-prevu-surface-light: #081e0c;
+  --color-prevu-surface-elevated: #0c2b12;
+  --color-prevu-text: #dcfce7;
   --color-prevu-text-muted: #4ade80;
   --color-prevu-accent: #00ff66;
   --color-prevu-accent-hover: #00dd55;
@@ -37,22 +37,28 @@ html.theme-hacker {
   --color-prevu-approved: #00ff66;
 }
 
+html.theme-hacker body {
+  background-color: #000000 !important;
+  color: #dcfce7 !important;
+}
+
 html.theme-hacker ::selection {
-  background-color: rgba(0, 255, 102, 0.4);
+  background-color: rgba(0, 255, 102, 0.45);
   color: #000000;
 }
 
 html.theme-hacker ::-webkit-scrollbar-track {
-  background: #020704;
+  background: #000000;
 }
 
 html.theme-hacker ::-webkit-scrollbar-thumb {
-  background: #0d2814;
-  border: 1px solid rgba(0, 255, 102, 0.4);
+  background: #081e0c;
+  border: 1px solid rgba(0, 255, 102, 0.5);
 }
 
 html.theme-hacker ::-webkit-scrollbar-thumb:hover {
   background: #00ff66;
+  box-shadow: 0 0 10px #00ff66;
 }
 
 /* CRT Terminal Scanline Overlay */
@@ -61,24 +67,30 @@ html.theme-hacker body::after {
   display: block;
   position: fixed;
   top: 0; left: 0; bottom: 0; right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.22) 50%), linear-gradient(90deg, rgba(0, 255, 102, 0.02), rgba(0, 0, 0, 0.01), rgba(0, 240, 255, 0.02));
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(0, 255, 102, 0.03), rgba(0, 0, 0, 0.01), rgba(0, 240, 255, 0.03));
   z-index: 99999;
   background-size: 100% 3px, 6px 100%;
   pointer-events: none;
   opacity: 0.45;
 }
 
-/* Subtle Phosphor Glow on Cards in Hacker Mode */
+/* Terminal Green Borders on Cards */
 html.theme-hacker .border-purple-500\/20,
 html.theme-hacker .border-purple-500\/25,
 html.theme-hacker .border-purple-500\/30,
 html.theme-hacker .border-prevu-surface-light {
-  border-color: rgba(0, 255, 102, 0.3) !important;
+  border-color: rgba(0, 255, 102, 0.4) !important;
+}
+
+html.theme-hacker .border-prevu-surface-light:hover,
+html.theme-hacker .group:hover .border-prevu-surface-light {
+  border-color: #00ff66 !important;
+  box-shadow: 0 0 15px rgba(0, 255, 102, 0.3) !important;
 }
 
 /* Green gradient overrides in Hacker Mode */
 html.theme-hacker .text-gradient-purple {
-  background: linear-gradient(135deg, #86efac 0%, #00ff66 50%, #00f0ff 100%) !important;
+  background: linear-gradient(135deg, #ffffff 0%, #00ff66 60%, #00f0ff 100%) !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
 }
@@ -87,28 +99,36 @@ html.theme-hacker .text-gradient-purple {
 html.theme-hacker .shadow-purple-600\/30,
 html.theme-hacker .shadow-purple-500\/40,
 html.theme-hacker .shadow-purple-900\/40 {
-  box-shadow: 0 10px 25px -5px rgba(0, 255, 102, 0.25) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 255, 102, 0.35) !important;
 }
 
+/* Hacker Typer Style High-Contrast Green Buttons */
+html.theme-hacker .bg-prevu-accent,
 html.theme-hacker .bg-purple-600 {
-  background-color: #00dd55 !important;
-  color: #020704 !important;
-  font-weight: 700 !important;
+  background-color: #00ff66 !important;
+  color: #000000 !important;
+  font-weight: 800 !important;
+  border: 1px solid #00ff66 !important;
+  box-shadow: 0 0 12px rgba(0, 255, 102, 0.4) !important;
 }
 
+html.theme-hacker .bg-prevu-accent:hover,
 html.theme-hacker .bg-purple-600:hover {
-  background-color: #00ff66 !important;
+  background-color: #33ff77 !important;
+  box-shadow: 0 0 20px rgba(0, 255, 102, 0.6) !important;
 }
 
 html.theme-hacker .text-purple-300,
 html.theme-hacker .text-purple-400 {
   color: #00ff66 !important;
+  text-shadow: 0 0 8px rgba(0, 255, 102, 0.4) !important;
 }
 
 html.theme-hacker .bg-purple-500\/20,
 html.theme-hacker .bg-purple-500\/15,
 html.theme-hacker .bg-purple-500\/10 {
-  background-color: rgba(0, 255, 102, 0.12) !important;
+  background-color: rgba(0, 255, 102, 0.15) !important;
+  border-color: rgba(0, 255, 102, 0.4) !important;
 }
 
 /* Custom Scrollbar */

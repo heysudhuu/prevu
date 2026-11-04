@@ -3,8 +3,7 @@ import { cookies } from 'next/headers'
 import { authAdmin } from '@/lib/firebase/server'
 import { isUserAdmin } from '@/lib/auth/admin-check'
 import HeaderNav from '@/components/HeaderNav'
-import { Sparkles } from 'lucide-react'
-
+import { Terminal } from 'lucide-react'
 import SemesterSwitcherPill from '@/components/navigation/SemesterSwitcherPill'
 
 export default async function Header() {
@@ -29,22 +28,28 @@ export default async function Header() {
   }
 
   return (
-    <header className="border-b border-prevu-surface-light/80 bg-[#09090d]/85 backdrop-blur-2xl sticky top-0 z-50 shadow-xl shadow-black/40">
+    <header className="border-b border-[#30363d]/70 bg-[#010409]/90 backdrop-blur-2xl sticky top-0 z-50 shadow-xl shadow-black/60">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         
         {/* Brand Logo & Dynamic Semester Switcher */}
         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
           <Link 
             href="/" 
-            className="group font-sans text-xl sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-2 hover:drop-shadow-[0_0_16px_rgba(139,92,246,0.6)] transition-all duration-300 shrink-0"
+            className="group font-mono text-xl sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-2.5 hover:text-emerald-400 transition-colors shrink-0"
           >
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-prevu-accent flex items-center justify-center text-white shadow-md shadow-purple-600/30 group-hover:scale-105 transition-transform shrink-0">
-              <Sparkles className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-xl bg-[#238636] flex items-center justify-center text-white shadow-md shadow-[#238636]/40 group-hover:scale-105 transition-transform shrink-0">
+              <Terminal className="w-4 h-4 text-white" />
             </div>
-            <span className="font-extrabold tracking-tight">Prevu</span>
+            <span className="font-extrabold tracking-tight">prevu</span>
           </Link>
 
           <SemesterSwitcherPill />
+
+          {/* Theme Badge: Terminal Git */}
+          <div className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#161b22] border border-[#30363d] text-[11px] font-mono text-emerald-400 select-none">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span>terminal-git</span>
+          </div>
         </div>
 
         {/* Dynamic Navigation & Mobile Menu */}

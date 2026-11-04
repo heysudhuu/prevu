@@ -25,7 +25,8 @@ import {
   WifiOff,
   Bell,
   Brain,
-  ChevronDown
+  ChevronDown,
+  Search
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import dynamic from 'next/dynamic'
@@ -243,7 +244,19 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
           <ExamCountdownTicker />
         </div>
 
-        {/* Global Hacker Mode Terminal Toggle */}
+        {/* Global Omni-Search Command Palette Button */}
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
+          className="hidden md:inline-flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-[#30363d] bg-[#161b22] hover:bg-[#21262d] text-[#7d8590] hover:text-white text-xs font-mono transition-all cursor-pointer shadow-sm group shrink-0"
+          title="Open Command Palette (Ctrl+K)"
+        >
+          <Search className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
+          <span className="text-[11px] hidden lg:inline">Search</span>
+          <kbd className="px-1.5 py-0.5 rounded bg-[#0d1117] border border-[#30363d] text-[10px] text-[#7d8590] group-hover:text-emerald-400">
+            ⌘K
+          </kbd>
+        </button>
         
 
         {/* Smart Exam Alerts & Batchmate Queries Bell */}

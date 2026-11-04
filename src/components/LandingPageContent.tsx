@@ -28,8 +28,10 @@ import {
   Star,
   Play,
   RotateCw,
-  Cpu
+  Cpu,
+  Command
 } from 'lucide-react'
+import InteractiveTerminalConsole from '@/components/terminal/InteractiveTerminalConsole'
 
 const PDFViewerModal = dynamic(() => import('@/components/preview/PDFViewerModal'), {
   ssr: false
@@ -353,6 +355,16 @@ export default function LandingPageContent() {
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
+
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
+                  className="hidden md:inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#21262d] hover:bg-[#30363d] text-[#7d8590] hover:text-white border border-[#30363d] text-[10px] font-mono shrink-0 transition-all cursor-pointer"
+                  title="Open Command Palette (Ctrl+K)"
+                >
+                  <Command className="w-3 h-3 text-emerald-400" />
+                  <span>Ctrl+K</span>
+                </button>
               </div>
 
               <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 p-1 sm:p-0">
@@ -424,65 +436,9 @@ export default function LandingPageContent() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.35 }}
-            className="w-full max-w-3xl rounded-2xl bg-[#0d1117] border border-[#30363d] shadow-2xl overflow-hidden text-left mb-8"
+            className="w-full flex justify-center"
           >
-            {/* Terminal Window Titlebar */}
-            <div className="flex items-center justify-between px-4 py-3 bg-[#161b22] border-b border-[#30363d]">
-              <div className="flex items-center gap-2">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-rose-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-amber-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
-                </div>
-                <span className="text-[11px] font-mono text-[#7d8590] ml-2">
-                  cu-terminal // bash 80x24 (git:main)
-                </span>
-              </div>
-
-              {/* Tabs */}
-              <div className="flex items-center gap-1.5">
-                {TERMINAL_COMMANDS.map((item, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleRunTerminal(idx)}
-                    className={`px-2.5 py-1 rounded text-[10px] font-mono transition-all ${
-                      activeTab === idx
-                        ? 'bg-[#21262d] text-emerald-400 font-bold border border-[#30363d]'
-                        : 'text-[#7d8590] hover:text-white'
-                    }`}
-                  >
-                    tab_{idx + 1}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Terminal Screen Body */}
-            <div className="p-4 sm:p-5 font-mono text-xs text-[#e6edf3] space-y-2.5">
-              <div className="flex items-center gap-2 text-[#7d8590]">
-                <span className="text-emerald-400 font-bold">$</span>
-                <span className="text-white font-semibold">{TERMINAL_COMMANDS[activeTab].cmd}</span>
-                {terminalRunning && (
-                  <RotateCw className="w-3 h-3 text-emerald-400 animate-spin ml-auto" />
-                )}
-              </div>
-
-              <div className="pt-2 border-t border-[#30363d]/50 space-y-1.5 text-[11px] sm:text-xs">
-                {TERMINAL_COMMANDS[activeTab].output.map((line, i) => (
-                  <div 
-                    key={i} 
-                    className={
-                      line.startsWith('[OK]') || line.startsWith('✔') ? 'text-emerald-400' :
-                      line.startsWith('[SECURE]') || line.startsWith('[INIT]') ? 'text-cyan-400' :
-                      line.startsWith('[TIMER]') ? 'text-amber-400' : 'text-[#7d8590]'
-                    }
-                  >
-                    {line}
-                  </div>
-                ))}
-              </div>
-            </div>
+            <InteractiveTerminalConsole />
           </motion.div>
 
           {/* Interactive Peeking Vee Mascot with Cursor Tracking */}

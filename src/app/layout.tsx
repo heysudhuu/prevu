@@ -29,6 +29,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SiteAnalyticsTracker } from "@/components/analytics/SiteAnalyticsTracker";
 import PWAProvider from "@/components/pwa/PWAProvider";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
+import GlobalCommandPalette from "@/components/search/GlobalCommandPalette";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-full flex flex-col font-sans bg-[#010409] text-[#e6edf3] pb-16 md:pb-0 relative">
         {children}
+        <GlobalCommandPalette />
         <MobileBottomNav />
         <PWAProvider />
         <SiteAnalyticsTracker />

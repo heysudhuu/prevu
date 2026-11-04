@@ -24,26 +24,218 @@
    ========================================================================== */
 html.theme-hacker {
   --color-prevu-bg: #000000;
-  --color-prevu-surface: #040905;
-  --color-prevu-surface-light: #081e0c;
-  --color-prevu-surface-elevated: #0c2b12;
-  --color-prevu-text: #dcfce7;
-  --color-prevu-text-muted: #4ade80;
+  --color-prevu-surface: #030a05;
+  --color-prevu-surface-light: #071f0c;
+  --color-prevu-surface-elevated: #0b2e13;
+  --color-prevu-text: #e2fce9;
+  --color-prevu-text-muted: #5eead4;
   --color-prevu-accent: #00ff66;
-  --color-prevu-accent-hover: #00dd55;
+  --color-prevu-accent-hover: #33ff88;
   --color-prevu-accent-light: #86efac;
   --color-prevu-cyan: #00f0ff;
   --color-prevu-pending: #facc15;
   --color-prevu-approved: #00ff66;
 }
 
-html.theme-hacker body {
-  background-color: #000000 !important;
-  color: #dcfce7 !important;
+/* Hacker Monospace Typography Everywhere */
+html.theme-hacker,
+html.theme-hacker body,
+html.theme-hacker h1,
+html.theme-hacker h2,
+html.theme-hacker h3,
+html.theme-hacker h4,
+html.theme-hacker p,
+html.theme-hacker span,
+html.theme-hacker a,
+html.theme-hacker button,
+html.theme-hacker input,
+html.theme-hacker select,
+html.theme-hacker textarea {
+  font-family: var(--font-ibm-plex), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
 }
 
+/* True Black Terminal Base */
+html.theme-hacker body {
+  background-color: #000000 !important;
+  color: #e2fce9 !important;
+}
+
+/* Make page wrappers, main, section containers, and footer transparent so Matrix Rain flows seamlessly */
+html.theme-hacker main,
+html.theme-hacker section,
+html.theme-hacker footer,
+html.theme-hacker [class*="bg-prevu-bg"],
+html.theme-hacker [class*="bg-[#09090f]"],
+html.theme-hacker [class*="bg-[#09090d]"],
+html.theme-hacker [class*="bg-[#09090e]"],
+html.theme-hacker [class*="section-gradient-alt"] {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+html.theme-hacker section[style*="background"],
+html.theme-hacker footer[style*="background"] {
+  background: transparent !important;
+}
+
+/* Translucent Glass Terminal Cards with Phosphor Green Borders */
+html.theme-hacker .bg-prevu-surface,
+html.theme-hacker .bg-prevu-surface\/98,
+html.theme-hacker .bg-prevu-surface\/95,
+html.theme-hacker .bg-prevu-surface\/92,
+html.theme-hacker .bg-prevu-surface\/90,
+html.theme-hacker .bg-prevu-surface\/80,
+html.theme-hacker .bg-prevu-surface\/70,
+html.theme-hacker .bg-prevu-surface\/60,
+html.theme-hacker .bg-prevu-surface\/50,
+html.theme-hacker .bg-prevu-surface\/40,
+html.theme-hacker .bg-prevu-surface-elevated,
+html.theme-hacker div[class*="bg-[#0b0b17]"],
+html.theme-hacker div[class*="bg-[#0f0f1a]"],
+html.theme-hacker div[class*="bg-[#0e0e1a]"],
+html.theme-hacker div[class*="bg-[#0f0f17]"] {
+  background-color: rgba(2, 10, 4, 0.82) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border-color: rgba(0, 255, 102, 0.35) !important;
+}
+
+/* Header & Navigation in Hacker Mode */
+html.theme-hacker header,
+html.theme-hacker header[class*="bg-[#09090d]"],
+html.theme-hacker nav[class*="bg-[#09090d]"] {
+  background-color: rgba(1, 6, 2, 0.92) !important;
+  backdrop-filter: blur(16px) !important;
+  border-bottom: 1px solid rgba(0, 255, 102, 0.45) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 255, 102, 0.15) !important;
+}
+
+/* Card Hover Glow */
+html.theme-hacker .group:hover,
+html.theme-hacker .card-hover-lift:hover,
+html.theme-hacker div[class*="hover:border-prevu-accent"]:hover {
+  border-color: #00ff66 !important;
+  box-shadow: 0 0 25px rgba(0, 255, 102, 0.35), inset 0 0 15px rgba(0, 255, 102, 0.05) !important;
+}
+
+/* All Borders converted to Emerald / Terminal Green */
+html.theme-hacker [class*="border-prevu-surface-light"],
+html.theme-hacker [class*="border-purple-500"],
+html.theme-hacker [class*="border-prevu-accent"] {
+  border-color: rgba(0, 255, 102, 0.32) !important;
+}
+
+/* Headings & Text */
+html.theme-hacker h1,
+html.theme-hacker h2,
+html.theme-hacker h3,
+html.theme-hacker h4 {
+  color: #ffffff !important;
+  text-shadow: 0 0 12px rgba(0, 255, 102, 0.3);
+}
+
+html.theme-hacker .text-prevu-text-muted {
+  color: #4ade80 !important;
+}
+
+html.theme-hacker .text-purple-300,
+html.theme-hacker .text-purple-400,
+html.theme-hacker .text-purple-500,
+html.theme-hacker .text-prevu-accent,
+html.theme-hacker .text-prevu-accent-light {
+  color: #00ff66 !important;
+  text-shadow: 0 0 10px rgba(0, 255, 102, 0.45) !important;
+}
+
+/* Phosphor Matrix Gradient Overrides */
+html.theme-hacker .text-gradient-purple,
+html.theme-hacker .text-gradient-cyan {
+  background: linear-gradient(135deg, #ffffff 0%, #00ff66 65%, #00f0ff 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  text-shadow: none !important;
+}
+
+/* High-Contrast Hacker Typer Neon Green Buttons */
+html.theme-hacker button.bg-gradient-to-r,
+html.theme-hacker a.bg-gradient-to-r,
+html.theme-hacker button.bg-gradient-to-br,
+html.theme-hacker a.bg-gradient-to-br,
+html.theme-hacker .bg-prevu-accent,
+html.theme-hacker .bg-purple-600 {
+  background: #00ff66 !important;
+  color: #000000 !important;
+  border: 1px solid #00ff66 !important;
+  font-weight: 800 !important;
+  text-shadow: none !important;
+  box-shadow: 0 0 16px rgba(0, 255, 102, 0.45) !important;
+}
+
+html.theme-hacker button.bg-gradient-to-r:hover,
+html.theme-hacker a.bg-gradient-to-r:hover,
+html.theme-hacker button.bg-gradient-to-br:hover,
+html.theme-hacker a.bg-gradient-to-br:hover,
+html.theme-hacker .bg-prevu-accent:hover,
+html.theme-hacker .bg-purple-600:hover {
+  background: #33ff88 !important;
+  box-shadow: 0 0 25px rgba(0, 255, 102, 0.8) !important;
+}
+
+/* Secondary & Outline Buttons */
+html.theme-hacker button[class*="border-prevu-surface-light"],
+html.theme-hacker a[class*="border-prevu-surface-light"] {
+  background-color: rgba(2, 14, 5, 0.7) !important;
+  border-color: rgba(0, 255, 102, 0.45) !important;
+  color: #00ff66 !important;
+}
+
+html.theme-hacker button[class*="border-prevu-surface-light"]:hover,
+html.theme-hacker a[class*="border-prevu-surface-light"]:hover {
+  background-color: rgba(0, 255, 102, 0.18) !important;
+  border-color: #00ff66 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 16px rgba(0, 255, 102, 0.4) !important;
+}
+
+/* Badges & Tags */
+html.theme-hacker [class*="bg-purple-500"],
+html.theme-hacker [class*="bg-prevu-accent/"] {
+  background-color: rgba(0, 255, 102, 0.14) !important;
+  border-color: rgba(0, 255, 102, 0.45) !important;
+  color: #00ff66 !important;
+}
+
+/* Ambient Purple Glows recolored to Matrix Phosphor Green */
+html.theme-hacker div[style*="139,92,246"],
+html.theme-hacker div[style*="88,28,135"],
+html.theme-hacker div[style*="168,85,247"] {
+  background: radial-gradient(ellipse, rgba(0, 255, 102, 0.16) 0%, rgba(0, 255, 102, 0.04) 45%, transparent 70%) !important;
+  opacity: 0.75 !important;
+}
+
+/* Input Fields & Textareas */
+html.theme-hacker input,
+html.theme-hacker textarea,
+html.theme-hacker select {
+  background-color: rgba(2, 12, 5, 0.85) !important;
+  border-color: rgba(0, 255, 102, 0.45) !important;
+  color: #00ff66 !important;
+}
+
+html.theme-hacker input:focus,
+html.theme-hacker textarea:focus {
+  border-color: #00ff66 !important;
+  box-shadow: 0 0 18px rgba(0, 255, 102, 0.45) !important;
+}
+
+html.theme-hacker input::placeholder,
+html.theme-hacker textarea::placeholder {
+  color: rgba(0, 255, 102, 0.45) !important;
+}
+
+/* Selection & Scrollbars */
 html.theme-hacker ::selection {
-  background-color: rgba(0, 255, 102, 0.45);
+  background-color: rgba(0, 255, 102, 0.5);
   color: #000000;
 }
 
@@ -67,68 +259,11 @@ html.theme-hacker body::after {
   display: block;
   position: fixed;
   top: 0; left: 0; bottom: 0; right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(0, 255, 102, 0.03), rgba(0, 0, 0, 0.01), rgba(0, 240, 255, 0.03));
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(0, 255, 102, 0.02), rgba(0, 0, 0, 0.01), rgba(0, 240, 255, 0.02));
   z-index: 99999;
   background-size: 100% 3px, 6px 100%;
   pointer-events: none;
-  opacity: 0.45;
-}
-
-/* Terminal Green Borders on Cards */
-html.theme-hacker .border-purple-500\/20,
-html.theme-hacker .border-purple-500\/25,
-html.theme-hacker .border-purple-500\/30,
-html.theme-hacker .border-prevu-surface-light {
-  border-color: rgba(0, 255, 102, 0.4) !important;
-}
-
-html.theme-hacker .border-prevu-surface-light:hover,
-html.theme-hacker .group:hover .border-prevu-surface-light {
-  border-color: #00ff66 !important;
-  box-shadow: 0 0 15px rgba(0, 255, 102, 0.3) !important;
-}
-
-/* Green gradient overrides in Hacker Mode */
-html.theme-hacker .text-gradient-purple {
-  background: linear-gradient(135deg, #ffffff 0%, #00ff66 60%, #00f0ff 100%) !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-}
-
-/* Ambient glow recoloring in Hacker Mode */
-html.theme-hacker .shadow-purple-600\/30,
-html.theme-hacker .shadow-purple-500\/40,
-html.theme-hacker .shadow-purple-900\/40 {
-  box-shadow: 0 10px 25px -5px rgba(0, 255, 102, 0.35) !important;
-}
-
-/* Hacker Typer Style High-Contrast Green Buttons */
-html.theme-hacker .bg-prevu-accent,
-html.theme-hacker .bg-purple-600 {
-  background-color: #00ff66 !important;
-  color: #000000 !important;
-  font-weight: 800 !important;
-  border: 1px solid #00ff66 !important;
-  box-shadow: 0 0 12px rgba(0, 255, 102, 0.4) !important;
-}
-
-html.theme-hacker .bg-prevu-accent:hover,
-html.theme-hacker .bg-purple-600:hover {
-  background-color: #33ff77 !important;
-  box-shadow: 0 0 20px rgba(0, 255, 102, 0.6) !important;
-}
-
-html.theme-hacker .text-purple-300,
-html.theme-hacker .text-purple-400 {
-  color: #00ff66 !important;
-  text-shadow: 0 0 8px rgba(0, 255, 102, 0.4) !important;
-}
-
-html.theme-hacker .bg-purple-500\/20,
-html.theme-hacker .bg-purple-500\/15,
-html.theme-hacker .bg-purple-500\/10 {
-  background-color: rgba(0, 255, 102, 0.15) !important;
-  border-color: rgba(0, 255, 102, 0.4) !important;
+  opacity: 0.35;
 }
 
 /* Custom Scrollbar */

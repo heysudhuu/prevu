@@ -25,13 +25,13 @@ export default function MatrixRainCanvas() {
     return () => window.removeEventListener('prevu-theme-change', handleThemeChange)
   }, [])
 
-  // Matrix Rain Animation Loop (Only runs when Hacker Mode is active)
+  // Matrix Rain Animation Loop (Runs when Hacker Mode is active)
   useEffect(() => {
     if (!isHacker) return
 
     const canvas = canvasRef.current
     if (!canvas) return
-    const ctx = canvas.getContext('2d')
+    const ctx = canvas.getContext('2d', { alpha: false })
     if (!ctx) return
 
     let animationFrameId: number
@@ -47,25 +47,39 @@ export default function MatrixRainCanvas() {
 
     window.addEventListener('resize', handleResize)
 
-    // Matrix characters: Binary, Hex, Code tokens, and Matrix glyphs
-    const characters = '010101010123456789ABCDEF<>/{}[]=+*~#$_PREVU_HACK_CU_EXAM'
-    const fontSize = 14
+    // Matrix characters: Binary, Hex, Code tokens, and Cyber symbols
+    const charset = '010101010123456789ABCDEF<>/{}[];=*~#$_PREVU_ROOT_CU_EXAM'
+    const fontSize = 15
     let columns = Math.floor(width / fontSize)
-    let drops: number[] = []
+    
+    // Each column has current y position and distinct speed for multi-depth rain
+    interface ColumnData {
+      y: number
+      speed: number
+      length: number
+    }
+    let drops: ColumnData[] = []
 
     const initDrops = () => {
       columns = Math.floor(width / fontSize)
       drops = []
       for (let i = 0; i < columns; i++) {
-        // Stagger drops randomly above the screen
-        drops[i] = Math.floor(Math.random() * -100)
+        drops[i] = {
+          y: Math.floor(Math.random() * -120),
+          speed: 0.8 + Math.random() * 1.4,
+          length: 15 + Math.floor(Math.random() * 25)
+        }
       }
     }
 
     initDrops()
 
+    // Clear initial canvas to pure black
+    ctx.fillStyle = '#000000'
+    ctx.fillRect(0, 0, width, height)
+
     let lastTime = 0
-    const fps = 30
+    const fps = 35
     const interval = 1000 / fps
 
     const draw = (currentTime: number) => {
@@ -75,37 +89,50 @@ export default function MatrixRainCanvas() {
       if (delta < interval) return
       lastTime = currentTime - (delta % interval)
 
-      // Translucent black overlay to produce trailing fade effect
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.07)'
+      // Translucent deep black wash to produce authentic phosphorescent decay trail
+      ctx.fillStyle = 'rgba(0, 3, 1, 0.08)'
       ctx.fillRect(0, 0, width, height)
 
-      ctx.font = `${fontSize}px monospace`
+      ctx.font = `${fontSize}px "IBM Plex Mono", monospace`
 
       for (let i = 0; i < drops.length; i++) {
-        const char = characters.charAt(Math.floor(Math.random() * characters.length))
+        const col = drops[i]
         const x = i * fontSize
-        const y = drops[i] * fontSize
+        const y = Math.floor(col.y) * fontSize
 
-        // Head of the code stream glows white-green
-        ctx.fillStyle = '#ffffff'
-        ctx.shadowColor = '#00ff66'
-        ctx.shadowBlur = 8
-        ctx.fillText(char, x, y)
+        if (y >= 0 && y <= height + fontSize) {
+          const char = charset.charAt(Math.floor(Math.random() * charset.length))
 
-        // Trailing characters in classic terminal phosphor green
-        ctx.fillStyle = '#00ff66'
-        ctx.shadowBlur = 3
-        if (drops[i] > 1) {
-          const prevChar = characters.charAt(Math.floor(Math.random() * characters.length))
-          ctx.fillText(prevChar, x, (drops[i] - 1) * fontSize)
+          // 1. Leading drop is glowing pure white / green bloom
+          ctx.fillStyle = '#ffffff'
+          ctx.shadowColor = '#00ff66'
+          ctx.shadowBlur = 10
+          ctx.fillText(char, x, y)
+
+          // 2. Trailing character in vivid terminal neon green
+          if (col.y > 1) {
+            ctx.fillStyle = '#00ff66'
+            ctx.shadowBlur = 4
+            const prevChar = charset.charAt(Math.floor(Math.random() * charset.length))
+            ctx.fillText(prevChar, x, y - fontSize)
+          }
+
+          // 3. Deeper trail in emerald green
+          if (col.y > 3) {
+            ctx.fillStyle = '#059669'
+            ctx.shadowBlur = 0
+            const tailChar = charset.charAt(Math.floor(Math.random() * charset.length))
+            ctx.fillText(tailChar, x, y - fontSize * 3)
+          }
         }
 
-        // Reset to top when off screen with random delay
-        if (y > height && Math.random() > 0.975) {
-          drops[i] = 0
+        // Reset column to above top after dropping off the screen
+        if (y > height + 100 && Math.random() > 0.96) {
+          col.y = -Math.floor(Math.random() * 40)
+          col.speed = 0.8 + Math.random() * 1.4
         }
 
-        drops[i]++
+        col.y += col.speed
       }
     }
 
@@ -122,9 +149,8 @@ export default function MatrixRainCanvas() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0 opacity-40 md:opacity-50 transition-opacity duration-700"
+      className="fixed inset-0 pointer-events-none z-0 opacity-80 md:opacity-85 transition-opacity duration-700"
       aria-hidden="true"
     />
   )
 }
-

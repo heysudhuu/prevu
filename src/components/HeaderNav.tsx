@@ -29,7 +29,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import dynamic from 'next/dynamic'
 import SmartExamAlertsModal from '@/components/notifications/SmartExamAlertsModal'
 import { getUnreadNotificationCountAction } from '@/app/requests/actions'
-import HackerModeToggle from '@/components/theme/HackerModeToggle'
 
 const ExamCountdownTicker = dynamic(
   () => import('@/components/exam/ExamCountdownTicker'),
@@ -243,7 +242,7 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
         </div>
 
         {/* Global Hacker Mode Terminal Toggle */}
-        <HackerModeToggle />
+        
 
         {/* Smart Exam Alerts & Batchmate Queries Bell */}
         <button
@@ -391,7 +390,7 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
             {/* Mobile Ticker & Hacker Toggle */}
             <div className="pb-3 border-b border-prevu-surface-light flex items-center justify-between gap-2">
               <ExamCountdownTicker />
-              <HackerModeToggle compact />
+              
             </div>
 
             {/* Mobile Primary Section */}

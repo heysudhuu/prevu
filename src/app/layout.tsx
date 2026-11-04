@@ -9,7 +9,6 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
-
 const ibmPlexMono = IBM_Plex_Mono({
   variable: "--font-ibm-plex",
   weight: ["400", "500", "600"],
@@ -29,9 +28,7 @@ export const metadata: Metadata = {
 import { Analytics } from "@vercel/analytics/next";
 import { SiteAnalyticsTracker } from "@/components/analytics/SiteAnalyticsTracker";
 import PWAProvider from "@/components/pwa/PWAProvider";
-
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
-import MatrixRainCanvas from "@/components/theme/MatrixRainCanvas";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -43,12 +40,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('prevu-theme');if(t==='hacker'){document.documentElement.classList.add('theme-hacker');}}catch(e){}})();`,
+            __html: `(function(){try{document.documentElement.classList.remove('theme-hacker');localStorage.removeItem('prevu-theme');}catch(e){}})();`,
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col font-sans bg-prevu-bg text-prevu-text pb-16 md:pb-0 relative">
-        <MatrixRainCanvas />
+      <body className="min-h-full flex flex-col font-sans bg-[#010409] text-[#e6edf3] pb-16 md:pb-0 relative">
         {children}
         <MobileBottomNav />
         <PWAProvider />

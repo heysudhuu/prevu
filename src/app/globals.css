@@ -94,6 +94,196 @@ html.theme-dracula-pro body {
   color: #f8f8f2 !important;
 }
 
+/* -------------------------------------------------------------
+   THEME 1: COSMIC VIOLET OVERRIDES
+   ------------------------------------------------------------- */
+html.theme-cosmic-violet main,
+html.theme-cosmic-violet div[class*="min-h-screen"],
+html.theme-cosmic-violet footer,
+html.theme-cosmic-violet [class*="bg-[#010409]"],
+html.theme-cosmic-violet header {
+  background-color: #07070c !important;
+  color: #f0f0f8 !important;
+}
+
+html.theme-cosmic-violet [class*="bg-[#0d1117]"] {
+  background-color: #0c0c16 !important;
+}
+
+html.theme-cosmic-violet [class*="bg-[#161b22]"] {
+  background-color: #141424 !important;
+}
+
+html.theme-cosmic-violet [class*="bg-[#21262d]"] {
+  background-color: #1c1c32 !important;
+}
+
+html.theme-cosmic-violet [class*="border-[#30363d]"] {
+  border-color: rgba(139, 92, 246, 0.28) !important;
+}
+
+html.theme-cosmic-violet [class*="bg-[#238636]"],
+html.theme-cosmic-violet button[class*="bg-[#238636]"],
+html.theme-cosmic-violet a[class*="bg-[#238636]"] {
+  background-color: #8b5cf6 !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4) !important;
+}
+
+html.theme-cosmic-violet [class*="bg-[#238636]"]:hover,
+html.theme-cosmic-violet button[class*="bg-[#238636]"]:hover {
+  background-color: #7c3aed !important;
+}
+
+html.theme-cosmic-violet [class*="text-emerald-400"],
+html.theme-cosmic-violet [class*="text-emerald-300"] {
+  color: #a78bfa !important;
+}
+
+/* -------------------------------------------------------------
+   THEME 2: MATRIX CYBERSEC OVERRIDES
+   ------------------------------------------------------------- */
+html.theme-matrix-cyber main,
+html.theme-matrix-cyber div[class*="min-h-screen"],
+html.theme-matrix-cyber footer,
+html.theme-matrix-cyber [class*="bg-[#010409]"],
+html.theme-matrix-cyber header {
+  background-color: #000000 !important;
+  color: #dcfce7 !important;
+}
+
+html.theme-matrix-cyber [class*="bg-[#0d1117]"] {
+  background-color: #030a04 !important;
+}
+
+html.theme-matrix-cyber [class*="bg-[#161b22]"] {
+  background-color: #081a0b !important;
+}
+
+html.theme-matrix-cyber [class*="bg-[#21262d]"] {
+  background-color: #0c2b12 !important;
+}
+
+html.theme-matrix-cyber [class*="border-[#30363d]"] {
+  border-color: rgba(0, 255, 102, 0.35) !important;
+}
+
+html.theme-matrix-cyber [class*="bg-[#238636]"],
+html.theme-matrix-cyber button[class*="bg-[#238636]"],
+html.theme-matrix-cyber a[class*="bg-[#238636]"] {
+  background-color: #00ff66 !important;
+  color: #000000 !important;
+  border-color: #00ff66 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 0 16px rgba(0, 255, 102, 0.45) !important;
+}
+
+html.theme-matrix-cyber [class*="bg-[#238636]"]:hover,
+html.theme-matrix-cyber button[class*="bg-[#238636]"]:hover {
+  background-color: #33ff88 !important;
+}
+
+html.theme-matrix-cyber [class*="text-emerald-400"],
+html.theme-matrix-cyber [class*="text-emerald-300"] {
+  color: #00ff66 !important;
+}
+
+/* -------------------------------------------------------------
+   THEME 3: CYBERPUNK NEON OVERRIDES
+   ------------------------------------------------------------- */
+html.theme-cyberpunk-neon main,
+html.theme-cyberpunk-neon div[class*="min-h-screen"],
+html.theme-cyberpunk-neon footer,
+html.theme-cyberpunk-neon [class*="bg-[#010409]"],
+html.theme-cyberpunk-neon header {
+  background-color: #08070d !important;
+  color: #fdf2f8 !important;
+}
+
+html.theme-cyberpunk-neon [class*="bg-[#0d1117]"] {
+  background-color: #0f0c18 !important;
+}
+
+html.theme-cyberpunk-neon [class*="bg-[#161b22]"] {
+  background-color: #171224 !important;
+}
+
+html.theme-cyberpunk-neon [class*="bg-[#21262d]"] {
+  background-color: #241a38 !important;
+}
+
+html.theme-cyberpunk-neon [class*="border-[#30363d]"] {
+  border-color: rgba(236, 72, 153, 0.3) !important;
+}
+
+html.theme-cyberpunk-neon [class*="bg-[#238636]"],
+html.theme-cyberpunk-neon button[class*="bg-[#238636]"],
+html.theme-cyberpunk-neon a[class*="bg-[#238636]"] {
+  background-color: #ec4899 !important;
+  border-color: #db2777 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 20px rgba(236, 72, 153, 0.45) !important;
+}
+
+html.theme-cyberpunk-neon [class*="bg-[#238636]"]:hover,
+html.theme-cyberpunk-neon button[class*="bg-[#238636]"]:hover {
+  background-color: #f43f5e !important;
+}
+
+html.theme-cyberpunk-neon [class*="text-emerald-400"],
+html.theme-cyberpunk-neon [class*="text-emerald-300"] {
+  color: #f472b6 !important;
+}
+
+/* -------------------------------------------------------------
+   THEME 4: DRACULA PRO OVERRIDES
+   ------------------------------------------------------------- */
+html.theme-dracula-pro main,
+html.theme-dracula-pro div[class*="min-h-screen"],
+html.theme-dracula-pro footer,
+html.theme-dracula-pro [class*="bg-[#010409]"],
+html.theme-dracula-pro header {
+  background-color: #1e1f29 !important;
+  color: #f8f8f2 !important;
+}
+
+html.theme-dracula-pro [class*="bg-[#0d1117]"] {
+  background-color: #242633 !important;
+}
+
+html.theme-dracula-pro [class*="bg-[#161b22]"] {
+  background-color: #282a36 !important;
+}
+
+html.theme-dracula-pro [class*="bg-[#21262d]"] {
+  background-color: #383a59 !important;
+}
+
+html.theme-dracula-pro [class*="border-[#30363d]"] {
+  border-color: rgba(189, 147, 249, 0.3) !important;
+}
+
+html.theme-dracula-pro [class*="bg-[#238636]"],
+html.theme-dracula-pro button[class*="bg-[#238636]"],
+html.theme-dracula-pro a[class*="bg-[#238636]"] {
+  background-color: #bd93f9 !important;
+  border-color: #a77df6 !important;
+  color: #282a36 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 20px rgba(189, 147, 249, 0.4) !important;
+}
+
+html.theme-dracula-pro [class*="bg-[#238636]"]:hover,
+html.theme-dracula-pro button[class*="bg-[#238636]"]:hover {
+  background-color: #ff79c6 !important;
+  color: #282a36 !important;
+}
+
+html.theme-dracula-pro [class*="text-emerald-400"],
+html.theme-dracula-pro [class*="text-emerald-300"] {
+  color: #50fa7b !important;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 7px;

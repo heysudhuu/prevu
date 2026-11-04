@@ -5,6 +5,7 @@ import { isUserAdmin } from '@/lib/auth/admin-check'
 import HeaderNav from '@/components/HeaderNav'
 import { Terminal } from 'lucide-react'
 import SemesterSwitcherPill from '@/components/navigation/SemesterSwitcherPill'
+import ThemeSwitcherDropdown from '@/components/theme/ThemeSwitcherDropdown'
 
 export default async function Header() {
   const token = (await cookies()).get('firebase-token')?.value
@@ -31,8 +32,8 @@ export default async function Header() {
     <header className="border-b border-[#30363d]/70 bg-[#010409]/90 backdrop-blur-2xl sticky top-0 z-50 shadow-xl shadow-black/60">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         
-        {/* Brand Logo & Dynamic Semester Switcher */}
-        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+        {/* Brand Logo, Semester Switcher & Interactive Theme Dropdown */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <Link 
             href="/" 
             className="group font-mono text-xl sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-2.5 hover:text-emerald-400 transition-colors shrink-0"
@@ -45,10 +46,9 @@ export default async function Header() {
 
           <SemesterSwitcherPill />
 
-          {/* Theme Badge: Terminal Git */}
-          <div className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#161b22] border border-[#30363d] text-[11px] font-mono text-emerald-400 select-none">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>terminal-git</span>
+          {/* Interactive Theme Switcher Dropdown */}
+          <div className="hidden sm:inline-flex items-center">
+            <ThemeSwitcherDropdown />
           </div>
         </div>
 

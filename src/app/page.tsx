@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+
 import Link from 'next/link'
 import { Sparkles } from 'lucide-react'
 import Header from '@/components/Header'
@@ -41,11 +42,11 @@ export default function Home() {
       <StudentSuggestionBox />
       {/* 8. Footer */}
       <footer className="py-16 border-t border-prevu-surface-light/60 relative overflow-hidden text-xs text-prevu-text-muted"
-              style={{ background: 'linear-gradient(180deg, #09090f 0%, #07070c 100%)' }}>
+        style={{ background: 'linear-gradient(180deg, #09090f 0%, #07070c 100%)' }}>
         {/* Subtle top glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[1px] pointer-events-none"
-             style={{ background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.3), rgba(6,182,212,0.2), rgba(139,92,246,0.3), transparent)' }} />
-        
+          style={{ background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.3), rgba(6,182,212,0.2), rgba(139,92,246,0.3), transparent)' }} />
+
         <div className="container mx-auto px-4 max-w-6xl space-y-12 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
             {/* Brand Col */}

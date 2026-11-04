@@ -3,6 +3,7 @@ import Header from '@/components/Header'
 import { getUserBookmarkIds, getUserUpvotedResourceIds, getResourceUpvoteCounts } from '@/app/dashboard/actions'
 import StudyMaterialClient from './StudyMaterialClient'
 import { Metadata } from 'next'
+import { FALLBACK_SUBJECTS_LIST, FALLBACK_EXAM_TYPES, enrichResourceWithFallback } from '@/lib/constants/fallbackSubjects'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,10 +48,10 @@ export default async function StudyMaterialPage({
     supabase
       .from('resources')
       .select(`
-        id, exam_year, file_path, file_type, original_filename, created_at, download_count,
-        subjects!inner ( id, name, code, semester, year, branch_id ),
-        exam_types!inner ( id, name ),
-        users!inner ( name, cu_verified, username, role )
+        id, exam_year, file_path, file_type, original_filename, created_at, download_count, subject_id, exam_type_id, uploaded_by,
+        subjects ( id, name, code, semester, year, branch_id ),
+        exam_types ( id, name ),
+        users ( name, cu_verified, username, role )
       `)
       .eq('status', 'approved')
       .order('created_at', { ascending: false })
@@ -65,8 +66,9 @@ export default async function StudyMaterialPage({
   ]
 
   const branches = (branchesData && branchesData.length > 0) ? branchesData : defaultBranches
-  const subjects = subjectsData || []
-  const allResources = resourcesData || []
+  const subjects = (subjectsData && subjectsData.length > 0) ? subjectsData : FALLBACK_SUBJECTS_LIST
+  const rawResources = resourcesData || []
+  const allResources = rawResources.map(enrichResourceWithFallback)
 
   // Filter resources to identify study materials (anything that is not strictly a PYQ like MST1, MST2, EST)
   // Or if it explicitly matches study material tags

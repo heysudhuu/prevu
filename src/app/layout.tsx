@@ -36,8 +36,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${inter.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('prevu-theme');if(t==='hacker'){document.documentElement.classList.add('theme-hacker');}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col font-sans bg-prevu-bg text-prevu-text pb-16 md:pb-0">
         {children}
         <MobileBottomNav />

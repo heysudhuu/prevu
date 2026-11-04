@@ -9,6 +9,7 @@ import CourseWorkspaceDeck from '@/components/browse/CourseWorkspaceDeck'
 import BrowseResourceList from '@/components/browse/BrowseResourceList'
 import { Sparkles, MessageSquarePlus, FileQuestion, ChevronLeft, ChevronRight } from 'lucide-react'
 import { resolveSearchKeywords } from '@/lib/search/smartSearch'
+import { FALLBACK_SUBJECTS_LIST, FALLBACK_EXAM_TYPES, enrichResourceWithFallback } from '@/lib/constants/fallbackSubjects'
 
 export const dynamic = 'force-dynamic'
 
@@ -64,13 +65,9 @@ export default async function BrowsePage({
   ]
   const branches = (branchesData && branchesData.length > 0) ? branchesData : defaultBranches
 
-  const defaultExamTypes: { id: number, name: string }[] = [
-    { id: 1, name: 'MST1' },
-    { id: 2, name: 'MST2' },
-    { id: 3, name: 'EST' }
-  ]
-  const resolvedExamTypes = (examTypesData && examTypesData.length > 0) ? examTypesData : defaultExamTypes
-  const subjects = subjectsData || []
+  const resolvedExamTypes = (examTypesData && examTypesData.length > 0) ? examTypesData : FALLBACK_EXAM_TYPES
+  const hasDatabaseSubjects = Boolean(subjectsData && subjectsData.length > 0)
+  const subjects = hasDatabaseSubjects ? subjectsData! : FALLBACK_SUBJECTS_LIST
 
   // Resolve search keywords, acronyms, and aliases
   const resolved = resolveSearchKeywords(searchFilter)
@@ -127,21 +124,42 @@ export default async function BrowsePage({
     }
   }
 
-  // Build Query with Server-side filtering
+  // Build Query with resilient Left Joins (never drop rows if unlinked)
   let query = supabase
     .from('resources')
     .select(`
-      id, exam_year, file_path, file_type, original_filename,
-      subjects!inner ( name, code, semester, year, branch_id ),
-      exam_types!inner ( name ),
-      users!inner ( name, cu_verified, username, role )
+      id, exam_year, file_path, file_type, original_filename, subject_id, exam_type_id, uploaded_by, download_count,
+      subjects ( name, code, semester, year, branch_id ),
+      exam_types ( name ),
+      users ( name, cu_verified, username, role )
     `, { count: 'exact' })
     .eq('status', 'approved')
     .order('created_at', { ascending: false })
 
-  if (branchFilter) query = query.eq('subjects.branch_id', branchFilter)
-  if (yearFilter) query = query.eq('subjects.year', yearFilter)
-  if (effectiveSemFilter) query = query.eq('subjects.semester', effectiveSemFilter)
+  if (hasDatabaseSubjects) {
+    if (branchFilter) query = query.eq('subjects.branch_id', branchFilter)
+    if (yearFilter) query = query.eq('subjects.year', yearFilter)
+    if (effectiveSemFilter) query = query.eq('subjects.semester', effectiveSemFilter)
+  } else {
+    // Resilient fallback filtering directly on subject_id using verified curriculum map
+    if (effectiveSemFilter) {
+      const semSubjectIds = subjects
+        .filter((s) => s.semester === effectiveSemFilter)
+        .map((s) => s.id)
+      if (semSubjectIds.length > 0) {
+        query = query.in('subject_id', semSubjectIds)
+      }
+    }
+    if (yearFilter) {
+      const yearSubjectIds = subjects
+        .filter((s) => s.year === yearFilter)
+        .map((s) => s.id)
+      if (yearSubjectIds.length > 0) {
+        query = query.in('subject_id', yearSubjectIds)
+      }
+    }
+  }
+
   if (subjectFilter) query = query.eq('subject_id', subjectFilter)
   if (typeFilter) query = query.eq('exam_type_id', typeFilter)
 
@@ -166,8 +184,9 @@ export default async function BrowsePage({
   query = query.range(from, to)
 
   const { data: resourcesData, count } = await query
-  const resources = resourcesData || []
-  const totalCount = count || 0
+  const rawResources = resourcesData || []
+  const resources = rawResources.map(enrichResourceWithFallback)
+  const totalCount = count || resources.length
   const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1
 
   // Helper function to build page URLs while preserving current filters

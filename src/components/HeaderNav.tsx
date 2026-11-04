@@ -5,23 +5,23 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import SignOutButton from '@/components/auth/SignOutButton'
-import { 
-  ShieldCheck, 
-  LayoutDashboard, 
-  Upload, 
-  User, 
-  Menu, 
-  X, 
-  BookOpen, 
-  Sparkles, 
-  LogIn, 
-  Trophy, 
-  GraduationCap, 
-  Target, 
-  MessageSquare, 
-  FileText, 
-  WifiOff, 
-  Bell, 
+import {
+  ShieldCheck,
+  LayoutDashboard,
+  Upload,
+  User,
+  Menu,
+  X,
+  BookOpen,
+  Sparkles,
+  LogIn,
+  Trophy,
+  GraduationCap,
+  Target,
+  MessageSquare,
+  FileText,
+  WifiOff,
+  Bell,
   Brain,
   ChevronDown
 } from 'lucide-react'
@@ -29,6 +29,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import dynamic from 'next/dynamic'
 import SmartExamAlertsModal from '@/components/notifications/SmartExamAlertsModal'
 import { getUnreadNotificationCountAction } from '@/app/requests/actions'
+import HackerModeToggle from '@/components/theme/HackerModeToggle'
 
 const ExamCountdownTicker = dynamic(
   () => import('@/components/exam/ExamCountdownTicker'),
@@ -106,47 +107,47 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
 
   // Explore sub-links
   const exploreLinks = [
-    { 
-      href: '/cbt', 
-      label: 'CBT Mock Arena', 
+    {
+      href: '/cbt',
+      label: 'CBT Mock Arena',
       desc: 'Real-time exam simulators with timers for Open Electives & CBTs',
-      icon: <Sparkles className="w-4 h-4 text-cyan-400" /> 
+      icon: <Sparkles className="w-4 h-4 text-cyan-400" />
     },
-    { 
-      href: '/exam-prep', 
-      label: 'Exam Prep Workspace', 
+    {
+      href: '/exam-prep',
+      label: 'Exam Prep Workspace',
       desc: 'Targeted MST & EST prep with syllabus weightage',
-      icon: <Target className="w-4 h-4 text-amber-400" /> 
+      icon: <Target className="w-4 h-4 text-amber-400" />
     },
-    { 
-      href: '/study-planner', 
-      label: 'Study Planner', 
+    {
+      href: '/study-planner',
+      label: 'Study Planner',
       desc: 'Exam countdown & personal revision scheduler',
-      icon: <Brain className="w-4 h-4 text-purple-400" /> 
+      icon: <Brain className="w-4 h-4 text-purple-400" />
     },
-    { 
-      href: '/study-material', 
-      label: 'Study Material', 
+    {
+      href: '/study-material',
+      label: 'Study Material',
       desc: 'Topper notes, formulas & blueprints',
-      icon: <BookOpen className="w-4 h-4 text-emerald-400" /> 
+      icon: <BookOpen className="w-4 h-4 text-emerald-400" />
     },
-    { 
-      href: '/subjects', 
-      label: 'Subjects Directory', 
+    {
+      href: '/subjects',
+      label: 'Subjects Directory',
       desc: 'All 8 semesters curriculum papers',
-      icon: <GraduationCap className="w-4 h-4 text-cyan-400" /> 
+      icon: <GraduationCap className="w-4 h-4 text-cyan-400" />
     },
-    { 
-      href: '/leaderboard', 
-      label: 'Hall of Fame', 
+    {
+      href: '/leaderboard',
+      label: 'Hall of Fame',
       desc: 'Top student contributors & ranks',
-      icon: <Trophy className="w-4 h-4 text-amber-400" /> 
+      icon: <Trophy className="w-4 h-4 text-amber-400" />
     },
-    { 
-      href: '/faculty', 
-      label: 'Faculty Portal', 
+    {
+      href: '/faculty',
+      label: 'Faculty Portal',
       desc: 'Professor paper certifications',
-      icon: <GraduationCap className="w-4 h-4 text-emerald-400" /> 
+      icon: <GraduationCap className="w-4 h-4 text-emerald-400" />
     }
   ]
 
@@ -157,7 +158,7 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
 
   return (
     <div className="flex items-center justify-between gap-3 flex-1 ml-4 lg:ml-8 min-w-0">
-      
+
       {/* ============================================================ */}
       {/* DESKTOP CENTER NAVIGATION LINKS */}
       {/* ============================================================ */}
@@ -168,11 +169,10 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
             <Link
               key={link.href}
               href={link.href}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all inline-flex items-center gap-1.5 whitespace-nowrap ${
-                isActive
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all inline-flex items-center gap-1.5 whitespace-nowrap ${isActive
                   ? 'bg-prevu-surface-light text-white shadow-sm font-bold border border-prevu-surface-light/80'
                   : 'text-prevu-text-muted hover:text-white hover:bg-prevu-surface-light/50'
-              }`}
+                }`}
             >
               {link.icon}
               <span>{link.label}</span>
@@ -184,11 +184,10 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
         <div ref={exploreRef} className="relative">
           <button
             onClick={() => setExploreMenuOpen(!exploreMenuOpen)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all inline-flex items-center gap-1 cursor-pointer whitespace-nowrap ${
-              isExploreActive || exploreMenuOpen
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all inline-flex items-center gap-1 cursor-pointer whitespace-nowrap ${isExploreActive || exploreMenuOpen
                 ? 'bg-prevu-surface-light text-white font-bold'
                 : 'text-prevu-text-muted hover:text-white hover:bg-prevu-surface-light/50'
-            }`}
+              }`}
           >
             <span>Explore</span>
             <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${exploreMenuOpen ? 'rotate-180' : ''}`} />
@@ -213,11 +212,10 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                     key={item.href}
                     href={item.href}
                     onClick={() => setExploreMenuOpen(false)}
-                    className={`p-2.5 rounded-xl flex items-start gap-3 transition-colors ${
-                      pathname.startsWith(item.href)
+                    className={`p-2.5 rounded-xl flex items-start gap-3 transition-colors ${pathname.startsWith(item.href)
                         ? 'bg-prevu-surface text-white'
                         : 'hover:bg-prevu-surface/60 text-prevu-text-muted hover:text-white'
-                    }`}
+                      }`}
                   >
                     <div className="w-8 h-8 rounded-xl bg-prevu-bg border border-prevu-surface-light flex items-center justify-center shrink-0 mt-0.5">
                       {item.icon}
@@ -238,20 +236,22 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
       {/* UTILITIES & ACTION BUTTONS */}
       {/* ============================================================ */}
       <div className="flex items-center gap-1.5 lg:gap-2 shrink-0 ml-auto">
-        
+
         {/* Compact Exam Countdown Ticker */}
         <div className="hidden xl:flex items-center shrink-0 mr-1">
           <ExamCountdownTicker />
         </div>
-        
+
+        {/* Global Hacker Mode Terminal Toggle */}
+        <HackerModeToggle />
+
         {/* Smart Exam Alerts & Batchmate Queries Bell */}
         <button
           onClick={() => setAlertsModalOpen(true)}
-          className={`w-8 h-8 rounded-xl border transition-all flex items-center justify-center cursor-pointer relative ${
-            unreadCount > 0
+          className={`w-8 h-8 rounded-xl border transition-all flex items-center justify-center cursor-pointer relative ${unreadCount > 0
               ? 'border-purple-500/60 bg-purple-500/15 text-white shadow-sm shadow-purple-500/30'
               : 'border-prevu-surface-light bg-prevu-surface/60 hover:bg-prevu-surface hover:border-purple-500/40 text-prevu-text-muted hover:text-white'
-          }`}
+            }`}
           title={unreadCount > 0 ? `${unreadCount} unread community alerts` : 'Smart Exam Alerts & Notifications'}
         >
           <Bell className={`w-3.5 h-3.5 ${unreadCount > 0 ? 'text-purple-300' : 'text-purple-400'}`} />
@@ -266,10 +266,10 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
 
         {/* Admin Console Badge Button (if Admin) */}
         {isAdmin && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            asChild 
+          <Button
+            variant="outline"
+            size="sm"
+            asChild
             className="h-8 px-3 text-xs border-purple-500/40 bg-purple-500/10 text-purple-200 hover:bg-purple-500/20 hover:text-white shadow-sm shadow-purple-500/20 font-bold shrink-0 hidden sm:inline-flex"
           >
             <Link href="/admin/dashboard" className="flex items-center gap-1.5">
@@ -280,9 +280,9 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
         )}
 
         {/* Upload Contribution Button */}
-        <Button 
-          size="sm" 
-          asChild 
+        <Button
+          size="sm"
+          asChild
           className="h-8 px-3.5 text-xs font-bold bg-gradient-to-r from-purple-600 to-prevu-accent hover:from-purple-500 hover:to-prevu-accent-light text-white shadow-md shadow-purple-600/25 shrink-0"
         >
           <Link href="/upload" className="flex items-center gap-1.5">
@@ -388,9 +388,10 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
             transition={{ duration: 0.2 }}
             className="absolute top-16 left-0 right-0 p-4 bg-[#09090d]/98 backdrop-blur-2xl border-b border-prevu-surface-light shadow-2xl z-50 md:hidden space-y-4 max-h-[85vh] overflow-y-auto"
           >
-            {/* Mobile Ticker */}
-            <div className="pb-3 border-b border-prevu-surface-light flex items-center justify-between">
+            {/* Mobile Ticker & Hacker Toggle */}
+            <div className="pb-3 border-b border-prevu-surface-light flex items-center justify-between gap-2">
               <ExamCountdownTicker />
+              <HackerModeToggle compact />
             </div>
 
             {/* Mobile Primary Section */}
@@ -403,9 +404,8 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`p-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-colors ${
-                    pathname === link.href ? 'bg-prevu-accent text-white' : 'text-prevu-text hover:bg-prevu-surface'
-                  }`}
+                  className={`p-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-colors ${pathname === link.href ? 'bg-prevu-accent text-white' : 'text-prevu-text hover:bg-prevu-surface'
+                    }`}
                 >
                   {link.icon}
                   <span>{link.label}</span>

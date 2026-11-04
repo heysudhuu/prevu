@@ -19,6 +19,98 @@
   --font-mono: var(--font-ibm-plex);
 }
 
+/* ==========================================================================
+   HACKER TERMINAL THEME (Matrix Green / Cybersec Mode)
+   ========================================================================== */
+html.theme-hacker {
+  --color-prevu-bg: #030704;
+  --color-prevu-surface: #061409;
+  --color-prevu-surface-light: #0d2814;
+  --color-prevu-surface-elevated: #12381c;
+  --color-prevu-text: #e2fee9;
+  --color-prevu-text-muted: #4ade80;
+  --color-prevu-accent: #00ff66;
+  --color-prevu-accent-hover: #00dd55;
+  --color-prevu-accent-light: #86efac;
+  --color-prevu-cyan: #00f0ff;
+  --color-prevu-pending: #facc15;
+  --color-prevu-approved: #00ff66;
+}
+
+html.theme-hacker ::selection {
+  background-color: rgba(0, 255, 102, 0.4);
+  color: #000000;
+}
+
+html.theme-hacker ::-webkit-scrollbar-track {
+  background: #020704;
+}
+
+html.theme-hacker ::-webkit-scrollbar-thumb {
+  background: #0d2814;
+  border: 1px solid rgba(0, 255, 102, 0.4);
+}
+
+html.theme-hacker ::-webkit-scrollbar-thumb:hover {
+  background: #00ff66;
+}
+
+/* CRT Terminal Scanline Overlay */
+html.theme-hacker body::after {
+  content: " ";
+  display: block;
+  position: fixed;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.22) 50%), linear-gradient(90deg, rgba(0, 255, 102, 0.02), rgba(0, 0, 0, 0.01), rgba(0, 240, 255, 0.02));
+  z-index: 99999;
+  background-size: 100% 3px, 6px 100%;
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+/* Subtle Phosphor Glow on Cards in Hacker Mode */
+html.theme-hacker .border-purple-500\/20,
+html.theme-hacker .border-purple-500\/25,
+html.theme-hacker .border-purple-500\/30,
+html.theme-hacker .border-prevu-surface-light {
+  border-color: rgba(0, 255, 102, 0.3) !important;
+}
+
+/* Green gradient overrides in Hacker Mode */
+html.theme-hacker .text-gradient-purple {
+  background: linear-gradient(135deg, #86efac 0%, #00ff66 50%, #00f0ff 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* Ambient glow recoloring in Hacker Mode */
+html.theme-hacker .shadow-purple-600\/30,
+html.theme-hacker .shadow-purple-500\/40,
+html.theme-hacker .shadow-purple-900\/40 {
+  box-shadow: 0 10px 25px -5px rgba(0, 255, 102, 0.25) !important;
+}
+
+html.theme-hacker .bg-purple-600 {
+  background-color: #00dd55 !important;
+  color: #020704 !important;
+  font-weight: 700 !important;
+}
+
+html.theme-hacker .bg-purple-600:hover {
+  background-color: #00ff66 !important;
+}
+
+html.theme-hacker .text-purple-300,
+html.theme-hacker .text-purple-400 {
+  color: #00ff66 !important;
+}
+
+html.theme-hacker .bg-purple-500\/20,
+html.theme-hacker .bg-purple-500\/15,
+html.theme-hacker .bg-purple-500\/10 {
+  background-color: rgba(0, 255, 102, 0.12) !important;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 7px;

@@ -208,3 +208,4 @@ export default function ThemeSwitcherDropdown({ compact = false }: ThemeSwitcher
     </div>
   )
 }
+

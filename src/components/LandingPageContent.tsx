@@ -248,7 +248,7 @@ export default function LandingPageContent() {
   }, [])
 
   return (
-    <main className="flex-1 bg-[#010409] text-[#e6edf3] font-mono selection:bg-[#238636] selection:text-white">
+    <main className="flex-1 bg-[#010409] text-[#e6edf3] font-mono selection:bg-emerald-500/30 selection:text-white">
       
       {/* ============================================================ */}
       {/* 1. GITHUB-STYLE MASTER HERO SECTION (TERMINAL GIT)           */}

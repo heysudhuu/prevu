@@ -54,13 +54,31 @@ html.theme-hacker textarea {
   font-family: var(--font-ibm-plex), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
 }
 
-/* True Black Terminal Base */
+/* Pure Pitch-Black Base */
+html.theme-hacker,
 html.theme-hacker body {
   background-color: #000000 !important;
+  background: #000000 !important;
   color: #e2fce9 !important;
 }
 
-/* Make page wrappers, main, section containers, and footer transparent so Matrix Rain flows seamlessly */
+/* Hide 3D canvas, grid patterns, and ambient glow clouds so background stays pure dark black */
+html.theme-hacker .hero-3d-scene,
+html.theme-hacker .grid-pattern,
+html.theme-hacker .grid-pattern-sm,
+html.theme-hacker div[style*="139,92,246"],
+html.theme-hacker div[style*="88,28,135"],
+html.theme-hacker div[style*="168,85,247"],
+html.theme-hacker div[style*="radial-gradient"] {
+  display: none !important;
+}
+
+/* Ensure no milky scanline wash interferes with deep black */
+html.theme-hacker body::after {
+  display: none !important;
+}
+
+/* Make page wrappers, main, section containers, and footer transparent so Matrix Rain flows on pure dark black */
 html.theme-hacker main,
 html.theme-hacker section,
 html.theme-hacker footer,
@@ -78,7 +96,7 @@ html.theme-hacker footer[style*="background"] {
   background: transparent !important;
 }
 
-/* Translucent Glass Terminal Cards with Phosphor Green Borders */
+/* Pure Pitch-Black Glass Terminal Cards with Vivid Phosphor Green Borders */
 html.theme-hacker .bg-prevu-surface,
 html.theme-hacker .bg-prevu-surface\/98,
 html.theme-hacker .bg-prevu-surface\/95,
@@ -94,20 +112,20 @@ html.theme-hacker div[class*="bg-[#0b0b17]"],
 html.theme-hacker div[class*="bg-[#0f0f1a]"],
 html.theme-hacker div[class*="bg-[#0e0e1a]"],
 html.theme-hacker div[class*="bg-[#0f0f17]"] {
-  background-color: rgba(2, 10, 4, 0.82) !important;
+  background-color: rgba(0, 0, 0, 0.88) !important;
   backdrop-filter: blur(14px) !important;
   -webkit-backdrop-filter: blur(14px) !important;
-  border-color: rgba(0, 255, 102, 0.35) !important;
+  border-color: rgba(0, 255, 102, 0.38) !important;
 }
 
-/* Header & Navigation in Hacker Mode */
+/* Header & Navigation in Pure Dark Black */
 html.theme-hacker header,
 html.theme-hacker header[class*="bg-[#09090d]"],
 html.theme-hacker nav[class*="bg-[#09090d]"] {
-  background-color: rgba(1, 6, 2, 0.92) !important;
+  background-color: rgba(0, 0, 0, 0.95) !important;
   backdrop-filter: blur(16px) !important;
   border-bottom: 1px solid rgba(0, 255, 102, 0.45) !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 255, 102, 0.15) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.95), 0 0 15px rgba(0, 255, 102, 0.15) !important;
 }
 
 /* Card Hover Glow */
@@ -205,14 +223,6 @@ html.theme-hacker [class*="bg-prevu-accent/"] {
   color: #00ff66 !important;
 }
 
-/* Ambient Purple Glows recolored to Matrix Phosphor Green */
-html.theme-hacker div[style*="139,92,246"],
-html.theme-hacker div[style*="88,28,135"],
-html.theme-hacker div[style*="168,85,247"] {
-  background: radial-gradient(ellipse, rgba(0, 255, 102, 0.16) 0%, rgba(0, 255, 102, 0.04) 45%, transparent 70%) !important;
-  opacity: 0.75 !important;
-}
-
 /* Input Fields & Textareas */
 html.theme-hacker input,
 html.theme-hacker textarea,
@@ -251,19 +261,6 @@ html.theme-hacker ::-webkit-scrollbar-thumb {
 html.theme-hacker ::-webkit-scrollbar-thumb:hover {
   background: #00ff66;
   box-shadow: 0 0 10px #00ff66;
-}
-
-/* CRT Terminal Scanline Overlay */
-html.theme-hacker body::after {
-  content: " ";
-  display: block;
-  position: fixed;
-  top: 0; left: 0; bottom: 0; right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(0, 255, 102, 0.02), rgba(0, 0, 0, 0.01), rgba(0, 240, 255, 0.02));
-  z-index: 99999;
-  background-size: 100% 3px, 6px 100%;
-  pointer-events: none;
-  opacity: 0.35;
 }
 
 /* Custom Scrollbar */

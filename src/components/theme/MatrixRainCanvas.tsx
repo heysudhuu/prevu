@@ -9,7 +9,7 @@ export default function MatrixRainCanvas() {
   // Track theme changes
   useEffect(() => {
     const checkTheme = () => {
-      const active = document.documentElement.classList.contains('theme-hacker') || 
+      const active = document.documentElement.classList.contains('theme-hacker') ||
         localStorage.getItem('prevu-theme') === 'hacker'
       setIsHacker(active)
     }
@@ -51,7 +51,7 @@ export default function MatrixRainCanvas() {
     const charset = '010101010123456789ABCDEF<>/{}[];=*~#$_PREVU_ROOT_CU_EXAM'
     const fontSize = 15
     let columns = Math.floor(width / fontSize)
-    
+
     // Each column has current y position and distinct speed for multi-depth rain
     interface ColumnData {
       y: number
@@ -89,8 +89,8 @@ export default function MatrixRainCanvas() {
       if (delta < interval) return
       lastTime = currentTime - (delta % interval)
 
-      // Translucent deep black wash to produce authentic phosphorescent decay trail
-      ctx.fillStyle = 'rgba(0, 3, 1, 0.08)'
+      // Pure jet-black wash to produce crisp falling trail on true pitch black
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.075)'
       ctx.fillRect(0, 0, width, height)
 
       ctx.font = `${fontSize}px "IBM Plex Mono", monospace`
@@ -149,7 +149,7 @@ export default function MatrixRainCanvas() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0 opacity-80 md:opacity-85 transition-opacity duration-700"
+      className="fixed inset-0 pointer-events-none z-0 bg-black opacity-100 transition-opacity duration-500"
       aria-hidden="true"
     />
   )

@@ -106,7 +106,7 @@ export default function Hero3DScene() {
   const isMobile = typeof window !== 'undefined' ? window.innerWidth < 768 : false
 
   return (
-    <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden opacity-35 sm:opacity-45">
+    <div className="hero-3d-scene absolute inset-0 z-0 pointer-events-none overflow-hidden opacity-35 sm:opacity-45">
       <Suspense fallback={null}>
         <Canvas 
           camera={{ position: [0, 0, 10], fov: isMobile ? 55 : 45 }} 

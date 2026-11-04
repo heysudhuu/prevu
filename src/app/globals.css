@@ -19,6 +19,81 @@
   --font-mono: var(--font-ibm-plex);
 }
 
+/* ==========================================================================
+   MULTI-THEME ENGINE (Terminal Git, Cosmic Violet, Matrix Cyber, Cyberpunk, Dracula)
+   ========================================================================== */
+html.theme-cosmic-violet {
+  --color-prevu-bg: #07070c;
+  --color-prevu-surface: #0f0f1a;
+  --color-prevu-surface-light: #1a1a2e;
+  --color-prevu-surface-elevated: #222238;
+  --color-prevu-text: #f0f0f8;
+  --color-prevu-text-muted: #8888a8;
+  --color-prevu-accent: #8b5cf6;
+  --color-prevu-accent-hover: #7c3aed;
+  --color-prevu-accent-light: #a78bfa;
+  --color-prevu-cyan: #06b6d4;
+  --color-prevu-approved: #10b981;
+}
+html.theme-cosmic-violet body {
+  background-color: #07070c !important;
+  color: #f0f0f8 !important;
+}
+
+html.theme-matrix-cyber {
+  --color-prevu-bg: #000000;
+  --color-prevu-surface: #040d06;
+  --color-prevu-surface-light: #081e0c;
+  --color-prevu-surface-elevated: #0c2b12;
+  --color-prevu-text: #dcfce7;
+  --color-prevu-text-muted: #4ade80;
+  --color-prevu-accent: #00ff66;
+  --color-prevu-accent-hover: #33ff88;
+  --color-prevu-accent-light: #86efac;
+  --color-prevu-cyan: #00f0ff;
+  --color-prevu-approved: #00ff66;
+}
+html.theme-matrix-cyber body {
+  background-color: #000000 !important;
+  color: #dcfce7 !important;
+}
+
+html.theme-cyberpunk-neon {
+  --color-prevu-bg: #08070d;
+  --color-prevu-surface: #120e1c;
+  --color-prevu-surface-light: #1d162e;
+  --color-prevu-surface-elevated: #281d3f;
+  --color-prevu-text: #fdf2f8;
+  --color-prevu-text-muted: #f472b6;
+  --color-prevu-accent: #ec4899;
+  --color-prevu-accent-hover: #f43f5e;
+  --color-prevu-accent-light: #fb7185;
+  --color-prevu-cyan: #06b6d4;
+  --color-prevu-approved: #10b981;
+}
+html.theme-cyberpunk-neon body {
+  background-color: #08070d !important;
+  color: #fdf2f8 !important;
+}
+
+html.theme-dracula-pro {
+  --color-prevu-bg: #1e1f29;
+  --color-prevu-surface: #282a36;
+  --color-prevu-surface-light: #343746;
+  --color-prevu-surface-elevated: #44475a;
+  --color-prevu-text: #f8f8f2;
+  --color-prevu-text-muted: #6272a4;
+  --color-prevu-accent: #bd93f9;
+  --color-prevu-accent-hover: #ff79c6;
+  --color-prevu-accent-light: #caa9fa;
+  --color-prevu-cyan: #8be9fd;
+  --color-prevu-approved: #50fa7b;
+}
+html.theme-dracula-pro body {
+  background-color: #1e1f29 !important;
+  color: #f8f8f2 !important;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 7px;

@@ -40,7 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{document.documentElement.classList.remove('theme-hacker');localStorage.removeItem('prevu-theme');}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('prevu-theme')||'terminal-git';document.documentElement.className=document.documentElement.className.replace(/\\btheme-\\S+/g,'').trim();document.documentElement.classList.add('theme-'+t);}catch(e){}})();`,
           }}
         />
       </head>

@@ -1,8 +1,9 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
-import { Sparkles, Terminal } from 'lucide-react'
+import { Terminal } from 'lucide-react'
 import Header from '@/components/Header'
 import LandingPageContent from '@/components/LandingPageContent'
+import ThemeSelectorSection from '@/components/theme/ThemeSelectorSection'
 import CommunityRequestsSection from '@/components/landing/CommunityRequestsSection'
 import AboutUsSection from '@/components/landing/AboutUsSection'
 import CommunityConnect from '@/components/landing/CommunityConnect'
@@ -17,29 +18,40 @@ export default function Home() {
       <Header />
       {/* 1. GitHub-Style Master Hero, Git Branch Spine & Curriculum Deck */}
       <LandingPageContent />
-      {/* 2. Live real stats from DB with count-up animation */}
+
+      {/* 2. Visual Theme Engine & Multi-Palette Studio */}
+      <ThemeSelectorSection />
+
+      {/* 3. Live real stats from DB with count-up animation */}
       <Suspense fallback={null}>
         <LiveStatsSection />
       </Suspense>
-      {/* 3. Recently added papers — horizontal scroll strip */}
+
+      {/* 4. Recently added papers — horizontal scroll strip */}
       <Suspense fallback={null}>
         <RecentPapersSection />
       </Suspense>
-      {/* 4. Campus Karma Achievers & Hall of Fame Collaborators */}
+
+      {/* 5. Campus Karma Achievers & Hall of Fame Collaborators */}
       <Suspense fallback={null}>
         <KarmaAchieversSection />
       </Suspense>
-      {/* 5. Community Requests Preview */}
+
+      {/* 6. Community Requests Preview */}
       <Suspense fallback={null}>
         <CommunityRequestsSection />
       </Suspense>
-      {/* 6. About Us */}
+
+      {/* 7. About Us */}
       <AboutUsSection />
-      {/* 7. Instagram & WhatsApp Community */}
+
+      {/* 8. Instagram & WhatsApp Community */}
       <CommunityConnect />
-      {/* 8. Student Suggestion Box */}
+
+      {/* 9. Student Suggestion Box */}
       <StudentSuggestionBox />
-      {/* 9. GitHub-Style Academic Footer */}
+
+      {/* 10. GitHub-Style Academic Footer */}
       <footer className="py-16 border-t border-[#30363d]/60 relative overflow-hidden text-xs text-[#7d8590] bg-[#010409]">
         <div className="container mx-auto px-4 max-w-6xl space-y-12 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10">

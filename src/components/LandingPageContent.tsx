@@ -234,14 +234,16 @@ export default function LandingPageContent() {
     setTimeout(() => setMascotBubble(null), 3500)
   }
 
-  // 48 columns x 7 days GitHub Contribution Grid
+  // 48 columns x 7 days Deterministic GitHub Contribution Grid (Zero Hydration Mismatch)
   const contributionGrid = useMemo(() => {
     const grid: number[][] = []
     for (let c = 0; c < 48; c++) {
       const col: number[] = []
       for (let r = 0; r < 7; r++) {
-        const rand = Math.random()
-        const level = rand > 0.85 ? 4 : rand > 0.65 ? 3 : rand > 0.4 ? 2 : rand > 0.2 ? 1 : 0
+        // Deterministic pseudo-random seed based on fixed (c, r) coordinates
+        const hash = Math.sin(c * 7 + r + 42) * 10000
+        const rand = hash - Math.floor(hash)
+        const level = rand > 0.82 ? 4 : rand > 0.62 ? 3 : rand > 0.38 ? 2 : rand > 0.18 ? 1 : 0
         col.push(level)
       }
       grid.push(col)

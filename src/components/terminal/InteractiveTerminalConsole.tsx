@@ -23,12 +23,8 @@ interface TerminalLog {
 }
 
 const INITIAL_LOGS: TerminalLog[] = [
-  { id: '1', type: 'info', text: 'Prevu Academic Shell v2.6.0-prod (x86_64-pc-cu-engineering)' },
-  { id: '2', type: 'info', text: 'Type "help" for command catalog or click preset chips below.' },
-  { id: '3', type: 'cmd', text: 'prevu status --verbose' },
-  { id: '4', type: 'ok', text: '[OK] Cloned cu-academic-vault (ref: origin/cu-engineering)' },
-  { id: '5', type: 'ok', text: '✔ Verified 1,450+ question papers cached (mst1/mst2/est)' },
-  { id: '6', type: 'info', text: '⚡ CBT hardware-accelerated simulator engine ready (0ms latency)' }
+  { id: '1', type: 'info', text: 'Prevu Academic Shell v2.6.0 (cu-engineering) • Type "help" or click below:' },
+  { id: '2', type: 'ok', text: '✔ Verified 1,450+ question papers & CBT simulation engine ready (0ms latency)' }
 ]
 
 const QUICK_COMMANDS = [
@@ -429,7 +425,7 @@ export default function InteractiveTerminalConsole() {
 
       {/* Terminal Screen Body */}
       <div 
-        className="p-4 sm:p-5 text-xs text-[#e6edf3] space-y-2 max-h-80 overflow-y-auto cursor-text select-text"
+        className="p-4 sm:p-5 text-xs text-[#e6edf3] space-y-2 max-h-52 sm:max-h-60 overflow-y-auto cursor-text select-text"
         onClick={() => inputRef.current?.focus()}
       >
         {isMatrixRain ? (

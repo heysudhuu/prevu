@@ -257,7 +257,7 @@ export default function LandingPageContent() {
       {/* ============================================================ */}
       {/* 1. GITHUB-STYLE MASTER HERO SECTION (TERMINAL GIT)           */}
       {/* ============================================================ */}
-      <section className="relative overflow-hidden pt-12 pb-20 lg:pt-16 lg:pb-28 border-b border-[#30363d]/60">
+      <section className="relative overflow-hidden pt-8 pb-12 lg:pt-10 lg:pb-16 border-b border-[#30363d]/60">
         
         {/* Subtle Isometric Coordinate Grid */}
         <div 
@@ -487,7 +487,7 @@ export default function LandingPageContent() {
       {/* ============================================================ */}
       {/* 2. GIT BRANCH CONNECTED SPINE & DUAL CODE CARDS              */}
       {/* ============================================================ */}
-      <section className="py-20 relative border-b border-[#30363d]/60 bg-[#0d1117]">
+      <section className="py-12 sm:py-16 relative border-b border-[#30363d]/60 bg-[#0d1117]">
         
         {/* Animated Git Signal Pulse Line running down the section */}
         <div className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-[1px] bg-gradient-to-b from-emerald-500/40 via-cyan-500/30 to-transparent pointer-events-none hidden lg:block">
@@ -501,21 +501,21 @@ export default function LandingPageContent() {
         <div className="container mx-auto px-4 max-w-6xl relative z-10">
           
           {/* Connected Git Header */}
-          <div className="flex flex-col items-center text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#161b22] border border-[#30363d] text-xs font-mono text-[#7d8590] mb-4">
+          <div className="flex flex-col items-center text-center mb-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#161b22] border border-[#30363d] text-xs font-mono text-[#7d8590] mb-3">
               <GitBranch className="w-3.5 h-3.5 text-emerald-400" />
               <span>git pull origin cu-engineering</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
               An ecosystem built for <span className="text-emerald-400">academic agility.</span>
             </h2>
-            <p className="text-[#7d8590] text-xs sm:text-sm mt-3 max-w-xl font-mono">
+            <p className="text-[#7d8590] text-xs sm:text-sm mt-2 max-w-xl font-mono">
               From verified semester past papers to live CBT practice and peer bounties, everything syncs to your engineering journey.
             </p>
           </div>
 
           {/* Dual GitHub Showcase Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             
             {/* Showcase Card 1: Verified PYQ Explorer */}
             <div className="p-6 sm:p-8 rounded-2xl bg-[#161b22] border border-[#30363d] hover:border-emerald-500/50 hover:shadow-[0_0_30px_rgba(35,134,54,0.15)] transition-all flex flex-col justify-between group">
@@ -651,10 +651,10 @@ export default function LandingPageContent() {
       {/* ============================================================ */}
       {/* 3. GITHUB CONTRIBUTION HEATMAP & VELOCITY METRICS            */}
       {/* ============================================================ */}
-      <section className="py-20 border-b border-[#30363d]/60 bg-[#010409]">
+      <section className="py-12 sm:py-16 border-b border-[#30363d]/60 bg-[#010409]">
         <div className="container mx-auto px-4 max-w-6xl">
           
-          <div className="p-6 sm:p-8 rounded-2xl bg-[#161b22] border border-[#30363d] shadow-2xl mb-12">
+          <div className="p-5 sm:p-6 rounded-2xl bg-[#161b22] border border-[#30363d] shadow-2xl mb-8">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
               <div>
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -775,16 +775,16 @@ export default function LandingPageContent() {
       {/* ============================================================ */}
       {/* 4. FAST-TRACK SEMESTER DECK CURRICULUM                       */}
       {/* ============================================================ */}
-      <section className="py-20 border-b border-[#30363d]/60 bg-[#0d1117]">
+      <section className="py-12 sm:py-16 border-b border-[#30363d]/60 bg-[#0d1117]">
         <div className="container mx-auto px-4 max-w-6xl">
           
-          <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4 mb-8">
+          <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4 mb-6">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 mb-3">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 mb-2">
                 <Layers className="w-3.5 h-3.5" />
                 <span>All 8 Semesters Repository</span>
               </div>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
                 Curriculum Deck by Semester
               </h2>
               <p className="text-xs sm:text-sm text-[#7d8590] mt-1 font-mono">
@@ -794,7 +794,7 @@ export default function LandingPageContent() {
 
             <Link
               href="/browse"
-              className="inline-flex items-center gap-2 text-xs font-bold font-mono text-emerald-400 hover:text-white px-4 py-2.5 rounded-xl bg-[#161b22] border border-[#30363d] hover:border-emerald-500/40 transition-all shrink-0"
+              className="inline-flex items-center gap-2 text-xs font-bold font-mono text-emerald-400 hover:text-white px-3.5 py-2 rounded-xl bg-[#161b22] border border-[#30363d] hover:border-emerald-500/40 transition-all shrink-0"
             >
               <span>Explore All 8 Semesters</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -802,7 +802,7 @@ export default function LandingPageContent() {
           </div>
 
           {/* Semester Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8 scrollbar-hide">
+          <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-6 scrollbar-hide">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
               <button
                 key={sem}
@@ -894,34 +894,34 @@ export default function LandingPageContent() {
       {/* ============================================================ */}
       {/* 5. GITHUB-STYLE STUDENT QUOTE & TRUST SIGNALS                */}
       {/* ============================================================ */}
-      <section className="py-20 border-b border-[#30363d]/60 bg-[#010409]">
+      <section className="py-12 sm:py-14 border-b border-[#30363d]/60 bg-[#010409]">
         <div className="container mx-auto px-4 max-w-4xl text-center">
           
-          <div className="w-12 h-12 rounded-2xl bg-[#161b22] border border-[#30363d] flex items-center justify-center mx-auto mb-6 text-emerald-400">
-            <Star className="w-6 h-6 fill-emerald-400/20 text-emerald-400" />
+          <div className="w-10 h-10 rounded-2xl bg-[#161b22] border border-[#30363d] flex items-center justify-center mx-auto mb-4 text-emerald-400">
+            <Star className="w-5 h-5 fill-emerald-400/20 text-emerald-400" />
           </div>
 
-          <blockquote className="text-xl sm:text-2xl font-semibold text-white leading-relaxed mb-6 font-mono">
+          <blockquote className="text-lg sm:text-xl font-semibold text-white leading-relaxed mb-4 font-mono">
             &ldquo;Prevu is one of the essential software tools that empower our entire semester batch. We wouldn&apos;t have navigated EST prep without verified answer keys directly from seniors.&rdquo;
           </blockquote>
 
-          <div className="flex flex-col items-center justify-center gap-1 text-sm font-mono">
+          <div className="flex flex-col items-center justify-center gap-0.5 text-xs font-mono">
             <span className="font-bold text-white">Sudhanshu Yadav</span>
-            <span className="text-xs text-[#7d8590]">BE-CSE &bull; Rank #1 Campus Contributor &bull; Chandigarh University</span>
+            <span className="text-[11px] text-[#7d8590]">BE-CSE &bull; Rank #1 Campus Contributor &bull; Chandigarh University</span>
           </div>
 
           {/* Department badges */}
-          <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-xs text-[#7d8590] font-mono">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-5 text-xs text-[#7d8590] font-mono">
             <span className="flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
               100% Moderated Question Papers
             </span>
             <span className="flex items-center gap-1.5">
-              <WifiOff className="w-4 h-4 text-cyan-400" />
+              <WifiOff className="w-3.5 h-3.5 text-cyan-400" />
               Encrypted Offline PWA Vault
             </span>
             <span className="flex items-center gap-1.5">
-              <Zap className="w-4 h-4 text-amber-400" />
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
               Zero-Leakage CBT Engine
             </span>
           </div>
@@ -932,17 +932,17 @@ export default function LandingPageContent() {
       {/* ============================================================ */}
       {/* 6. BOTTOM GITHUB CALL TO ACTION                              */}
       {/* ============================================================ */}
-      <section className="py-20 bg-[#0d1117] relative">
+      <section className="py-12 sm:py-16 bg-[#0d1117] relative">
         <div className="container mx-auto px-4 max-w-4xl text-center">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight mb-4">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight mb-3">
             Let&apos;s excel from here.
           </h2>
-          <p className="text-sm sm:text-base text-[#7d8590] max-w-lg mx-auto mb-8 font-mono">
+          <p className="text-xs sm:text-sm text-[#7d8590] max-w-lg mx-auto mb-6 font-mono">
             Join hundreds of Chandigarh University engineering scholars studying smarter before exams.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
-            <Button size="lg" className="w-full sm:w-auto px-8 font-bold bg-[#238636] hover:bg-[#2ea44f] text-white rounded-xl shadow-lg shadow-[#238636]/30 cursor-pointer font-mono" asChild>
+            <Button size="lg" className="w-full sm:w-auto px-7 font-bold bg-[#238636] hover:bg-[#2ea44f] text-white rounded-xl shadow-lg shadow-[#238636]/30 cursor-pointer font-mono" asChild>
               <Link href="/browse" className="flex items-center justify-center gap-2">
                 <span>Explore Study Hub</span>
                 <ArrowRight className="w-4 h-4" />

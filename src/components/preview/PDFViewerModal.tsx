@@ -297,7 +297,7 @@ export default function PDFViewerModal({ isOpen, onClose, resource }: PDFViewerM
         className={`bg-prevu-surface border border-prevu-surface-light rounded-3xl flex flex-col shadow-2xl overflow-hidden transition-all duration-300 ${
           isFullscreen 
             ? 'w-full h-full rounded-none' 
-            : 'w-full max-w-6xl h-[92vh]'
+            : 'w-full max-w-6xl 2xl:max-w-[1720px] h-[92vh]'
         }`}
       >
         {/* Top Header Bar */}

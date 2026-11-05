@@ -37,7 +37,7 @@ export default async function RecentPapersSection() {
 
     return (
       <section className="py-16 border-b border-prevu-surface-light bg-[#09090d] overflow-hidden">
-        <div className="container mx-auto px-4 max-w-6xl">
+        <div className="container mx-auto px-4 max-w-6xl 2xl:max-w-[1720px]">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2.5">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-prevu-accent/15 text-prevu-accent border border-prevu-accent/30">

@@ -1105,3 +1105,22 @@ html.theme-solarized-dark [class*="text-emerald-300"] {
   background-color: #07070a !important;
   color: #ededf2 !important;
 }
+
+/* ==========================================================================
+   1920x1080 (Full HD / 1080p Desktop) Viewport & Container Optimization
+   ========================================================================== */
+@media (min-width: 1536px) {
+  .container {
+    max-width: 1720px;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@media (min-width: 1920px) {
+  .container {
+    max-width: 1820px;
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
+}

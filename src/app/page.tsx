@@ -40,7 +40,7 @@ export default function Home() {
 
       {/* 5. GitHub-Style Academic Footer */}
       <footer className="py-12 border-t border-[#30363d]/60 relative overflow-hidden text-xs text-[#7d8590] bg-[#010409]">
-        <div className="container mx-auto px-4 max-w-6xl space-y-10 relative z-10">
+        <div className="container mx-auto px-4 max-w-6xl 2xl:max-w-[1720px] space-y-10 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {/* Brand Col */}
             <div className="space-y-3 md:col-span-1">

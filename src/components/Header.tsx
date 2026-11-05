@@ -30,7 +30,7 @@ export default async function Header() {
 
   return (
     <header className="border-b border-[#30363d]/70 bg-[#010409]/90 backdrop-blur-2xl sticky top-0 z-50 shadow-xl shadow-black/60">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+      <div className="container mx-auto px-4 max-w-7xl 2xl:max-w-[1720px] h-16 flex items-center justify-between">
         
         {/* Brand Logo, Semester Switcher & Interactive Theme Dropdown */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">

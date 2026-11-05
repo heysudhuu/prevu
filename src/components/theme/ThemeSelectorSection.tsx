@@ -91,7 +91,7 @@ export default function ThemeSelectorSection() {
         }}
       />
 
-      <div className="container mx-auto px-4 max-w-6xl relative z-10">
+      <div className="container mx-auto px-4 max-w-6xl 2xl:max-w-[1720px] relative z-10">
         
         {/* Compact Section Header */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">

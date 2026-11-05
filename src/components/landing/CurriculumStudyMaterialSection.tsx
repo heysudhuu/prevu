@@ -761,7 +761,7 @@ export default function CurriculumStudyMaterialSection() {
       {/* Background Ambience */}
       <div className="absolute right-1/4 top-0 w-[500px] h-[300px] bg-cyan-500/5 blur-[120px] pointer-events-none" />
 
-      <div className="container mx-auto px-4 max-w-6xl relative z-10">
+      <div className="container mx-auto px-4 max-w-6xl 2xl:max-w-[1720px] relative z-10">
 
         {/* Section Header */}
         <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4 mb-8">

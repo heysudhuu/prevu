@@ -82,7 +82,7 @@ export default function CommunityAndFaqSection() {
   return (
     <section className="py-12 sm:py-16 border-b border-[#30363d]/60 bg-[#010409] font-mono relative overflow-hidden">
       
-      <div className="container mx-auto px-4 max-w-6xl relative z-10">
+      <div className="container mx-auto px-4 max-w-6xl 2xl:max-w-[1720px] relative z-10">
         
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-10">

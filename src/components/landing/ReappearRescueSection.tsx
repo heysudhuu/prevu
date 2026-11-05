@@ -833,7 +833,7 @@ export default function ReappearRescueSection() {
       <div className="absolute right-0 top-1/4 w-[500px] h-[350px] bg-amber-500/5 blur-[140px] pointer-events-none" />
       <div className="absolute left-0 bottom-1/4 w-[500px] h-[350px] bg-rose-500/5 blur-[140px] pointer-events-none" />
 
-      <div className="container mx-auto px-4 max-w-6xl relative z-10">
+      <div className="container mx-auto px-4 max-w-6xl 2xl:max-w-[1720px] relative z-10">
 
         {/* Section Header */}
         <div className="flex flex-col items-center text-center mb-8">

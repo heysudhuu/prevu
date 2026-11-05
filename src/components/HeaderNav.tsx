@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import SignOutButton from '@/components/auth/SignOutButton'
 import {
   ShieldCheck,
+  ShieldAlert,
   LayoutDashboard,
   Upload,
   User,
@@ -116,7 +117,13 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
       icon: <Sparkles className="w-4 h-4 text-cyan-400" />
     },
     {
-      href: '/exam-prep',
+      href: '/#reappear-rescue',
+    label: 'Reappear & Remedial Vault',
+    desc: 'High-yield emergency PYQs, 80/20 crash notes & pass plan',
+    icon: <ShieldAlert className="w-4 h-4 text-amber-400" />
+  },
+  {
+    href: '/exam-prep',
       label: 'Exam Prep Workspace',
       desc: 'Targeted MST & EST prep with syllabus weightage',
       icon: <Target className="w-4 h-4 text-amber-400" />

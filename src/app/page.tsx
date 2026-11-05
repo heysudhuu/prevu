@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Terminal } from 'lucide-react'
 import Header from '@/components/Header'
 import LandingPageContent from '@/components/LandingPageContent'
+import ReappearRescueSection from '@/components/landing/ReappearRescueSection'
 import ThemeSelectorSection from '@/components/theme/ThemeSelectorSection'
 import RecentPapersSection from '@/components/landing/RecentPapersSection'
 import CommunityAndFaqSection from '@/components/landing/CommunityAndFaqSection'
@@ -15,7 +16,10 @@ export default function Home() {
       {/* 1. Master Hero, Connected Git Spine, Contribution Calendar & Fast-Track Curriculum */}
       <LandingPageContent />
 
-      {/* 2. Compact Visual Theme Engine Workbench (10 Palettes) */}
+      {/* 2. Reappear & Remedial Rescue Vault (High-Yield PYQs & 80/20 Study Material) */}
+      <ReappearRescueSection />
+
+      {/* 3. Compact Visual Theme Engine Workbench (10 Palettes) */}
       <ThemeSelectorSection />
 
       {/* 3. Fresh Vault Additions — Recent Paper Carousels */}
@@ -52,6 +56,7 @@ export default function Home() {
               <div className="font-mono text-[11px] font-bold uppercase text-white/80 tracking-widest mb-3">Academic Vault</div>
               <ul className="space-y-2 text-xs font-mono">
                 <li><Link href="/browse" className="hover:text-emerald-400 transition-colors">Question Papers (PYQs)</Link></li>
+                <li><Link href="#reappear-rescue" className="text-amber-400 hover:text-amber-300 font-bold transition-colors">Reappear &amp; Remedial Vault</Link></li>
                 <li><Link href="/study-material" className="hover:text-emerald-400 transition-colors">Curated Study Notes</Link></li>
                 <li><Link href="/exam-prep" className="hover:text-emerald-400 transition-colors">Exam Prep Workspace</Link></li>
                 <li><Link href="/subjects" className="hover:text-emerald-400 transition-colors">All 8 Semesters Curriculum</Link></li>

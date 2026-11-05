@@ -757,7 +757,7 @@ export default function CurriculumStudyMaterialSection() {
 
   return (
     <section id="curriculum-study-material" className="py-14 sm:py-20 border-b border-[#30363d]/60 bg-[#0d1117] font-mono relative overflow-hidden">
-      
+
       {/* Background Ambience */}
       <div className="absolute right-1/4 top-0 w-[500px] h-[300px] bg-cyan-500/5 blur-[120px] pointer-events-none" />
 
@@ -794,11 +794,10 @@ export default function CurriculumStudyMaterialSection() {
               key={sem}
               type="button"
               onClick={() => setSelectedSem(sem)}
-              className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
-                selectedSem === sem
+              className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${selectedSem === sem
                   ? 'bg-cyan-600 text-white border-cyan-400 shadow-lg shadow-cyan-600/30'
                   : 'bg-[#161b22] border-[#30363d] text-[#7d8590] hover:text-white hover:border-[#7d8590]'
-              }`}
+                }`}
             >
               <span>Semester {sem}</span>
             </button>
@@ -822,11 +821,10 @@ export default function CurriculumStudyMaterialSection() {
                 key={type.id}
                 type="button"
                 onClick={() => setCategoryFilter(type.id)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  categoryFilter === type.id
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${categoryFilter === type.id
                     ? 'bg-cyan-600 text-white font-bold'
                     : 'bg-[#0d1117] text-[#7d8590] hover:text-white border border-[#30363d]'
-                }`}
+                  }`}
               >
                 {type.label}
               </button>
@@ -948,3 +946,4 @@ export default function CurriculumStudyMaterialSection() {
     </section>
   )
 }
+

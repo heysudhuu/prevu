@@ -723,7 +723,7 @@ export default function CurriculumPyqSection() {
 
   return (
     <section id="curriculum-pyqs" className="py-14 sm:py-20 border-b border-[#30363d]/60 bg-[#010409] font-mono relative overflow-hidden">
-      
+
       {/* Background Ambience */}
       <div className="absolute left-1/4 top-0 w-[500px] h-[300px] bg-emerald-500/5 blur-[120px] pointer-events-none" />
 
@@ -760,11 +760,10 @@ export default function CurriculumPyqSection() {
               key={sem}
               type="button"
               onClick={() => setSelectedSem(sem)}
-              className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
-                selectedSem === sem
+              className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${selectedSem === sem
                   ? 'bg-[#238636] text-white border-[#2ea44f] shadow-lg shadow-[#238636]/30'
                   : 'bg-[#161b22] border-[#30363d] text-[#7d8590] hover:text-white hover:border-[#7d8590]'
-              }`}
+                }`}
             >
               <span>Semester {sem}</span>
             </button>
@@ -782,11 +781,10 @@ export default function CurriculumPyqSection() {
                 key={type}
                 type="button"
                 onClick={() => setExamTypeFilter(type)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  examTypeFilter === type
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${examTypeFilter === type
                     ? 'bg-[#238636] text-white font-bold'
                     : 'bg-[#0d1117] text-[#7d8590] hover:text-white border border-[#30363d]'
-                }`}
+                  }`}
               >
                 {type === 'ALL' ? 'All Exams' : type}
               </button>
@@ -896,3 +894,4 @@ export default function CurriculumPyqSection() {
     </section>
   )
 }
+

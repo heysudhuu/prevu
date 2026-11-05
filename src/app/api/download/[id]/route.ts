@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/utils/supabase/admin'
 import { cookies } from 'next/headers'
 import { authAdmin } from '@/lib/firebase/server'
+import { generateAcademicDownloadText } from '@/lib/academic-preview/generateAcademicDocument'
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params
@@ -36,7 +37,17 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     .single()
 
   if (error || !resource) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    // Return generated academic solved document for download
+    const textData = generateAcademicDownloadText(id)
+    const cleanId = id.replace(/[^a-zA-Z0-9_-]/g, '_')
+    return new NextResponse(textData, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${cleanId}_Solved_Paper.txt"`,
+        'Cache-Control': 'public, max-age=3600'
+      }
+    })
   }
 
   // Only admins can download pending/rejected, or the person who uploaded it

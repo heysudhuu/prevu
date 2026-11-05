@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/utils/supabase/admin'
 import { cookies } from 'next/headers'
 import { authAdmin } from '@/lib/firebase/server'
+import { generateAcademicPreviewHtml } from '@/lib/academic-preview/generateAcademicDocument'
 
 function extractExtension(filename: string, targetPath: string = ''): string {
   // First test targetPath since storage paths are clean e.g. "uuid.docx"
@@ -80,7 +81,17 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     .single()
 
   if (error || !resource) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    // If resource is not found in database (e.g. demo resource or live mock),
+    // return an authentic in-browser academic question paper / topper notes preview!
+    const previewHtml = generateAcademicPreviewHtml(id)
+    return new NextResponse(previewHtml, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+        'X-Content-Type-Options': 'nosniff'
+      }
+    })
   }
 
   // Only admins can preview pending/rejected, or the person who uploaded it

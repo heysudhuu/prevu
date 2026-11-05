@@ -29,7 +29,8 @@ import {
   Play,
   RotateCw,
   Cpu,
-  Command
+  Command,
+  Activity
 } from 'lucide-react'
 import InteractiveTerminalConsole from '@/components/terminal/InteractiveTerminalConsole'
 
@@ -143,6 +144,78 @@ const TERMINAL_COMMANDS = [
   }
 ]
 
+// Real-time Academic Git Stream logs (simulating live verified downloads)
+const LIVE_VAULT_LOGS = [
+  {
+    id: 'act-1',
+    time: '2m ago',
+    hash: '8f3a9e',
+    sem: 'CSE Sem 4',
+    title: 'Downloaded 23CSH-242 OS Solved EST',
+    tag: 'PYQ',
+    color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+  },
+  {
+    id: 'act-2',
+    time: '6m ago',
+    hash: '4c12d0',
+    sem: 'Senior Peer',
+    title: 'Verified 2024 DAA MST-2 working notes',
+    tag: 'Verified',
+    color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20'
+  },
+  {
+    id: 'act-3',
+    time: '11m ago',
+    hash: '9e58ba',
+    sem: 'Aptitude Hub',
+    title: 'Scholar scored 100% on Speed Math CBT',
+    tag: 'CBT 100%',
+    color: 'text-amber-400 bg-amber-500/10 border-amber-500/20'
+  },
+  {
+    id: 'act-4',
+    time: '19m ago',
+    hash: '1a04fd',
+    sem: 'Offline PWA',
+    title: 'Auto-cached 4 new answer blueprints',
+    tag: 'Sync',
+    color: 'text-purple-400 bg-purple-500/10 border-purple-500/20'
+  }
+]
+
+// Engine Performance & Architecture Specs
+const ENGINE_SPECS = [
+  {
+    label: 'Cache Latency',
+    val: '0ms Instant',
+    desc: 'Local IndexedDB offline PWA vault',
+    icon: Zap,
+    color: 'text-emerald-400'
+  },
+  {
+    label: 'Leak Protection',
+    val: 'Zero Leakage',
+    desc: 'CBT mock server-side isolated grading',
+    icon: ShieldCheck,
+    color: 'text-cyan-400'
+  },
+  {
+    label: 'Verified Answers',
+    val: 'Senior Audited',
+    desc: 'Handwritten steps & formula derivations',
+    icon: Check,
+    color: 'text-amber-400'
+  },
+  {
+    label: 'Theme Engine',
+    val: '10 Palettes',
+    desc: 'Dynamic real-time developer color profiles',
+    icon: Sparkles,
+    color: 'text-purple-400'
+  }
+]
+
 export default function LandingPageContent() {
   const router = useRouter()
   const [heroSearch, setHeroSearch] = useState('')
@@ -151,10 +224,18 @@ export default function LandingPageContent() {
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [cbtOption, setCbtOption] = useState<string | null>('B')
   const [simulatedScore, setSimulatedScore] = useState<number | null>(null)
+  const [hoveredCell, setHoveredCell] = useState<{ col: number; row: number; level: number } | null>(null)
   
   // Interactive Terminal State
   const [activeTab, setActiveTab] = useState(0)
   const [terminalRunning, setTerminalRunning] = useState(false)
+
+  // Trigger command directly in terminal
+  const triggerTerminalCmd = (cmd: string) => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('terminal-run-cmd', { detail: cmd }))
+    }
+  }
 
   // Interactive Mascot Eye Tracking
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
@@ -274,7 +355,7 @@ export default function LandingPageContent() {
         {/* Ambient Emerald Terminal Ambient Glow */}
         <div className="absolute left-1/2 -top-20 -translate-x-1/2 w-[750px] h-[380px] bg-emerald-500/10 blur-[140px] pointer-events-none" />
 
-        <div className="container mx-auto px-4 relative z-10 max-w-5xl flex flex-col items-center text-center">
+        <div className="container mx-auto px-4 relative z-10 max-w-7xl flex flex-col items-center text-center">
           
           {/* Eyebrow Badge Pill */}
           <motion.div 
@@ -431,16 +512,147 @@ export default function LandingPageContent() {
             ))}
           </div>
 
+          {/* Mobile/Tablet Live Vault Activity Strip */}
+          <div className="xl:hidden w-full max-w-2xl px-3 py-1.5 rounded-xl bg-[#161b22] border border-[#30363d] text-[11px] font-mono text-[#7d8590] flex items-center justify-between gap-2 mb-6 overflow-hidden">
+            <div className="flex items-center gap-2 truncate">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 animate-pulse" />
+              <span className="text-white font-bold shrink-0">Live:</span>
+              <span className="truncate text-emerald-400">CSE Sem 4 fetched 23CSH-242 OS Solved EST (2m ago)</span>
+            </div>
+            <button 
+              type="button" 
+              onClick={() => triggerTerminalCmd('neofetch')}
+              className="text-[10px] text-cyan-400 hover:underline shrink-0 font-bold"
+            >
+              $ neofetch &rarr;
+            </button>
+          </div>
+
           {/* ============================================================ */}
-          {/* LIVE INTERACTIVE TERMINAL CONSOLE                            */}
+          {/* LIVE INTERACTIVE TERMINAL WORKBENCH & FLANKS                 */}
           {/* ============================================================ */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.35 }}
-            className="w-full flex justify-center"
+            className="w-full max-w-6xl grid grid-cols-1 xl:grid-cols-12 gap-5 items-start mb-6"
           >
-            <InteractiveTerminalConsole />
+            {/* Left Flank: Live Vault Activity Stream (Fills the Left Red-Mark Void) */}
+            <div className="hidden xl:flex xl:col-span-3 flex-col rounded-2xl bg-[#0d1117] border border-[#30363d] p-3.5 shadow-2xl text-left font-mono">
+              <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-[#30363d]/60">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[11px] font-bold text-white uppercase tracking-wider">Live Vault Stream</span>
+                </div>
+                <span className="text-[10px] text-[#7d8590] bg-[#161b22] px-2 py-0.5 rounded border border-[#30363d]">git::live</span>
+              </div>
+
+              <div className="space-y-2.5">
+                {LIVE_VAULT_LOGS.map((item) => (
+                  <div key={item.id} className="p-2.5 rounded-xl bg-[#161b22] border border-[#30363d]/50 hover:border-[#30363d] transition-all text-left group">
+                    <div className="flex items-center justify-between text-[10px] text-[#7d8590] mb-1">
+                      <span className="text-emerald-400 font-bold">{item.sem}</span>
+                      <span>{item.time}</span>
+                    </div>
+                    <p className="text-[11px] text-[#e6edf3] font-medium leading-snug line-clamp-2 group-hover:text-white transition-colors">
+                      {item.title}
+                    </p>
+                    <div className="mt-1.5 flex items-center justify-between text-[9px] text-[#7d8590]">
+                      <span className="font-mono text-[#7d8590] group-hover:text-emerald-400/80 transition-colors">ref: {item.hash}</span>
+                      <span className={`px-1.5 py-0.2 rounded border font-semibold ${item.color}`}>
+                        {item.tag}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Interactive Trigger Pill */}
+              <div className="mt-3 pt-2.5 border-t border-[#30363d]/60 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => triggerTerminalCmd('status')}
+                  className="w-full text-center py-1.5 px-2 rounded-lg bg-[#21262d] hover:bg-[#30363d] text-[10px] text-emerald-400 hover:text-emerald-300 font-bold transition-all border border-[#30363d] flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Activity className="w-3 h-3" />
+                  <span>Inspect Vault Status</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Center: Interactive Terminal Console */}
+            <div className="xl:col-span-6 flex justify-center w-full">
+              <InteractiveTerminalConsole />
+            </div>
+
+            {/* Right Flank: Engine Telemetry & Fast-Runs */}
+            <div className="hidden xl:flex xl:col-span-3 flex-col rounded-2xl bg-[#0d1117] border border-[#30363d] p-3.5 shadow-2xl text-left font-mono">
+              <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-[#30363d]/60">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400" />
+                  <span className="text-[11px] font-bold text-white uppercase tracking-wider">Engine Specs</span>
+                </div>
+                <span className="text-[10px] text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/30">v2.6.0</span>
+              </div>
+
+              <div className="space-y-2">
+                {ENGINE_SPECS.map((spec) => {
+                  const Icon = spec.icon
+                  return (
+                    <div key={spec.label} className="p-2 rounded-xl bg-[#161b22] border border-[#30363d]/50 hover:border-[#30363d] transition-all">
+                      <div className="flex items-center justify-between text-[11px] mb-0.5">
+                        <span className="text-[#7d8590] flex items-center gap-1.5">
+                          <Icon className={`w-3 h-3 ${spec.color}`} />
+                          {spec.label}
+                        </span>
+                        <span className={`font-bold ${spec.color}`}>{spec.val}</span>
+                      </div>
+                      <p className="text-[10px] text-[#7d8590] leading-tight pl-4">
+                        {spec.desc}
+                      </p>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Quick CLI Shortcuts */}
+              <div className="mt-3 pt-2.5 border-t border-[#30363d]/60 space-y-1.5">
+                <div className="text-[9px] uppercase tracking-wider text-[#7d8590] font-bold flex items-center justify-between">
+                  <span>CLI Fast-Runs</span>
+                  <span className="text-emerald-400 font-mono">Click to fire</span>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => triggerTerminalCmd('neofetch')}
+                    className="p-1 rounded bg-[#21262d] hover:bg-[#30363d] text-[10px] text-[#7d8590] hover:text-white border border-[#30363d] transition-colors cursor-pointer text-center"
+                  >
+                    $ neofetch
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => triggerTerminalCmd('cgpa 8.5')}
+                    className="p-1 rounded bg-[#21262d] hover:bg-[#30363d] text-[10px] text-[#7d8590] hover:text-white border border-[#30363d] transition-colors cursor-pointer text-center"
+                  >
+                    $ cgpa 8.5
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => triggerTerminalCmd('cbt --mock')}
+                    className="p-1 rounded bg-[#21262d] hover:bg-[#30363d] text-[10px] text-[#7d8590] hover:text-white border border-[#30363d] transition-colors cursor-pointer text-center"
+                  >
+                    $ cbt mock
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => triggerTerminalCmd('matrix')}
+                    className="p-1 rounded bg-[#21262d] hover:bg-[#30363d] text-[10px] text-[#7d8590] hover:text-white border border-[#30363d] transition-colors cursor-pointer text-center"
+                  >
+                    $ matrix
+                  </button>
+                </div>
+              </div>
+            </div>
           </motion.div>
 
           {/* Interactive Peeking Vee Mascot with Cursor Tracking */}
@@ -690,6 +902,8 @@ export default function LandingPageContent() {
                       return (
                         <div 
                           key={rIdx} 
+                          onMouseEnter={() => setHoveredCell({ col: cIdx, row: rIdx, level })}
+                          onMouseLeave={() => setHoveredCell(null)}
                           className={`w-3 h-3 rounded-sm ${colorClass} transition-transform hover:scale-125 cursor-pointer`}
                           title={`Day commit intensity level: ${level}`}
                         />
@@ -697,6 +911,30 @@ export default function LandingPageContent() {
                     })}
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Interactive Heatmap Footer: Academic Streak & Cell Inspection */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mt-4 pt-3 border-t border-[#30363d]/50 text-xs font-mono text-[#7d8590]">
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-400 font-bold flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  42-Day Academic Prep Streak
+                </span>
+                <span className="text-[#30363d]">•</span>
+                <span>Avg 31 contributions / week</span>
+              </div>
+              <div className="text-xs">
+                {hoveredCell ? (
+                  <span className="text-white font-medium">
+                    Week {hoveredCell.col + 1}, {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][hoveredCell.row]}:{' '}
+                    <strong className="text-emerald-400">
+                      {hoveredCell.level === 0 ? 'No uploads recorded' : `${hoveredCell.level * 3 + 2} verified paper & notes contributions`}
+                    </strong>
+                  </span>
+                ) : (
+                  <span className="text-[#7d8590] hidden sm:inline">Hover over any day square for upload details</span>
+                )}
               </div>
             </div>
           </div>

@@ -3,12 +3,12 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { PREVU_THEMES } from '@/lib/constants/themes'
-import { 
-  Terminal as TerminalIcon, 
-  Volume2, 
-  VolumeX, 
-  RotateCw, 
-  CornerDownLeft, 
+import {
+  Terminal as TerminalIcon,
+  Volume2,
+  VolumeX,
+  RotateCw,
+  CornerDownLeft,
   Sparkles,
   Command,
   HelpCircle,
@@ -45,7 +45,7 @@ export default function InteractiveTerminalConsole() {
   const [soundEnabled, setSoundEnabled] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [isMatrixRain, setIsMatrixRain] = useState(false)
-  
+
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -53,6 +53,18 @@ export default function InteractiveTerminalConsole() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [logs, isMatrixRain])
+
+  // Listen for global command triggers from quick-run chips or external cards
+  useEffect(() => {
+    const handleCustomCmd = (e: Event) => {
+      const customEvent = e as CustomEvent<string>
+      if (customEvent.detail) {
+        handleCommandExecution(customEvent.detail)
+      }
+    }
+    window.addEventListener('terminal-run-cmd', handleCustomCmd)
+    return () => window.removeEventListener('terminal-run-cmd', handleCustomCmd)
+  }, [])
 
   // Play mechanical key click sound
   const playKeySound = () => {
@@ -63,12 +75,12 @@ export default function InteractiveTerminalConsole() {
       const ctx = new AudioCtx()
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
-      
+
       osc.type = 'triangle'
       osc.frequency.setValueAtTime(600 + Math.random() * 200, ctx.currentTime)
       gain.gain.setValueAtTime(0.015, ctx.currentTime)
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03)
-      
+
       osc.connect(gain)
       gain.connect(ctx.destination)
       osc.start()
@@ -87,7 +99,7 @@ export default function InteractiveTerminalConsole() {
       const ctx = new AudioCtx()
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
-      
+
       osc.type = 'sine'
       if (success) {
         osc.frequency.setValueAtTime(523.25, ctx.currentTime) // C5
@@ -98,7 +110,7 @@ export default function InteractiveTerminalConsole() {
       }
       gain.gain.setValueAtTime(0.03, ctx.currentTime)
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12)
-      
+
       osc.connect(gain)
       gain.connect(ctx.destination)
       osc.start()
@@ -115,7 +127,7 @@ export default function InteractiveTerminalConsole() {
     // Add command to log
     const cmdLogId = Date.now().toString()
     setLogs(prev => [...prev, { id: cmdLogId, type: 'cmd', text: trimmed }])
-    
+
     // Update history
     setHistory(prev => [trimmed, ...prev])
     setHistoryIndex(-1)
@@ -193,7 +205,7 @@ export default function InteractiveTerminalConsole() {
 
         const targetThemeId = args[0].toLowerCase()
         const match = PREVU_THEMES.find(t => t.id === targetThemeId || t.name.toLowerCase().includes(targetThemeId))
-        
+
         if (match) {
           playCompleteSound(true)
           // Live apply theme
@@ -260,10 +272,10 @@ export default function InteractiveTerminalConsole() {
         playCompleteSound(true)
         const target = parseFloat(args[0]) || 8.5
         const validTarget = Math.min(Math.max(target, 4.0), 10.0)
-        
+
         const mstTarget = Math.round(validTarget * 2.8)
         const estTarget = Math.round(validTarget * 7.5)
-        
+
         setLogs(prev => [
           ...prev,
           { id: makeId(), type: 'info', text: `════ TARGET CGPA ROADMAP: ${validTarget.toFixed(2)} ════` },
@@ -335,10 +347,10 @@ export default function InteractiveTerminalConsole() {
         playCompleteSound(false)
         setLogs(prev => [
           ...prev,
-          { 
-            id: makeId(), 
-            type: 'error', 
-            text: `Command not recognized: "${fullStr}". Type "help" for available commands.` 
+          {
+            id: makeId(),
+            type: 'error',
+            text: `Command not recognized: "${fullStr}". Type "help" for available commands.`
           }
         ])
         break
@@ -382,7 +394,7 @@ export default function InteractiveTerminalConsole() {
 
   return (
     <div className="w-full max-w-3xl rounded-2xl bg-[#0d1117] border border-[#30363d] shadow-2xl overflow-hidden text-left mb-8 font-mono">
-      
+
       {/* Terminal Titlebar */}
       <div className="flex items-center justify-between px-4 py-3 bg-[#161b22] border-b border-[#30363d]">
         <div className="flex items-center gap-2">
@@ -403,11 +415,10 @@ export default function InteractiveTerminalConsole() {
             type="button"
             onClick={() => setSoundEnabled(prev => !prev)}
             title={soundEnabled ? 'Mute Mechanical Keystrokes' : 'Enable Mechanical Keystroke Sound'}
-            className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
-              soundEnabled 
-                ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300' 
+            className={`p-1.5 rounded-lg border transition-all cursor-pointer ${soundEnabled
+                ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
                 : 'bg-[#21262d] border-[#30363d] text-[#7d8590] hover:text-white'
-            }`}
+              }`}
           >
             {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
           </button>
@@ -424,7 +435,7 @@ export default function InteractiveTerminalConsole() {
       </div>
 
       {/* Terminal Screen Body */}
-      <div 
+      <div
         className="p-4 sm:p-5 text-xs text-[#e6edf3] space-y-2 max-h-52 sm:max-h-60 overflow-y-auto cursor-text select-text"
         onClick={() => inputRef.current?.focus()}
       >
@@ -453,12 +464,12 @@ export default function InteractiveTerminalConsole() {
               )
             }
             return (
-              <div 
-                key={log.id} 
+              <div
+                key={log.id}
                 className={
                   log.type === 'ok' ? 'text-emerald-400' :
-                  log.type === 'error' ? 'text-rose-400 font-bold' :
-                  log.type === 'warn' ? 'text-amber-400' : 'text-[#7d8590]'
+                    log.type === 'error' ? 'text-rose-400 font-bold' :
+                      log.type === 'warn' ? 'text-amber-400' : 'text-[#7d8590]'
                 }
               >
                 {log.text}
@@ -485,8 +496,8 @@ export default function InteractiveTerminalConsole() {
           {isProcessing ? (
             <RotateCw className="w-3.5 h-3.5 text-emerald-400 animate-spin" />
           ) : (
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => handleCommandExecution(inputVal)}
               className="text-[#7d8590] hover:text-emerald-400 p-0.5 cursor-pointer"
               title="Execute Command"

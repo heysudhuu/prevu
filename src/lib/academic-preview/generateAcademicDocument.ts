@@ -571,3 +571,4 @@ export function generateAcademicDownloadText(resourceId: string): string {
   text += `========================================================================\n`
   return text
 }
+

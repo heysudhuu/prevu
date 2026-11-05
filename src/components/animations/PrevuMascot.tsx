@@ -35,6 +35,11 @@ export default function PrevuMascot() {
   }, [eyeControls, bodyControls])
 
   const handleClick = () => {
+    // Open Vee Academic AI Chatbot
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('prevu:open-ai-chat'))
+    }
+
     // Celebration spin on click
     bodyControls.start({
       rotate: [0, 360],
@@ -63,7 +68,7 @@ export default function PrevuMascot() {
         initial={{ y: 5 }}
         whileHover={{ y: 0 }}
       >
-        Need study materials?
+        Need help? Ask Vee AI! 🤖
       </motion.div>
 
       {/* Mascot Body */}

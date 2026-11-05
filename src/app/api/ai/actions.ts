@@ -21,6 +21,68 @@ export interface ExamInsightsResult {
  * Generates an AI-powered Exam Blueprint, Formula Sheet & Study Guide
  * powered by Google Gemini (with robust fallback heuristics).
  */
+// Helper to query OpenAI or Gemini with automatic fallback
+async function callAiChatJson(prompt: string, maxTokens = 1500) {
+  const openaiKey = process.env.OPENAI_API_KEY
+  if (openaiKey) {
+    try {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${openaiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.2,
+          response_format: { type: 'json_object' },
+          max_tokens: maxTokens
+        })
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const content = data?.choices?.[0]?.message?.content
+        if (content) {
+          return JSON.parse(content)
+        }
+      }
+    } catch (err) {
+      console.warn('OpenAI call failed, falling back:', err)
+    }
+  }
+
+  const geminiKey = process.env.GEMINI_API_KEY
+  if (geminiKey) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: maxTokens
+          }
+        })
+      })
+      if (response.ok) {
+        const data = await response.json()
+        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim()
+        if (rawText) {
+          const cleanedText = rawText.replace(/^```json\s*/i, '').replace(/\s*```$/, '').trim()
+          return JSON.parse(cleanedText)
+        }
+      }
+    } catch (err) {
+      console.warn('Gemini call failed:', err)
+    }
+  }
+
+  return null
+}
+
 export async function generateExamAssistantInsights(resourceId: string): Promise<ExamInsightsResult> {
   try {
     const supabase = getSupabaseAdmin()
@@ -50,11 +112,7 @@ export async function generateExamAssistantInsights(resourceId: string): Promise
     const examType = (resource.exam_types as any)?.name || 'MST'
     const examYear = resource.exam_year
 
-    const apiKey = process.env.GEMINI_API_KEY
-
-    if (apiKey) {
-      try {
-        const prompt = `
+    const prompt = `
 You are an expert Chandigarh University (CU) engineering professor and academic advisor.
 Analyze the following university exam context:
 - Subject: "${subjectName}" (${subjectCode})
@@ -63,49 +121,28 @@ Analyze the following university exam context:
 
 Provide a structured, highly actionable study blueprint in strictly valid JSON format with this exact structure:
 {
-  "keyTopics": ["Topic 1 with short description", "Topic 2 with short description", ... 5 items max],
-  "formulaeSheet": ["Formula/Theorem/Concept 1", "Formula/Theorem/Concept 2", ... 5 items max],
-  "frequentQuestions": ["Frequently tested question pattern 1", "Pattern 2", "Pattern 3", ... 4 items max],
+  "keyTopics": ["Topic 1 with short description", "Topic 2 with short description", "Topic 3", "Topic 4", "Topic 5"],
+  "formulaeSheet": ["Formula/Theorem/Concept 1", "Formula/Theorem/Concept 2", "Formula 3", "Formula 4"],
+  "frequentQuestions": ["Frequently tested question pattern 1", "Pattern 2", "Pattern 3"],
   "scoringStrategy": "A 2-3 sentence strategic tip on how to maximize score in CU ${examType} for ${subjectName}."
 }
-Only output the raw JSON, no markdown code blocks or additional text.
+Only output strictly valid JSON format.
 `
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.2,
-              maxOutputTokens: 1024
-            }
-          })
-        })
 
-        if (response.ok) {
-          const data = await response.json()
-          const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim()
-          if (rawText) {
-            const cleanedText = rawText.replace(/^```json\s*/i, '').replace(/\s*```$/, '').trim()
-            const parsed = JSON.parse(cleanedText)
-            return {
-              success: true,
-              insights: {
-                subjectName,
-                subjectCode,
-                examType,
-                examYear,
-                keyTopics: parsed.keyTopics || [],
-                formulaeSheet: parsed.formulaeSheet || [],
-                frequentQuestions: parsed.frequentQuestions || [],
-                scoringStrategy: parsed.scoringStrategy || ''
-              }
-            }
-          }
+    const parsed = await callAiChatJson(prompt, 1024)
+    if (parsed) {
+      return {
+        success: true,
+        insights: {
+          subjectName,
+          subjectCode,
+          examType,
+          examYear,
+          keyTopics: parsed.keyTopics || [],
+          formulaeSheet: parsed.formulaeSheet || [],
+          frequentQuestions: parsed.frequentQuestions || [],
+          scoringStrategy: parsed.scoringStrategy || ''
         }
-      } catch (geminiErr) {
-        console.warn('Gemini API call failed, using heuristic blueprint fallback:', geminiErr)
       }
     }
 
@@ -171,10 +208,8 @@ export async function solvePaperQuestion(
     return { success: false, error: 'Please enter a valid question to solve.' }
   }
 
-  const apiKey = process.env.GEMINI_API_KEY
-  if (apiKey) {
-    try {
-      const prompt = `
+  try {
+    const prompt = `
 You are a senior professor and head evaluator at Chandigarh University (CU).
 A student needs a high-scoring model answer for their university exam:
 Subject: "${subjectName}"
@@ -192,41 +227,22 @@ Return strictly valid JSON with this exact structure:
 }
 Only output the raw JSON, no markdown code fence or extra chatter.
 `
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.3,
-            maxOutputTokens: 1500
-          }
-        })
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim()
-        if (rawText) {
-          const cleanedText = rawText.replace(/^```json\s*/i, '').replace(/\s*```$/, '').trim()
-          const parsed = JSON.parse(cleanedText)
-          return {
-            success: true,
-            solution: {
-              question: questionText,
-              marksWeightage: parsed.marksWeightage || '5-10 Marks',
-              keyPoints: parsed.keyPoints || [],
-              stepByStepAnswer: parsed.stepByStepAnswer || '',
-              cuMarkingTip: parsed.cuMarkingTip || 'Draw a neat labeled diagram to secure full marks.',
-              diagramCodeSnippet: parsed.diagramCodeSnippet || ''
-            }
-          }
+    const parsed = await callAiChatJson(prompt, 1500)
+    if (parsed) {
+      return {
+        success: true,
+        solution: {
+          question: questionText,
+          marksWeightage: parsed.marksWeightage || '5-10 Marks',
+          keyPoints: parsed.keyPoints || [],
+          stepByStepAnswer: parsed.stepByStepAnswer || '',
+          cuMarkingTip: parsed.cuMarkingTip || 'Draw a neat labeled diagram to secure full marks.',
+          diagramCodeSnippet: parsed.diagramCodeSnippet || ''
         }
       }
-    } catch (err) {
-      console.warn('Gemini question solver error, using heuristic fallback:', err)
     }
+  } catch (err) {
+    console.warn('AI question solver error, using heuristic fallback:', err)
   }
 
   // Heuristic Fallback Answer
@@ -282,11 +298,8 @@ export async function predictExamPatterns(
   subjectCode: string,
   examType: string
 ): Promise<ExamPatternPredictionResult> {
-  const apiKey = process.env.GEMINI_API_KEY
-
-  if (apiKey) {
-    try {
-      const prompt = `
+  try {
+    const prompt = `
 You are the Chief Examination Auditor at Chandigarh University (CU).
 Analyze 5 years of exam papers for:
 - Subject: "${subjectName}" (${subjectCode})
@@ -302,8 +315,7 @@ Return strictly valid JSON with this exact structure:
       "frequencyYears": "Appeared in 2022, 2023, 2025",
       "unit": "Unit 1",
       "marks": "10 Marks"
-    },
-    ... 4 items total
+    }
   ],
   "repeatedTopicsHeatmap": [
     { "topic": "Topic Name", "appearanceRate": "90% of past exams", "importance": "Critical" },
@@ -315,42 +327,23 @@ Return strictly valid JSON with this exact structure:
 }
 Only output the raw JSON, no markdown code fence or extra text.
 `
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 1200
-          }
-        })
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim()
-        if (rawText) {
-          const cleanedText = rawText.replace(/^```json\s*/i, '').replace(/\s*```$/, '').trim()
-          const parsed = JSON.parse(cleanedText)
-          return {
-            success: true,
-            predictions: {
-              subjectName,
-              subjectCode,
-              examType,
-              highProbabilityQuestions: parsed.highProbabilityQuestions || [],
-              repeatedTopicsHeatmap: parsed.repeatedTopicsHeatmap || [],
-              safeToDeprioritize: parsed.safeToDeprioritize || [],
-              examinerAdvice: parsed.examinerAdvice || ''
-            }
-          }
+    const parsed = await callAiChatJson(prompt, 1200)
+    if (parsed) {
+      return {
+        success: true,
+        predictions: {
+          subjectName,
+          subjectCode,
+          examType,
+          highProbabilityQuestions: parsed.highProbabilityQuestions || [],
+          repeatedTopicsHeatmap: parsed.repeatedTopicsHeatmap || [],
+          safeToDeprioritize: parsed.safeToDeprioritize || [],
+          examinerAdvice: parsed.examinerAdvice || ''
         }
       }
-    } catch (err) {
-      console.warn('Gemini pattern prediction error, using heuristic fallback:', err)
     }
+  } catch (err) {
+    console.warn('AI pattern prediction error, using heuristic fallback:', err)
   }
 
   // Heuristic Fallback Analysis

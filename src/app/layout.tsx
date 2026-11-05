@@ -30,6 +30,7 @@ import { SiteAnalyticsTracker } from "@/components/analytics/SiteAnalyticsTracke
 import PWAProvider from "@/components/pwa/PWAProvider";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import GlobalCommandPalette from "@/components/search/GlobalCommandPalette";
+import GlobalAcademicChatbot from "@/components/ai/GlobalAcademicChatbot";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -52,6 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PWAProvider />
         <SiteAnalyticsTracker />
         <PrevuMascot />
+        <GlobalAcademicChatbot />
         <AuthListener />
         <Analytics />
       </body>

@@ -9,6 +9,7 @@ import ReappearRescueSection from '@/components/landing/ReappearRescueSection'
 import ThemeSelectorSection from '@/components/theme/ThemeSelectorSection'
 import RecentPapersSection from '@/components/landing/RecentPapersSection'
 import CommunityAndFaqSection from '@/components/landing/CommunityAndFaqSection'
+import RoamingRobot from '@/components/mascot/RoamingRobot'
 
 export default function Home() {
   return (
@@ -100,6 +101,9 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Futuristic 3D-Style Roaming Robot Mascot */}
+      <RoamingRobot />
     </div>
   )
 }

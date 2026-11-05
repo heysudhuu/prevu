@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
-import PrevuMascot from "@/components/animations/PrevuMascot";
 import AuthListener from "@/components/auth/AuthListener";
 
 const inter = Inter({
@@ -52,7 +51,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <MobileBottomNav />
         <PWAProvider />
         <SiteAnalyticsTracker />
-        <PrevuMascot />
         <GlobalAcademicChatbot />
         <AuthListener />
         <Analytics />

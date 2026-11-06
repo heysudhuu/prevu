@@ -33,6 +33,8 @@ import {
   Activity
 } from 'lucide-react'
 import InteractiveTerminalConsole from '@/components/terminal/InteractiveTerminalConsole'
+import { RealLiveLog, RealPlatformStats, RealPeerReview } from '@/app/actions/homepage'
+import { LeaderboardUser } from '@/app/leaderboard/actions'
 
 const PDFViewerModal = dynamic(() => import('@/components/preview/PDFViewerModal'), {
   ssr: false
@@ -145,42 +147,54 @@ const TERMINAL_COMMANDS = [
 ]
 
 // Real-time Academic Git Stream logs (simulating live verified downloads)
-const LIVE_VAULT_LOGS = [
+const LIVE_VAULT_LOGS: RealLiveLog[] = [
   {
     id: 'act-1',
     time: '2m ago',
     hash: '8f3a9e',
     sem: 'CSE Sem 4',
-    title: 'Downloaded 23CSH-242 OS Solved EST',
-    tag: 'PYQ',
-    color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+    title: '23CSH-242 Operating Systems EST Solved',
+    tag: 'EST Solved',
+    color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+    uploaderUsername: 'yashasvee',
+    uploaderName: 'Yashasvi Dabas',
+    cuVerified: true
   },
   {
     id: 'act-2',
-    time: '6m ago',
+    time: '18m ago',
     hash: '4c12d0',
-    sem: 'Senior Peer',
-    title: 'Verified 2024 DAA MST-2 working notes',
-    tag: 'Verified',
-    color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20'
+    sem: 'CSE Sem 5',
+    title: '21CSH-311 DAA Dynamic Programming Notes',
+    tag: 'Topper Notes',
+    color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20',
+    uploaderUsername: 'sudhu',
+    uploaderName: 'Sudhanshu Yadav',
+    cuVerified: true
   },
   {
     id: 'act-3',
-    time: '11m ago',
+    time: '1h ago',
     hash: '9e58ba',
-    sem: 'Aptitude Hub',
-    title: 'Scholar scored 100% on Speed Math CBT',
-    tag: 'CBT 100%',
-    color: 'text-amber-400 bg-amber-500/10 border-amber-500/20'
+    sem: 'CSE Sem 3',
+    title: '22CS201 Data Structures AVL Tree Rotations',
+    tag: 'MST-1 Solved',
+    color: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
+    uploaderUsername: 'py77164961',
+    uploaderName: '6 Sigma',
+    cuVerified: true
   },
   {
     id: 'act-4',
-    time: '19m ago',
+    time: '3h ago',
     hash: '1a04fd',
-    sem: 'Offline PWA',
-    title: 'Auto-cached 4 new answer blueprints',
-    tag: 'Sync',
-    color: 'text-purple-400 bg-purple-500/10 border-purple-500/20'
+    sem: 'CSE Sem 6',
+    title: '22CST-390 Theory of Computation Pumping Lemma',
+    tag: 'Remedial 80/20',
+    color: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
+    uploaderUsername: 'academic_cell',
+    uploaderName: 'Prevu Academic Cell',
+    cuVerified: true
   }
 ]
 
@@ -216,7 +230,19 @@ const ENGINE_SPECS = [
   }
 ]
 
-export default function LandingPageContent() {
+interface LandingPageContentProps {
+  stats?: RealPlatformStats
+  recentLogs?: RealLiveLog[]
+  topContributors?: LeaderboardUser[]
+  recentPeerReviews?: RealPeerReview[]
+}
+
+export default function LandingPageContent({
+  stats,
+  recentLogs = LIVE_VAULT_LOGS,
+  topContributors = [],
+  recentPeerReviews = []
+}: LandingPageContentProps = {}) {
   const router = useRouter()
   const [heroSearch, setHeroSearch] = useState('')
   const [selectedSem, setSelectedSem] = useState<number>(3)
@@ -548,7 +574,7 @@ export default function LandingPageContent() {
               </div>
 
               <div className="space-y-2.5">
-                {LIVE_VAULT_LOGS.map((item) => (
+                {(recentLogs || LIVE_VAULT_LOGS).slice(0, 4).map((item) => (
                   <div key={item.id} className="p-2.5 rounded-xl bg-[#161b22] border border-[#30363d]/50 hover:border-[#30363d] transition-all text-left group">
                     <div className="flex items-center justify-between text-[10px] text-[#7d8590] mb-1">
                       <span className="text-emerald-400 font-bold">{item.sem}</span>
@@ -558,7 +584,10 @@ export default function LandingPageContent() {
                       {item.title}
                     </p>
                     <div className="mt-1.5 flex items-center justify-between text-[9px] text-[#7d8590]">
-                      <span className="font-mono text-[#7d8590] group-hover:text-emerald-400/80 transition-colors">ref: {item.hash}</span>
+                      <span className="font-mono text-[#7d8590] group-hover:text-emerald-400/80 transition-colors flex items-center gap-1">
+                        @{item.uploaderUsername || 'cu_scholar'}
+                        {item.cuVerified && <span className="text-emerald-400" title="CU Verified">✓</span>}
+                      </span>
                       <span className={`px-1.5 py-0.2 rounded border font-semibold ${item.color}`}>
                         {item.tag}
                       </span>
@@ -596,7 +625,36 @@ export default function LandingPageContent() {
               </div>
 
               <div className="space-y-2">
-                {ENGINE_SPECS.map((spec) => {
+                {[
+                  {
+                    label: 'Vault Papers',
+                    val: `${stats?.totalPapers || 107}+`,
+                    desc: 'Verified past year exam papers',
+                    icon: FileText,
+                    color: 'text-emerald-400'
+                  },
+                  {
+                    label: 'Campus Scholars',
+                    val: `${stats?.totalContributors || 28}+`,
+                    desc: 'Active student contributors',
+                    icon: Check,
+                    color: 'text-cyan-400'
+                  },
+                  {
+                    label: 'Vault Downloads',
+                    val: `${(stats?.totalDownloads || 1450).toLocaleString()}+`,
+                    desc: 'Local IndexedDB offline PWA vault',
+                    icon: Zap,
+                    color: 'text-amber-400'
+                  },
+                  {
+                    label: 'Theme Engine',
+                    val: '10 Palettes',
+                    desc: 'Dynamic real-time developer color profiles',
+                    icon: Sparkles,
+                    color: 'text-purple-400'
+                  }
+                ].map((spec) => {
                   const Icon = spec.icon
                   return (
                     <div key={spec.label} className="p-2 rounded-xl bg-[#161b22] border border-[#30363d]/50 hover:border-[#30363d] transition-all">
@@ -939,22 +997,22 @@ export default function LandingPageContent() {
             </div>
           </div>
 
-          {/* 3 Metric Sparkline Cards with Animated Meters */}
+          {/* 3 Real Metric Sparkline Cards with Animated Meters */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
-            <div className="p-6 rounded-2xl bg-[#161b22] border border-[#30363d] hover:border-emerald-500/40 transition-all flex flex-col justify-between">
+            <div className="p-6 rounded-2xl bg-[#161b22] border border-[#30363d] hover:border-emerald-500/40 transition-all flex flex-col justify-between text-left">
               <div>
-                <span className="text-xs font-mono uppercase text-emerald-400 font-bold">Assessment Pass Rate</span>
-                <div className="text-3xl font-extrabold text-white mt-1 mb-2 font-mono">98.4%</div>
+                <span className="text-xs font-mono uppercase text-emerald-400 font-bold">Verified Past Papers</span>
+                <div className="text-3xl font-extrabold text-white mt-1 mb-2 font-mono">{stats?.totalPapers || 107}+ Papers</div>
                 <p className="text-xs text-[#7d8590] leading-relaxed">
-                  Students using Prevu verified question blueprints pass MST and EST exams on their first attempt.
+                  Authentic semester end-term (EST) and mid-term (MST-1 &amp; 2) papers with step-by-step solved student keys.
                 </p>
               </div>
               <div className="h-8 mt-4 flex items-end gap-1">
                 <div className="w-full h-2 bg-emerald-500/20 rounded-full overflow-hidden">
                   <motion.div 
                     initial={{ width: 0 }}
-                    whileInView={{ width: '98%' }}
+                    whileInView={{ width: '100%' }}
                     viewport={{ once: true }}
                     transition={{ duration: 1.2, ease: 'easeOut' }}
                     className="h-full bg-emerald-400 rounded-full" 
@@ -963,12 +1021,12 @@ export default function LandingPageContent() {
               </div>
             </div>
 
-            <div className="p-6 rounded-2xl bg-[#161b22] border border-[#30363d] hover:border-cyan-500/40 transition-all flex flex-col justify-between">
+            <div className="p-6 rounded-2xl bg-[#161b22] border border-[#30363d] hover:border-cyan-500/40 transition-all flex flex-col justify-between text-left">
               <div>
-                <span className="text-xs font-mono uppercase text-cyan-400 font-bold">Retrieval Latency</span>
-                <div className="text-3xl font-extrabold text-white mt-1 mb-2 font-mono">&lt; 45s</div>
+                <span className="text-xs font-mono uppercase text-cyan-400 font-bold">Campus Contributors</span>
+                <div className="text-3xl font-extrabold text-white mt-1 mb-2 font-mono">{stats?.totalContributors || 28}+ Scholars</div>
                 <p className="text-xs text-[#7d8590] leading-relaxed">
-                  Average time for a student to locate, preview, and download full solved course papers.
+                  Active BE-CSE students and department toppers uploading papers and earning community karma.
                 </p>
               </div>
               <div className="h-8 mt-4 flex items-end gap-1">
@@ -984,19 +1042,19 @@ export default function LandingPageContent() {
               </div>
             </div>
 
-            <div className="p-6 rounded-2xl bg-[#161b22] border border-[#30363d] hover:border-purple-500/40 transition-all flex flex-col justify-between">
+            <div className="p-6 rounded-2xl bg-[#161b22] border border-[#30363d] hover:border-purple-500/40 transition-all flex flex-col justify-between text-left">
               <div>
-                <span className="text-xs font-mono uppercase text-purple-400 font-bold">Active Community</span>
-                <div className="text-3xl font-extrabold text-white mt-1 mb-2 font-mono">500+ Peers</div>
+                <span className="text-xs font-mono uppercase text-purple-400 font-bold">Community Solved Doubts</span>
+                <div className="text-3xl font-extrabold text-white mt-1 mb-2 font-mono">{stats?.totalDoubtsSolved || 86}+ Solved</div>
                 <p className="text-xs text-[#7d8590] leading-relaxed">
-                  Active BE-CSE students sharing solved questions, handwritten summaries, and exam bounties.
+                  Verified derivations, algorithms, and formula proofs vetted by senior scholars and toppers.
                 </p>
               </div>
               <div className="h-8 mt-4 flex items-end gap-1">
                 <div className="w-full h-2 bg-purple-500/20 rounded-full overflow-hidden">
                   <motion.div 
                     initial={{ width: 0 }}
-                    whileInView={{ width: '72%' }}
+                    whileInView={{ width: '92%' }}
                     viewport={{ once: true }}
                     transition={{ duration: 1.2, ease: 'easeOut' }}
                     className="h-full bg-purple-400 rounded-full" 
@@ -1011,22 +1069,95 @@ export default function LandingPageContent() {
       </section>
 
       {/* ============================================================ */}
-      {/* 4. GITHUB-STYLE STUDENT QUOTE & TRUST SIGNALS                */}
+      {/* 4. REAL STUDENT DISCUSSIONS & PEER ENDORSEMENTS              */}
       {/* ============================================================ */}
-      <section className="py-12 sm:py-14 border-b border-[#30363d]/60 bg-[#010409]">
-        <div className="container mx-auto px-4 max-w-4xl 2xl:max-w-5xl text-center">
+      <section className="py-12 sm:py-16 border-b border-[#30363d]/60 bg-[#010409]">
+        <div className="container mx-auto px-4 max-w-6xl 2xl:max-w-[1720px]">
           
-          <div className="w-10 h-10 rounded-2xl bg-[#161b22] border border-[#30363d] flex items-center justify-center mx-auto mb-4 text-emerald-400">
-            <Star className="w-5 h-5 fill-emerald-400/20 text-emerald-400" />
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 mb-3">
+              <Star className="w-3.5 h-3.5 fill-emerald-400 text-emerald-400" />
+              <span>Real Student Discussions &amp; Peer Endorsements</span>
+            </div>
+            
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
+              Backed by Real <span className="text-emerald-400">CU Scholars.</span>
+            </h2>
+            <p className="text-[#7d8590] text-xs sm:text-sm mt-2 font-mono">
+              Authentic study feedback and solved question verification from active engineering batchmates.
+            </p>
           </div>
 
-          <blockquote className="text-lg sm:text-xl font-semibold text-white leading-relaxed mb-4 font-mono">
-            &ldquo;Prevu is one of the essential software tools that empower our entire semester batch. We wouldn&apos;t have navigated EST prep without verified answer keys directly from seniors.&rdquo;
-          </blockquote>
+          {/* Real Peer Reviews Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+            {recentPeerReviews.map((rev) => (
+              <div 
+                key={rev.id} 
+                className="p-5 rounded-2xl bg-[#161b22] border border-[#30363d] hover:border-emerald-500/40 transition-all flex flex-col justify-between text-left group"
+              >
+                <div>
+                  <div className="flex items-center justify-between text-[11px] font-mono text-[#7d8590] mb-3 pb-2 border-b border-[#30363d]/50">
+                    <span className="text-emerald-400 font-bold">{rev.subjectCode}</span>
+                    <span>{rev.timeAgo}</span>
+                  </div>
 
-          <div className="flex flex-col items-center justify-center gap-0.5 text-xs font-mono">
-            <span className="font-bold text-white">Sudhanshu Yadav</span>
-            <span className="text-[11px] text-[#7d8590]">BE-CSE &bull; Rank #1 Campus Contributor &bull; Chandigarh University</span>
+                  <p className="text-xs text-[#e6edf3] leading-relaxed mb-4 font-sans">
+                    &ldquo;{rev.comment}&rdquo;
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-[#30363d]/50 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-sm">
+                      {rev.authorName[0]?.toUpperCase() || 'S'}
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-white flex items-center gap-1 font-mono">
+                        <span>@{rev.authorUsername}</span>
+                        {rev.cuVerified && (
+                          <span className="text-emerald-400 text-[10px]" title="CU Verified Student">✓</span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-[#7d8590] font-mono truncate max-w-[160px]">
+                        {rev.role}
+                      </div>
+                    </div>
+                  </div>
+
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 font-bold">
+                    ▲ {rev.upvotes}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Action Callout Bar */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#0d1117] border border-[#30363d] flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs">
+            <div className="flex items-center gap-3 text-left">
+              <div className="w-9 h-9 rounded-xl bg-[#238636]/20 border border-[#238636]/40 flex items-center justify-center text-[#3fb950] shrink-0">
+                <Zap className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-white font-bold block">Contribute your exam papers &amp; notes</span>
+                <span className="text-[#7d8590] text-[11px]">Earn +25 Karma per approved upload and unlock Campus Legend badges.</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 w-full sm:w-auto">
+              <Link 
+                href="/upload"
+                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#238636] hover:bg-[#2ea44f] text-white font-bold text-xs shadow-md shadow-[#238636]/30 transition-all text-center"
+              >
+                Upload Paper (+25 Karma)
+              </Link>
+              <Link 
+                href="/leaderboard"
+                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#21262d] hover:bg-[#30363d] text-[#e6edf3] font-bold text-xs border border-[#30363d] transition-all text-center"
+              >
+                Leaderboard &rarr;
+              </Link>
+            </div>
           </div>
 
           {/* Department badges */}

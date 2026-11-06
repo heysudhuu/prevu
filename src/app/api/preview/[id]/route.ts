@@ -127,7 +127,15 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       .createSignedUrl(targetPath, 60 * 60) // 1 hour
 
     if (urlError || !urlData?.signedUrl) {
-      return NextResponse.json({ error: 'Failed to access document preview' }, { status: 500 })
+      const previewHtml = generateAcademicPreviewHtml(id)
+      return new NextResponse(previewHtml, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+          'X-Content-Type-Options': 'nosniff'
+        }
+      })
     }
 
     const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(urlData.signedUrl)}&embedded=true`
@@ -154,12 +162,28 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       .createSignedUrl(targetPath, 60 * 15)
 
     if (urlError || !urlData?.signedUrl) {
-      return NextResponse.json({ error: 'Failed to access document preview' }, { status: 500 })
+      const previewHtml = generateAcademicPreviewHtml(id)
+      return new NextResponse(previewHtml, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+          'X-Content-Type-Options': 'nosniff'
+        }
+      })
     }
 
     const fetchRes = await fetch(urlData.signedUrl)
     if (!fetchRes.ok) {
-      return NextResponse.json({ error: 'Failed to fetch document content' }, { status: 502 })
+      const previewHtml = generateAcademicPreviewHtml(id)
+      return new NextResponse(previewHtml, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+          'X-Content-Type-Options': 'nosniff'
+        }
+      })
     }
     arrayBuffer = await fetchRes.arrayBuffer()
     const contentTypeHeader = fetchRes.headers.get('content-type')

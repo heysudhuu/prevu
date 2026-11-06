@@ -55,7 +55,7 @@ export default async function KarmaAchieversSection() {
       <div className="absolute left-1/4 top-1/2 -translate-y-1/2 -z-10 h-[350px] w-[500px] rounded-full bg-amber-500/10 blur-[140px] pointer-events-none" />
       <div className="absolute right-1/4 top-1/2 -translate-y-1/2 -z-10 h-[350px] w-[500px] rounded-full bg-purple-600/10 blur-[140px] pointer-events-none" />
 
-      <div className="container mx-auto px-4 max-w-6xl">
+      <div className="container mx-auto px-4 max-w-6xl 2xl:max-w-[1720px]">
         
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">

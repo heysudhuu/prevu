@@ -722,7 +722,7 @@ export default function CurriculumPyqSection() {
   })
 
   return (
-    <section id="curriculum-pyqs" className="py-14 sm:py-20 border-b border-[#30363d]/60 bg-[#010409] font-mono relative overflow-hidden">
+    <section id="curriculum-pyqs" className="scroll-mt-16 sm:scroll-mt-20 py-14 sm:py-20 border-b border-[#30363d]/60 bg-[#010409] font-mono relative overflow-hidden">
 
       {/* Background Ambience */}
       <div className="absolute left-1/4 top-0 w-[500px] h-[300px] bg-emerald-500/5 blur-[120px] pointer-events-none" />
@@ -843,9 +843,29 @@ export default function CurriculumPyqSection() {
                 </div>
 
                 <div>
+                  {/* Real Contributor / Peer Attribution */}
+                  <div className="mb-3 p-2 rounded-xl bg-[#0d1117] border border-[#30363d]/60 flex items-center justify-between text-[11px] font-mono">
+                    <div className="flex items-center gap-2 truncate">
+                      <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-[10px] font-bold shrink-0">
+                        {(paper.demoResource?.users?.username || 'cu')[0].toUpperCase()}
+                      </div>
+                      <div className="truncate">
+                        <span className="text-white font-semibold truncate">
+                          @{paper.demoResource?.users?.username || 'cu_scholar'}
+                        </span>
+                        {paper.demoResource?.users?.cu_verified && (
+                          <span className="ml-1 text-[9px] text-emerald-400 font-bold" title="CU Verified Student">✓</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0 text-[10px] text-emerald-400 font-bold">
+                      <span>▲ {paper.upvotes}</span>
+                    </div>
+                  </div>
+
                   <div className="text-[10px] text-[#7d8590] mb-3 flex items-center justify-between">
                     <span className="truncate">Audited: {paper.verifiedBy}</span>
-                    <span className="text-emerald-400 shrink-0 font-bold">▲ {paper.upvotes}</span>
+                    <span className="text-[#7d8590] text-[9px]">Verified Solved</span>
                   </div>
 
                   <div className="pt-3 border-t border-[#30363d]/60 flex items-center justify-between gap-2">

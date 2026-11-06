@@ -9,15 +9,24 @@ import ReappearRescueSection from '@/components/landing/ReappearRescueSection'
 import ThemeSelectorSection from '@/components/theme/ThemeSelectorSection'
 import RecentPapersSection from '@/components/landing/RecentPapersSection'
 import CommunityAndFaqSection from '@/components/landing/CommunityAndFaqSection'
+import KarmaAchieversSection from '@/components/landing/KarmaAchieversSection'
 import RoamingRobot from '@/components/mascot/RoamingRobot'
+import { getHomepageData } from '@/app/actions/homepage'
 
-export default function Home() {
+export default async function Home() {
+  const homepageData = await getHomepageData()
+
   return (
     <div className="min-h-screen flex flex-col bg-[#010409] text-[#e6edf3]">
       <Header />
       
-      {/* 1. Master Hero, Connected Git Spine, Contribution Calendar & Fast-Track Curriculum */}
-      <LandingPageContent />
+      {/* 1. Master Hero, Connected Git Spine, Live Real Stream & Real Metrics */}
+      <LandingPageContent 
+        stats={homepageData.stats}
+        recentLogs={homepageData.recentLogs}
+        topContributors={homepageData.topContributors}
+        recentPeerReviews={homepageData.recentPeerReviews}
+      />
 
       {/* 2. Official Examination Vault — Previous Year Questions (PYQs) for All Semesters 1 - 8 */}
       <CurriculumPyqSection />
@@ -28,7 +37,10 @@ export default function Home() {
       {/* 4. Reappear & Remedial Hub — Reappear PYQs & 80/20 Crash Material for All Semesters 1 - 8 */}
       <ReappearRescueSection />
 
-      {/* 5. Compact Visual Theme Engine Workbench (10 Palettes) */}
+      {/* 5. Real Contributor Hall of Fame & Top Karma Achievers */}
+      <KarmaAchieversSection />
+
+      {/* 6. Compact Visual Theme Engine Workbench (10 Palettes) */}
       <ThemeSelectorSection />
 
       {/* 3. Fresh Vault Additions — Recent Paper Carousels */}

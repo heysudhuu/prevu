@@ -756,7 +756,7 @@ export default function CurriculumStudyMaterialSection() {
   })
 
   return (
-    <section id="curriculum-study-material" className="py-14 sm:py-20 border-b border-[#30363d]/60 bg-[#0d1117] font-mono relative overflow-hidden">
+    <section id="curriculum-study-material" className="scroll-mt-16 sm:scroll-mt-20 py-14 sm:py-20 border-b border-[#30363d]/60 bg-[#0d1117] font-mono relative overflow-hidden">
 
       {/* Background Ambience */}
       <div className="absolute right-1/4 top-0 w-[500px] h-[300px] bg-cyan-500/5 blur-[120px] pointer-events-none" />
@@ -892,12 +892,30 @@ export default function CurriculumStudyMaterialSection() {
                 </div>
 
                 <div>
+                  {/* Real Contributor / Peer Attribution */}
+                  <div className="mb-3 p-2 rounded-xl bg-[#0d1117] border border-[#30363d]/60 flex items-center justify-between text-[11px] font-mono">
+                    <div className="flex items-center gap-2 truncate">
+                      <div className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 flex items-center justify-center text-[10px] font-bold shrink-0">
+                        {(mat.demoResource?.users?.username || 'cu')[0].toUpperCase()}
+                      </div>
+                      <div className="truncate">
+                        <span className="text-white font-semibold truncate">
+                          @{mat.demoResource?.users?.username || 'topper_notes'}
+                        </span>
+                        {mat.demoResource?.users?.cu_verified && (
+                          <span className="ml-1 text-[9px] text-cyan-400 font-bold" title="CU Verified Topper">✓</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 text-amber-400 font-bold text-[10px] shrink-0">
+                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                      <span>{mat.rating}</span>
+                    </div>
+                  </div>
+
                   <div className="text-[10px] text-[#7d8590] mb-3 flex items-center justify-between">
-                    <span className="flex items-center gap-1 text-amber-400 font-bold">
-                      <Star className="w-3 h-3 fill-amber-400" />
-                      {mat.rating} / 5.0
-                    </span>
-                    <span className="text-cyan-400 text-[10px] font-bold">Verified PDF</span>
+                    <span className="truncate">{mat.author}</span>
+                    <span className="text-cyan-400 text-[10px] font-bold font-mono">Verified PDF</span>
                   </div>
 
                   <div className="pt-3 border-t border-[#30363d]/60 flex items-center justify-between gap-2">

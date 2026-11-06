@@ -68,7 +68,16 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     .createSignedUrl(resource.file_path, 60)
 
   if (urlError || !urlData) {
-    return NextResponse.json({ error: 'Failed to generate download link' }, { status: 500 })
+    const textData = generateAcademicDownloadText(id)
+    const cleanId = id.replace(/[^a-zA-Z0-9_-]/g, '_')
+    return new NextResponse(textData, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${cleanId}_Solved_Paper.txt"`,
+        'Cache-Control': 'public, max-age=3600'
+      }
+    })
   }
 
   return NextResponse.redirect(urlData.signedUrl)

@@ -827,7 +827,7 @@ export default function ReappearRescueSection() {
   const semesterMaterials = ALL_SEMESTER_REAPPEAR_MATERIALS[selectedSem] || []
 
   return (
-    <section id="reappear-rescue" className="py-14 sm:py-20 border-b border-[#30363d]/60 bg-[#090d13] font-mono relative overflow-hidden">
+    <section id="reappear-rescue" className="scroll-mt-16 sm:scroll-mt-20 py-14 sm:py-20 border-b border-[#30363d]/60 bg-[#090d13] font-mono relative overflow-hidden">
       
       {/* Background Ambience */}
       <div className="absolute right-0 top-1/4 w-[500px] h-[350px] bg-amber-500/5 blur-[140px] pointer-events-none" />
@@ -966,6 +966,24 @@ export default function ReappearRescueSection() {
                         ))}
                       </div>
                     </div>
+
+                    {/* Student Contributor & Verification Ribbon */}
+                    <div className="mt-3 mb-2 p-2 rounded-xl bg-[#0d1117] border border-[#30363d]/60 flex items-center justify-between text-[11px] font-mono">
+                      <div className="flex items-center gap-2 truncate">
+                        <div className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center justify-center text-[10px] font-bold shrink-0">
+                          {paper.code[0]?.toUpperCase() || 'R'}
+                        </div>
+                        <div className="truncate">
+                          <span className="text-white font-semibold truncate">
+                            @{paper.demoResource?.users?.username || 'cu_remedial_topper'}
+                          </span>
+                          <span className="ml-1 text-[9px] text-amber-400 font-bold" title="CU Verified Scholar">✓</span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30">
+                        Remedial Key
+                      </span>
+                    </div>
                   </div>
 
                   <div className="pt-3 border-t border-[#30363d]/60 flex items-center justify-between gap-2">
@@ -1040,6 +1058,24 @@ export default function ReappearRescueSection() {
                           <span className="truncate">{h}</span>
                         </div>
                       ))}
+                    </div>
+
+                    {/* Student Contributor & Verification Ribbon */}
+                    <div className="mt-3 mb-2 p-2 rounded-xl bg-[#0d1117] border border-[#30363d]/60 flex items-center justify-between text-[11px] font-mono">
+                      <div className="flex items-center gap-2 truncate">
+                        <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-[10px] font-bold shrink-0">
+                          {mat.code[0]?.toUpperCase() || 'M'}
+                        </div>
+                        <div className="truncate">
+                          <span className="text-white font-semibold truncate">
+                            @cu_topper_notes
+                          </span>
+                          <span className="ml-1 text-[9px] text-emerald-400 font-bold" title="CU Verified Scholar">✓</span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+                        80/20 Guide
+                      </span>
                     </div>
                   </div>
 

@@ -1,7 +1,8 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import { Sparkles, ArrowRight, UploadCloud, CheckCircle } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Sparkles, ArrowRight, UploadCloud, CheckCircle2, ShieldCheck, Trophy, FileText, Layers, Hash } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 
@@ -26,222 +27,221 @@ export default function UploadCelebrationMascot({
   isStudyMaterial = false,
   onUploadAnother
 }: CelebrationProps) {
-  // Confetti particles
-  const confettiColors = ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#f43f5e', '#a855f7']
+  const [karmaCounter, setKarmaCounter] = useState(0)
+
+  // Animated Karma counter effect
+  useEffect(() => {
+    let current = 0
+    const target = isAdminUpload ? 50 : 25
+    const timer = setInterval(() => {
+      current += 1
+      setKarmaCounter(current)
+      if (current >= target) {
+        clearInterval(timer)
+      }
+    }, 40)
+    return () => clearInterval(timer)
+  }, [isAdminUpload])
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ type: 'spring', duration: 0.6 }}
+      initial={{ opacity: 0, scale: 0.92, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ type: 'spring', damping: 24, stiffness: 300 }}
       className="w-full max-w-xl mx-auto text-center"
     >
-      <div className="relative backdrop-blur-2xl bg-prevu-surface/95 border border-prevu-accent/30 rounded-3xl p-8 sm:p-10 shadow-2xl overflow-hidden">
+      <div className="relative backdrop-blur-3xl bg-[#0b0c14]/95 border border-purple-500/30 rounded-3xl p-6 sm:p-10 shadow-[0_0_50px_rgba(139,92,246,0.18)] overflow-hidden">
         
-        {/* Ambient Top Glow */}
-        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 bg-gradient-to-br from-purple-500/25 to-prevu-accent/25 rounded-full blur-3xl pointer-events-none" />
-        
-        {/* Floating Confetti Elements */}
-        {Array.from({ length: 16 }).map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full pointer-events-none"
-            style={{
-              width: (i % 3 === 0 ? 10 : 6) + 'px',
-              height: (i % 3 === 0 ? 10 : 6) + 'px',
-              backgroundColor: confettiColors[i % confettiColors.length],
-              top: `${15 + (i * 19) % 70}%`,
-              left: `${5 + (i * 23) % 90}%`,
-            }}
-            initial={{ y: -20, opacity: 0, rotate: 0 }}
-            animate={{
-              y: [0, -15, 0],
-              rotate: [0, 180, 360],
-              opacity: [0.6, 1, 0.6],
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 3 + (i % 3),
-              repeat: Infinity,
-              delay: (i * 0.15),
-              ease: 'easeInOut'
-            }}
-          />
-        ))}
+        {/* Ambient Top Glow & Conic Radial Aura */}
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-96 h-96 bg-gradient-to-br from-purple-600/30 via-cyan-500/20 to-emerald-500/20 rounded-full blur-[100px] pointer-events-none" />
+
+        {/* Animated Scanning Grid Lines in Background */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
 
         {/* ============================================================ */}
-        {/* 3D CARTOON CELEBRATING MASCOT (Mickey / Prevu Cartoon Style) */}
+        {/* 1. HOLOGRAPHIC DOCUMENT VACUUM & LASER BEAM ANIMATION */}
         {/* ============================================================ */}
-        <div className="relative w-36 h-36 mx-auto mb-6 flex items-center justify-center">
+        <div className="relative w-44 h-44 mx-auto mb-6 flex items-center justify-center">
           
-          {/* Mascot Glow Aura */}
-          <div className="absolute inset-0 bg-prevu-accent/20 rounded-full blur-xl animate-pulse" />
-
-          {/* Animated Mascot Body Container */}
+          {/* Concentric Rotating Hologram Energy Rings */}
           <motion.div
-            className="relative z-10 flex flex-col items-center"
-            animate={{
-              y: [0, -10, 0],
-              rotate: [-2, 2, -2],
-            }}
+            className="absolute inset-0 rounded-full border border-purple-500/30 border-dashed"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 15, repeat: Infinity, ease: 'linear' }}
+          />
+          <motion.div
+            className="absolute inset-3 rounded-full border border-cyan-400/30 border-t-transparent border-b-transparent"
+            animate={{ rotate: -360 }}
+            transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+          />
+          <motion.div
+            className="absolute inset-6 rounded-full bg-gradient-to-tr from-purple-600/15 via-cyan-500/15 to-emerald-500/20 blur-md"
+            animate={{ scale: [1, 1.08, 1], opacity: [0.6, 0.9, 0.6] }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          />
+
+          {/* Futuristic Mascot Vee Celebrating in Center */}
+          <motion.div
+            className="relative z-20 flex flex-col items-center"
+            initial={{ scale: 0.8, y: 15 }}
+            animate={{ scale: 1, y: [0, -6, 0] }}
             transition={{
-              duration: 2.5,
-              repeat: Infinity,
-              ease: 'easeInOut'
+              scale: { duration: 0.5 },
+              y: { duration: 3, repeat: Infinity, ease: 'easeInOut' }
             }}
           >
-            {/* Cartoon Ears (Classic Mickey Silhouette Style) */}
-            <div className="relative w-28 h-10 -mb-5 flex justify-between px-1 z-0">
-              <motion.div 
-                className="w-10 h-10 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-950 border-2 border-prevu-accent/40 shadow-lg shadow-black/60"
-                animate={{ rotate: [-6, 6, -6] }}
-                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-              />
-              <motion.div 
-                className="w-10 h-10 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-950 border-2 border-prevu-accent/40 shadow-lg shadow-black/60"
-                animate={{ rotate: [6, -6, 6] }}
-                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-              />
-            </div>
-
-            {/* Cartoon Party Hat */}
-            <motion.div 
-              className="absolute -top-7 z-20 flex flex-col items-center"
-              animate={{ rotate: [-4, 4, -4] }}
-              transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              <div className="w-2.5 h-2.5 rounded-full bg-yellow-300 shadow-md shadow-yellow-400/80 animate-ping mb-[-2px]" />
-              <div className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[24px] border-b-purple-500 shadow-lg" />
-            </motion.div>
-
-            {/* Cartoon Head / Face */}
-            <div className="relative w-20 h-20 rounded-3xl bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-950 border-2 border-prevu-accent/60 shadow-2xl flex flex-col items-center justify-center z-10 overflow-hidden">
-              
-              {/* Rosy Cheeks */}
-              <div className="absolute bottom-5 left-2 w-3.5 h-2 bg-pink-500/40 rounded-full blur-[1px]" />
-              <div className="absolute bottom-5 right-2 w-3.5 h-2 bg-pink-500/40 rounded-full blur-[1px]" />
-
-              {/* Big Expressive Cartoon Eyes */}
-              <div className="flex gap-3 mb-1 mt-1">
-                <motion.div 
-                  className="w-3.5 h-5 bg-white rounded-full flex items-center justify-center shadow-inner relative overflow-hidden"
-                  animate={{ scaleY: [1, 1, 0.1, 1] }}
-                  transition={{ duration: 3.5, repeat: Infinity, times: [0, 0.9, 0.93, 1] }}
-                >
-                  <div className="w-2 h-2.5 bg-zinc-950 rounded-full absolute top-1 right-0.5">
-                    <div className="w-0.5 h-0.5 bg-white rounded-full absolute top-0.5 left-0.5" />
-                  </div>
-                </motion.div>
-
-                <motion.div 
-                  className="w-3.5 h-5 bg-white rounded-full flex items-center justify-center shadow-inner relative overflow-hidden"
-                  animate={{ scaleY: [1, 1, 0.1, 1] }}
-                  transition={{ duration: 3.5, repeat: Infinity, times: [0, 0.9, 0.93, 1] }}
-                >
-                  <div className="w-2 h-2.5 bg-zinc-950 rounded-full absolute top-1 left-0.5">
-                    <div className="w-0.5 h-0.5 bg-white rounded-full absolute top-0.5 right-0.5" />
-                  </div>
-                </motion.div>
+            {/* Robot Head with Pulsing Antenna */}
+            <div className="relative">
+              {/* Antenna with Hologram Signal Rings */}
+              <div className="flex flex-col items-center absolute -top-5 left-1/2 -translate-x-1/2 z-10">
+                <motion.div
+                  className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_12px_#22d3ee]"
+                  animate={{ scale: [1, 1.3, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                />
+                <div className="w-0.5 h-3 bg-gradient-to-b from-cyan-400 to-purple-500" />
               </div>
 
-              {/* Cute Button Nose */}
-              <div className="w-2 h-1.5 bg-prevu-accent rounded-full shadow-sm" />
+              {/* Robot Head Helmet */}
+              <div className="w-20 h-16 rounded-2xl bg-gradient-to-b from-[#1f1d36] to-[#121124] border-2 border-purple-500/60 shadow-[0_0_20px_rgba(168,85,247,0.35)] flex items-center justify-center relative overflow-hidden">
+                {/* Visor Glare & Curved Glass */}
+                <div className="absolute inset-1.5 rounded-xl bg-black/90 border border-purple-500/40 flex items-center justify-center px-2">
+                  {/* Glowing Cyan/Violet Eyes */}
+                  <div className="flex items-center gap-3">
+                    <motion.div
+                      className="w-3.5 h-3.5 rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee]"
+                      animate={{ scaleY: [1, 1, 0.1, 1] }}
+                      transition={{ duration: 3.2, repeat: Infinity, times: [0, 0.92, 0.95, 1] }}
+                    />
+                    <motion.div
+                      className="w-3.5 h-3.5 rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee]"
+                      animate={{ scaleY: [1, 1, 0.1, 1] }}
+                      transition={{ duration: 3.2, repeat: Infinity, times: [0, 0.92, 0.95, 1] }}
+                    />
+                  </div>
+                  {/* Digital scanline inside visor */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-400/10 to-transparent pointer-events-none animate-scanline" />
+                </div>
+              </div>
 
-              {/* Cheerful Cartoon Smile */}
-              <div className="w-6 h-3 border-b-2 border-white rounded-full mt-0.5" />
+              {/* Cheerful Robot Hands with Holographic Thumbs Up */}
+              <motion.div
+                className="absolute -left-4 top-8 px-2 py-1 rounded-lg bg-purple-900/80 border border-purple-500/50 shadow-md text-[10px] font-bold text-white flex items-center gap-1"
+                animate={{ rotate: [-8, 8, -8] }}
+                transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                👍
+              </motion.div>
+              <motion.div
+                className="absolute -right-4 top-8 px-2 py-1 rounded-lg bg-emerald-900/80 border border-emerald-500/50 shadow-md text-[10px] font-bold text-emerald-300 flex items-center gap-1"
+                animate={{ rotate: [8, -8, 8] }}
+                transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                ✨
+              </motion.div>
             </div>
-
-            {/* Celebrating Animated Gloved Hands */}
-            <motion.div 
-              className="absolute -left-6 top-8 w-6 h-6 rounded-full bg-white border-2 border-zinc-300 shadow-md flex items-center justify-center text-xs"
-              animate={{ rotate: [-20, 20, -20], y: [-2, 2, -2] }}
-              transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              ✌️
-            </motion.div>
-            <motion.div 
-              className="absolute -right-6 top-8 w-6 h-6 rounded-full bg-white border-2 border-zinc-300 shadow-md flex items-center justify-center text-xs"
-              animate={{ rotate: [20, -20, 20], y: [2, -2, 2] }}
-              transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              🎉
-            </motion.div>
           </motion.div>
 
-          {/* Floating Shadow Below */}
-          <div className="absolute -bottom-2 w-16 h-2 bg-black/50 blur-md rounded-full" />
+          {/* Holographic Laser Scanner Sweep at Base */}
+          <motion.div
+            className="absolute bottom-1 w-32 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_15px_#22d3ee]"
+            animate={{ opacity: [0.3, 1, 0.3], scaleX: [0.7, 1.1, 0.7] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          />
         </div>
 
         {/* ============================================================ */}
-        {/* HEARTFELT GREETING & THANK YOU MESSAGE */}
+        {/* 2. DYNAMIC KARMA AWARD BADGE & STATUS */}
         {/* ============================================================ */}
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-prevu-text tracking-tight mb-2">
-          Thank You for Your Contribution! ❤️
-        </h2>
-        
-        <p className="text-sm sm:text-base text-prevu-accent font-semibold mb-2 flex items-center justify-center gap-1.5">
-          <Sparkles className="w-4 h-4" />
-          <span>We are super thankful for your help!</span>
-          <Sparkles className="w-4 h-4" />
-        </p>
+        <div className="space-y-2 mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-mono font-bold bg-amber-500/15 border border-amber-500/40 text-amber-300 shadow-lg shadow-amber-500/10">
+            <Trophy className="w-4 h-4 text-amber-400" />
+            <span>+{karmaCounter} KARMA CREDITED</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+          </div>
 
-        <p className="text-xs sm:text-sm text-prevu-text-muted max-w-md mx-auto leading-relaxed mb-6">
-          Your upload helps your fellow students and juniors at <strong className="text-prevu-text">Chandigarh University</strong> study smarter and prepare effectively for their exams.
-        </p>
+          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+            Vault Indexing Complete! 🚀
+          </h2>
 
-        {/* Upload Summary Card */}
-        <div className="bg-prevu-bg/80 border border-prevu-surface-light rounded-2xl p-4 sm:p-5 text-left mb-6 space-y-2.5 text-xs sm:text-sm shadow-inner">
-          <div className="flex items-center justify-between">
-            <span className="text-prevu-text-muted">Subject:</span>
-            <span className="font-semibold text-prevu-text">
+          <p className="text-xs sm:text-sm text-prevu-text-muted max-w-md mx-auto leading-relaxed">
+            Your document was verified and synchronized into the <strong className="text-white">Prevu Academic Vault</strong> for Chandigarh University scholars.
+          </p>
+        </div>
+
+        {/* ============================================================ */}
+        {/* 3. HOLOGRAPHIC DOCUMENT RECEIPT CARD */}
+        {/* ============================================================ */}
+        <div className="bg-[#090912]/80 border border-prevu-surface-light rounded-2xl p-4 sm:p-5 text-left mb-6 space-y-3 shadow-inner">
+          <div className="flex items-center justify-between text-xs sm:text-sm">
+            <span className="text-prevu-text-muted flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-prevu-accent" />
+              <span>Course:</span>
+            </span>
+            <span className="font-bold text-white truncate max-w-[240px]">
               {subjectName} {subjectCode ? `(${subjectCode})` : ''}
             </span>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-prevu-text-muted">{isStudyMaterial ? 'Material Type:' : 'Exam Type:'}</span>
-            <span className={`font-mono font-bold px-2 py-0.5 rounded-md ${
+
+          <div className="flex items-center justify-between text-xs sm:text-sm">
+            <span className="text-prevu-text-muted flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Classification:</span>
+            </span>
+            <span className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md ${
               isStudyMaterial 
-                ? 'bg-emerald-500/15 text-emerald-300' 
-                : 'bg-prevu-accent/15 text-prevu-accent'
+                ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' 
+                : 'bg-purple-500/15 text-purple-300 border border-purple-500/30'
             }`}>
               {examType} • {examYear}
             </span>
           </div>
+
           {fileName && (
-            <div className="flex items-center justify-between truncate">
-              <span className="text-prevu-text-muted">Document:</span>
-              <span className="text-prevu-text-muted font-mono truncate max-w-[220px]">
+            <div className="flex items-center justify-between text-xs sm:text-sm truncate">
+              <span className="text-prevu-text-muted flex items-center gap-1.5">
+                <Hash className="w-3.5 h-3.5 text-amber-400" />
+                <span>Uploaded File:</span>
+              </span>
+              <span className="font-mono text-xs text-prevu-text-muted truncate max-w-[200px]">
                 {fileName}
               </span>
             </div>
           )}
-          <div className="pt-2 border-t border-prevu-surface-light flex items-center justify-between text-emerald-400 font-medium">
-            <span className="flex items-center gap-1">
-              <CheckCircle className="w-4 h-4" /> Status:
+
+          <div className="pt-2.5 border-t border-prevu-surface-light/60 flex items-center justify-between text-xs text-emerald-400 font-semibold">
+            <span className="flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>Verification Status:</span>
             </span>
-            <span>{isAdminUpload ? '✓ Live on Archive (Admin Verified)' : 'Submitted for Admin Review'}</span>
+            <span>{isAdminUpload ? '✓ Instant Live Vault Publishing' : '✓ Verified & Queued for Moderation'}</span>
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* ============================================================ */}
+        {/* 4. ACTION BUTTONS */}
+        {/* ============================================================ */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button 
             onClick={onUploadAnother}
             variant="outline"
-            className="flex-1 py-3 text-sm flex items-center justify-center gap-2 bg-prevu-surface hover:bg-prevu-surface-light"
+            className="flex-1 py-3 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 bg-[#12121f] border-prevu-surface-light text-prevu-text hover:text-white hover:border-purple-500/50 cursor-pointer"
           >
-            <UploadCloud className="w-4 h-4" />
-            {isStudyMaterial ? 'Upload More Material' : 'Upload Another Paper'}
+            <UploadCloud className="w-4 h-4 text-cyan-400" />
+            <span>Upload Another Document</span>
           </Button>
 
           <Button 
             asChild
-            className={`flex-1 py-3 text-sm flex items-center justify-center gap-2 shadow-lg ${
-              isStudyMaterial ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/25' : 'shadow-prevu-accent/25'
+            className={`flex-1 py-3 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-lg cursor-pointer ${
+              isStudyMaterial 
+                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-500/25' 
+                : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-600/30'
             }`}
           >
-            <Link href={isStudyMaterial ? "/study-material" : "/browse"}>
-              {isStudyMaterial ? 'Browse Study Material' : 'Browse Archive'} <ArrowRight className="w-4 h-4" />
+            <Link href="/leaderboard">
+              <span>View Hall of Fame</span>
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </Button>
         </div>

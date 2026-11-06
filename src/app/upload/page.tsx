@@ -9,9 +9,10 @@ import { createClient } from '@/utils/supabase/client'
 import { 
   Upload, AlertCircle, Sparkles, BookOpen, Layers, Eye, FileText, 
   CheckCircle2, CloudUpload, Clipboard, Loader2, ShieldCheck, Check, 
-  Wand2, AlertTriangle, Sparkle 
+  Wand2, AlertTriangle, Sparkle, Calendar 
 } from 'lucide-react'
 import UploadCelebrationMascot from '@/components/animations/UploadCelebrationMascot'
+import FigmaDropdown, { FigmaDropdownOption } from '@/components/ui/FigmaDropdown'
 import { analyzeImageQuality, autoEnhanceDocumentScan, type QualityAnalysisResult } from '@/lib/scanner/scanQuality'
 import { detectMetadataFromFile, type DetectedMetadata } from '@/lib/scanner/autoDetect'
 
@@ -26,6 +27,49 @@ const STUDY_MATERIAL_TYPES = [
   { value: 'Book', label: 'Reference Book / Textbook PDF', icon: '📚' },
   { value: 'Cheatsheet', label: 'Formula Sheet & Quick Cheatsheet', icon: '⚡' },
   { value: 'Study Material', label: 'General Study Material / Slides', icon: '💡' },
+]
+
+const EXAM_TYPE_OPTIONS: FigmaDropdownOption[] = [
+  { 
+    value: 'MST1', 
+    label: 'MST 1 (Mid Semester 1)', 
+    subtitle: 'Units 1 & 2 · 20 Marks', 
+    icon: '📑',
+    badge: 'Mid Term' 
+  },
+  { 
+    value: 'MST2', 
+    label: 'MST 2 (Mid Semester 2)', 
+    subtitle: 'Units 3 & 4 · 20 Marks', 
+    icon: '📊',
+    badge: 'Mid Term' 
+  },
+  { 
+    value: 'EST', 
+    label: 'EST (End Semester Test)', 
+    subtitle: 'Comprehensive Final Exam · 60 Marks', 
+    icon: '🎓',
+    badge: 'Final Exam' 
+  },
+]
+
+const STUDY_MATERIAL_OPTIONS: FigmaDropdownOption[] = [
+  { value: 'Notes', label: 'Lecture & Handwritten Notes', subtitle: 'Topper handwritten summaries & derivations', icon: '📝', badge: 'Popular' },
+  { value: 'Syllabus', label: 'Syllabus & Blueprint', subtitle: 'Official CU marking distribution roadmap', icon: '📑' },
+  { value: 'Assignment', label: 'Assignment & Solutions', subtitle: 'Step-by-step tutorial problem solutions', icon: '📋' },
+  { value: 'Lab Manual', label: 'Lab Manual & Viva Guide', subtitle: 'Code implementations & viva questions', icon: '🔬' },
+  { value: 'Question Bank', label: 'Question Bank & High-Yield', subtitle: 'Frequently repeated exam questions', icon: '❓', badge: 'High Yield' },
+  { value: 'Book', label: 'Reference Book / Textbook', subtitle: 'Prescribed standard textbook PDF', icon: '📚' },
+  { value: 'Cheatsheet', label: 'Formula Sheet & Cheatsheet', subtitle: 'Quick memory formulas & theorems', icon: '⚡', badge: 'Quick' },
+  { value: 'Study Material', label: 'General Slides & PPTs', subtitle: 'Department lecture presentation slides', icon: '💡' },
+]
+
+const EXAM_YEAR_OPTIONS: FigmaDropdownOption[] = [
+  { value: 2026, label: '2026 Session', subtitle: 'Current Academic Term', icon: '✨', badge: 'Active' },
+  { value: 2025, label: '2025 Session', subtitle: 'Recent Examination Papers', icon: '📅' },
+  { value: 2024, label: '2024 Session', subtitle: 'Verified Past Year Archive', icon: '📚' },
+  { value: 2023, label: '2023 Session', subtitle: 'Previous Syllabus Cohort', icon: '🏛️' },
+  { value: 2022, label: '2022 Session', subtitle: 'Archived Reference Papers', icon: '📂' },
 ]
 
 function formatBytes(bytes: number, decimals = 1): string {
@@ -768,68 +812,43 @@ function UploadFormContent() {
               {/* Dynamic Row: If Study Material -> Material Type; If Exam Paper -> Exam Type */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {isStudy ? (
-                  /* Study Material Type Selector */
+                  /* Figma-style Study Material Type Selector */
                   <div className="space-y-1.5 sm:col-span-1">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-emerald-400" htmlFor="material_type">
-                        Study Material Type
-                      </label>
-                      <span className="text-[10px] font-mono text-emerald-400/80">Category</span>
-                    </div>
-                    <div className="relative">
-                      <Layers className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />
-                      <select 
-                        id="material_type" 
-                        value={materialType}
-                        onChange={(e) => setMaterialType(e.target.value)}
-                        required
-                        className="w-full pl-10 pr-3 py-2.5 bg-prevu-bg border border-emerald-500/30 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-400 transition-colors font-medium cursor-pointer"
-                      >
-                        {STUDY_MATERIAL_TYPES.map(t => (
-                          <option key={t.value} value={t.value}>
-                            {t.icon} {t.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <FigmaDropdown
+                      label="Study Material Type"
+                      value={materialType}
+                      onChange={(val) => setMaterialType(val)}
+                      options={STUDY_MATERIAL_OPTIONS}
+                      variant="emerald"
+                      icon={<BookOpen className="w-4 h-4 text-emerald-400" />}
+                      required
+                    />
                   </div>
                 ) : (
-                  /* Exam Type Selector (MST1, MST2, EST) */
+                  /* Figma-style Exam Type Selector (MST1, MST2, EST) */
                   <div className="space-y-1.5 sm:col-span-1">
-                    <label className="text-xs font-semibold text-prevu-text-muted" htmlFor="exam_type">
-                      Exam Type
-                    </label>
-                    <div className="relative">
-                      <Layers className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-prevu-text-muted" />
-                      <select 
-                        id="exam_type" 
-                        value={examType}
-                        onChange={(e) => setExamType(e.target.value)}
-                        required
-                        className="w-full pl-10 pr-3 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text focus:outline-none focus:border-prevu-accent transition-colors font-medium cursor-pointer"
-                      >
-                        <option value="MST1">MST 1 (Mid Semester 1)</option>
-                        <option value="MST2">MST 2 (Mid Semester 2)</option>
-                        <option value="EST">EST (End Semester Test)</option>
-                      </select>
-                    </div>
+                    <FigmaDropdown
+                      label="Exam Type"
+                      value={examType}
+                      onChange={(val) => setExamType(val)}
+                      options={EXAM_TYPE_OPTIONS}
+                      variant="violet"
+                      icon={<Layers className="w-4 h-4 text-prevu-accent" />}
+                      required
+                    />
                   </div>
                 )}
 
-                {/* Academic Session / Exam Year */}
+                {/* Academic Session / Exam Year with Figma Dropdown */}
                 <div className="space-y-1.5 sm:col-span-1">
-                  <label className="text-xs font-semibold text-prevu-text-muted" htmlFor="exam_year">
-                    {isStudy ? 'Academic Year / Session' : 'Exam Year'}
-                  </label>
-                  <input 
-                    type="number" 
-                    id="exam_year" 
+                  <FigmaDropdown
+                    label={isStudy ? 'Academic Session / Year' : 'Exam Year'}
                     value={examYear}
-                    onChange={(e) => setExamYear(Number(e.target.value))}
+                    onChange={(val) => setExamYear(Number(val))}
+                    options={EXAM_YEAR_OPTIONS}
+                    variant={isStudy ? 'emerald' : 'violet'}
+                    icon={<Calendar className="w-4 h-4 text-prevu-text-muted" />}
                     required
-                    min={2015}
-                    max={new Date().getFullYear() + 1}
-                    className="w-full px-3 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text focus:outline-none focus:border-prevu-accent transition-colors font-mono"
                   />
                 </div>
               </div>

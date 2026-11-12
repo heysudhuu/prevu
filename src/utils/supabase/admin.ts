@@ -1,4 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
+import dns from 'node:dns'
+
+// Optimize DNS lookup order on Windows to prevent IPv6 connection timeouts
+try {
+  dns.setDefaultResultOrder?.('ipv4first')
+} catch {}
 
 export function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL

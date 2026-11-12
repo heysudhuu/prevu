@@ -51,7 +51,7 @@ export default function UploadCelebrationMascot({
       className="w-full max-w-xl mx-auto text-center"
     >
       <div className="relative backdrop-blur-3xl bg-[#0b0c14]/95 border border-purple-500/30 rounded-3xl p-6 sm:p-10 shadow-[0_0_50px_rgba(139,92,246,0.18)] overflow-hidden">
-        
+
         {/* Ambient Top Glow & Conic Radial Aura */}
         <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-96 h-96 bg-gradient-to-br from-purple-600/30 via-cyan-500/20 to-emerald-500/20 rounded-full blur-[100px] pointer-events-none" />
 
@@ -62,7 +62,7 @@ export default function UploadCelebrationMascot({
         {/* 1. HOLOGRAPHIC DOCUMENT VACUUM & LASER BEAM ANIMATION */}
         {/* ============================================================ */}
         <div className="relative w-44 h-44 mx-auto mb-6 flex items-center justify-center">
-          
+
           {/* Concentric Rotating Hologram Energy Rings */}
           <motion.div
             className="absolute inset-0 rounded-full border border-purple-500/30 border-dashed"
@@ -188,11 +188,10 @@ export default function UploadCelebrationMascot({
               <Layers className="w-3.5 h-3.5 text-cyan-400" />
               <span>Classification:</span>
             </span>
-            <span className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md ${
-              isStudyMaterial 
-                ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' 
+            <span className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md ${isStudyMaterial
+                ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
                 : 'bg-purple-500/15 text-purple-300 border border-purple-500/30'
-            }`}>
+              }`}>
               {examType} • {examYear}
             </span>
           </div>
@@ -222,7 +221,7 @@ export default function UploadCelebrationMascot({
         {/* 4. ACTION BUTTONS */}
         {/* ============================================================ */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button 
+          <Button
             onClick={onUploadAnother}
             variant="outline"
             className="flex-1 py-3 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 bg-[#12121f] border-prevu-surface-light text-prevu-text hover:text-white hover:border-purple-500/50 cursor-pointer"
@@ -231,13 +230,12 @@ export default function UploadCelebrationMascot({
             <span>Upload Another Document</span>
           </Button>
 
-          <Button 
+          <Button
             asChild
-            className={`flex-1 py-3 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-lg cursor-pointer ${
-              isStudyMaterial 
-                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-500/25' 
+            className={`flex-1 py-3 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-lg cursor-pointer ${isStudyMaterial
+                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-500/25'
                 : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-600/30'
-            }`}
+              }`}
           >
             <Link href="/leaderboard">
               <span>View Hall of Fame</span>

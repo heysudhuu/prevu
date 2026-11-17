@@ -3,6 +3,14 @@
 import { getSupabaseAdmin } from '@/utils/supabase/admin'
 import { isSuperAdminEmail } from '@/lib/auth/admin-check'
 
+export interface ContributedPaper {
+  id: string
+  title: string
+  subject: string
+  examType?: string
+  year?: number
+}
+
 export interface LeaderboardUser {
   id: string
   name: string
@@ -17,6 +25,7 @@ export interface LeaderboardUser {
     color: string
     icon: string
   }
+  contributions?: ContributedPaper[]
 }
 
 /**
@@ -96,6 +105,32 @@ const KNOWN_CONTRIBUTOR_PROFILES: Record<string, { name: string; username: strin
   }
 }
 
+const DEFAULT_USER_CONTRIBUTIONS: Record<string, ContributedPaper[]> = {
+  'xUrFrDdUBvdo7tFjyyDsm0Tp2Nr2': [
+    { id: 'c1', title: 'Java Question Bank', subject: 'OOP using Java', examType: 'MST1', year: 2026 },
+    { id: 'c2', title: 'DBMS Comprehensive Notes', subject: 'Database Management System', examType: 'MST2', year: 2026 },
+    { id: 'c3', title: 'OS Previous Exam Solved', subject: 'Operating Systems', examType: 'Final', year: 2025 }
+  ],
+  'ZFVZriksm3Qq7amj5JZxHdo1K192': [
+    { id: 'c4', title: 'COA MST1 PYQ', subject: 'Computer Organization & Architecture', examType: 'MST1', year: 2023 },
+    { id: 'c5', title: 'Agile Methodologies PYQ', subject: 'Agile Development Methodologies', examType: 'MST1', year: 2023 }
+  ],
+  'OcISUwvJZfMhhkeNTKYFZTxrnWn2': [
+    { id: 'c6', title: 'DAA Prev Yr Merged (Nemesis)', subject: 'Design & Analysis of Algorithms', examType: 'MST1', year: 2023 },
+    { id: 'c7', title: 'Communication Skills MST1 PYQ', subject: 'Communication Skills', examType: 'MST1', year: 2026 }
+  ],
+  'erD5nQTwybXagxMnuvsChTxreD72': [
+    { id: 'c8', title: 'TOC PYQ CU Updates', subject: 'Theory Of Computation', examType: 'MST1', year: 2024 },
+    { id: 'c9', title: 'Parallel & Distributed Computing', subject: 'Parallel & Distributed Computing', examType: 'MST1', year: 2024 }
+  ],
+  'yZXDoM6OC6hBjb2KNpKc1Ly8OEP2': [
+    { id: 'c10', title: 'Digital Electronics Blueprint', subject: 'Digital Electronics', examType: 'MST1', year: 2025 }
+  ],
+  'LUZvIzcgenMafO7QfheNKgelcNt1': [
+    { id: 'c11', title: 'Data Structures MST1 PYQ', subject: 'Data Structures & Algorithms', examType: 'MST1', year: 2025 }
+  ]
+}
+
 /**
  * Calculates contributor rankings based on approved question paper uploads and verification.
  */
@@ -103,18 +138,37 @@ export async function getLeaderboard(): Promise<LeaderboardUser[]> {
   try {
     const supabase = getSupabaseAdmin()
 
-    // 1. Fetch approved resources grouped by uploaded_by
+    // 1. Fetch approved resources with subject & exam type grouped by uploaded_by
     const { data: approvedResources } = await supabase
       .from('resources')
-      .select('uploaded_by')
+      .select(`
+        id, original_filename, created_at, uploaded_by, exam_year,
+        subjects ( name, code ),
+        exam_types ( name )
+      `)
       .eq('status', 'approved')
+      .order('created_at', { ascending: false })
 
-    // Tally upload counts per user ID from real database
+    // Tally upload counts and collect top contributed papers per user ID from real database
     const uploadCounts: Record<string, number> = {}
+    const userContributions: Record<string, ContributedPaper[]> = {}
+
     if (approvedResources && approvedResources.length > 0) {
-      approvedResources.forEach(r => {
+      approvedResources.forEach((r: any) => {
         if (r.uploaded_by) {
           uploadCounts[r.uploaded_by] = (uploadCounts[r.uploaded_by] || 0) + 1
+          if (!userContributions[r.uploaded_by]) {
+            userContributions[r.uploaded_by] = []
+          }
+          if (userContributions[r.uploaded_by].length < 3) {
+            userContributions[r.uploaded_by].push({
+              id: r.id,
+              title: r.original_filename?.replace(/\.(pdf|jpeg|jpg|png)$/i, '') || 'Question Paper',
+              subject: r.subjects?.name || r.subjects?.code || 'Engineering Core',
+              examType: r.exam_types?.name,
+              year: r.exam_year
+            })
+          }
         }
       })
     }
@@ -164,6 +218,10 @@ export async function getLeaderboard(): Promise<LeaderboardUser[]> {
         badge = { title: 'Semester Hero', color: 'text-cyan-300 bg-cyan-500/15 border-cyan-500/30', icon: '⭐' }
       }
 
+      const contributions = userContributions[uid]?.length
+        ? userContributions[uid]
+        : (DEFAULT_USER_CONTRIBUTIONS[uid] || [])
+
       return {
         id: uid,
         name,
@@ -173,7 +231,8 @@ export async function getLeaderboard(): Promise<LeaderboardUser[]> {
         role,
         approvedUploads: uploads,
         karma,
-        badge
+        badge,
+        contributions
       }
     })
 
@@ -197,7 +256,8 @@ function getFallbackLeaderboard(): LeaderboardUser[] {
       role: 'student',
       approvedUploads: 120,
       karma: 3050,
-      badge: { title: 'Campus Legend', color: 'text-amber-300 bg-amber-500/15 border-amber-500/30', icon: '👑' }
+      badge: { title: 'Campus Legend', color: 'text-amber-300 bg-amber-500/15 border-amber-500/30', icon: '👑' },
+      contributions: DEFAULT_USER_CONTRIBUTIONS['xUrFrDdUBvdo7tFjyyDsm0Tp2Nr2']
     },
     {
       id: 'ZFVZriksm3Qq7amj5JZxHdo1K192',
@@ -208,7 +268,8 @@ function getFallbackLeaderboard(): LeaderboardUser[] {
       role: 'student',
       approvedUploads: 3,
       karma: 125,
-      badge: { title: 'Vault Guardian', color: 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30', icon: '🛡️' }
+      badge: { title: 'Vault Guardian', color: 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30', icon: '🛡️' },
+      contributions: DEFAULT_USER_CONTRIBUTIONS['ZFVZriksm3Qq7amj5JZxHdo1K192']
     },
     {
       id: 'erD5nQTwybXagxMnuvsChTxreD72',
@@ -219,7 +280,8 @@ function getFallbackLeaderboard(): LeaderboardUser[] {
       role: 'student',
       approvedUploads: 2,
       karma: 100,
-      badge: { title: 'Vault Guardian', color: 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30', icon: '🛡️' }
+      badge: { title: 'Vault Guardian', color: 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30', icon: '🛡️' },
+      contributions: DEFAULT_USER_CONTRIBUTIONS['erD5nQTwybXagxMnuvsChTxreD72']
     },
     {
       id: 'yZXDoM6OC6hBjb2KNpKc1Ly8OEP2',
@@ -230,7 +292,8 @@ function getFallbackLeaderboard(): LeaderboardUser[] {
       role: 'student',
       approvedUploads: 1,
       karma: 75,
-      badge: { title: 'Bounty Hunter', color: 'text-amber-400 bg-amber-500/15 border-amber-500/30', icon: '⚡' }
+      badge: { title: 'Bounty Hunter', color: 'text-amber-400 bg-amber-500/15 border-amber-500/30', icon: '⚡' },
+      contributions: DEFAULT_USER_CONTRIBUTIONS['yZXDoM6OC6hBjb2KNpKc1Ly8OEP2']
     },
     {
       id: 'LUZvIzcgenMafO7QfheNKgelcNt1',
@@ -241,7 +304,8 @@ function getFallbackLeaderboard(): LeaderboardUser[] {
       role: 'student',
       approvedUploads: 1,
       karma: 75,
-      badge: { title: 'Bounty Hunter', color: 'text-amber-400 bg-amber-500/15 border-amber-500/30', icon: '⚡' }
+      badge: { title: 'Bounty Hunter', color: 'text-amber-400 bg-amber-500/15 border-amber-500/30', icon: '⚡' },
+      contributions: DEFAULT_USER_CONTRIBUTIONS['LUZvIzcgenMafO7QfheNKgelcNt1']
     }
   ]
 }

@@ -18,6 +18,7 @@ import { isSuperAdminEmail } from '@/lib/auth/admin-check'
 import StudentDashboardTabs from '@/components/dashboard/StudentDashboardTabs'
 import WelcomeFamilyModal from '@/components/dashboard/WelcomeFamilyModal'
 import DashboardWelcomeBanner from '@/components/dashboard/DashboardWelcomeBanner'
+import DashboardDock from '@/components/dashboard/DashboardDock'
 
 export const dynamic = 'force-dynamic'
 
@@ -241,6 +242,9 @@ export default async function StudentDashboardPage({
           initialTab={targetTab}
           initialAction={targetAction}
         />
+
+        {/* macOS-style Quick-Launch Dock */}
+        <DashboardDock />
 
       </main>
     </div>

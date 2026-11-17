@@ -174,11 +174,10 @@ ALTER TABLE IF EXISTS site_page_views DISABLE ROW LEVEL SECURITY;`
         <div className="flex items-center gap-2 self-start sm:self-auto">
           <button
             onClick={() => setAutoRefresh(!autoRefresh)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all flex items-center gap-1.5 ${
-              autoRefresh
+            className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all flex items-center gap-1.5 ${autoRefresh
                 ? 'bg-purple-950/40 border-purple-500/40 text-purple-300'
                 : 'bg-prevu-surface border-prevu-surface-light text-prevu-text-muted hover:text-prevu-text'
-            }`}
+              }`}
           >
             <Radio className={`w-3.5 h-3.5 ${autoRefresh ? 'text-purple-400 animate-pulse' : 'text-prevu-text-muted'}`} />
             <span>{autoRefresh ? 'Live Auto-Sync (8s)' : 'Live Sync Paused'}</span>
@@ -328,21 +327,19 @@ ALTER TABLE IF EXISTS site_page_views DISABLE ROW LEVEL SECURITY;`
                   <div className="w-full max-w-[48px] flex items-end justify-center gap-1 h-36 bg-prevu-bg/50 rounded-xl p-1 border border-prevu-surface-light/30">
                     {/* Total Views Bar */}
                     <div
-                      className={`w-1/2 rounded-lg transition-all duration-500 ${
-                        isToday
+                      className={`w-1/2 rounded-lg transition-all duration-500 ${isToday
                           ? 'bg-gradient-to-t from-purple-600 via-indigo-500 to-purple-400 shadow-lg shadow-purple-600/30'
                           : 'bg-purple-600/80 group-hover:bg-purple-500'
-                      }`}
+                        }`}
                       style={{ height: `${viewsHeightPercent}%` }}
                       title={`${day.views} views`}
                     />
                     {/* Unique Visitors Bar */}
                     <div
-                      className={`w-1/2 rounded-lg transition-all duration-500 ${
-                        isToday
+                      className={`w-1/2 rounded-lg transition-all duration-500 ${isToday
                           ? 'bg-cyan-400 shadow-md shadow-cyan-400/30'
                           : 'bg-cyan-500/80 group-hover:bg-cyan-400'
-                      }`}
+                        }`}
                       style={{ height: `${visitorsHeightPercent}%` }}
                       title={`${day.uniqueVisitors} unique visitors`}
                     />

@@ -29,7 +29,7 @@ import {
   ChevronDown,
   Search
 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import dynamic from 'next/dynamic'
 import SmartExamAlertsModal from '@/components/notifications/SmartExamAlertsModal'
 import { getUnreadNotificationCountAction } from '@/app/requests/actions'
@@ -57,6 +57,8 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
   const [exploreMenuOpen, setExploreMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState<number>(0)
+
+  const shouldReduceMotion = useReducedMotion()
 
   const exploreRef = useRef<HTMLDivElement>(null)
   const userRef = useRef<HTMLDivElement>(null)
@@ -171,20 +173,67 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
       {/* ============================================================ */}
       {/* DESKTOP CENTER NAVIGATION LINKS */}
       {/* ============================================================ */}
-      <nav className="hidden lg:flex items-center gap-1 shrink-0">
+      <nav className="hidden lg:flex items-center gap-1 shrink-0 p-0.5 rounded-2xl bg-[#090d13]/60 border border-[#30363d]/40 backdrop-blur-md relative">
         {primaryLinks.map((link) => {
           const isActive = pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href))
           return (
             <Link
               key={link.href}
               href={link.href}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all inline-flex items-center gap-1.5 whitespace-nowrap ${isActive
-                  ? 'bg-prevu-surface-light text-white shadow-sm font-bold border border-prevu-surface-light/80'
-                  : 'text-prevu-text-muted hover:text-white hover:bg-prevu-surface-light/50'
-                }`}
+              className={`relative px-3 py-1.5 rounded-xl text-xs transition-colors inline-flex items-center gap-1.5 whitespace-nowrap ${
+                isActive
+                  ? 'text-white font-bold'
+                  : 'text-prevu-text-muted hover:text-white hover:bg-prevu-surface-light/40 font-semibold'
+              }`}
             >
-              {link.icon}
-              <span>{link.label}</span>
+              {isActive && (
+                <>
+                  {/* Fluid Stretch Active Pill (Figma Riff Inspired) */}
+                  <motion.div
+                    layoutId="desktopActiveNavPill"
+                    className="absolute inset-0 rounded-xl bg-prevu-surface-light/95 border border-prevu-accent/35 shadow-[0_2px_12px_rgba(0,0,0,0.5)] -z-10"
+                    transition={
+                      shouldReduceMotion
+                        ? { duration: 0 }
+                        : {
+                            type: 'spring',
+                            stiffness: 380,
+                            damping: 30,
+                            mass: 0.8
+                          }
+                    }
+                  >
+                    {/* Top specular highlight line */}
+                    <div className="absolute inset-x-2 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                    {/* Subtle ambient accent glow */}
+                    <div className="absolute inset-0 rounded-xl bg-prevu-accent/10 pointer-events-none" />
+                  </motion.div>
+
+                  {/* Elastic Trailing Droplet Indicator */}
+                  <motion.div
+                    layoutId="desktopActiveNavDroplet"
+                    className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-1 rounded-full bg-prevu-accent shadow-[0_0_10px_var(--color-prevu-accent)] z-20 pointer-events-none"
+                    transition={
+                      shouldReduceMotion
+                        ? { duration: 0 }
+                        : {
+                            type: 'spring',
+                            stiffness: 240,
+                            damping: 20,
+                            mass: 1.15
+                          }
+                    }
+                  >
+                    {/* Micro droplet core glow */}
+                    <span className="absolute inset-0 rounded-full bg-white/40 blur-[0.5px]" />
+                  </motion.div>
+                </>
+              )}
+
+              <span className="relative z-10 flex items-center gap-1.5">
+                {link.icon}
+                <span>{link.label}</span>
+              </span>
             </Link>
           )
         })}

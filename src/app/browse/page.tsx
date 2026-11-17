@@ -272,7 +272,7 @@ export default async function BrowsePage({
                   <Sparkles className="w-4 h-4 text-purple-400" />
                 </div>
                 <div className="text-xs sm:text-sm text-purple-100">
-                  Found question papers for <strong className="text-white">&ldquo;{crossSemesterNotice.searchedTerm}&rdquo;</strong> in <strong className="text-purple-300">Semester {crossSemesterNotice.actualSemesters.join(' & ')}</strong> (none currently filed under Semester {semFilter}).
+                  Found question papers for <strong className="text-white">&ldquo;{crossSemesterNotice.searchedTerm}&rdquo;</strong> in <strong className="text-purple-300">Semester {(crossSemesterNotice.actualSemesters || []).join(' & ')}</strong> (none currently filed under Semester {semFilter}).
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">

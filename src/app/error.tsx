@@ -12,7 +12,11 @@ export default function Error({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('[Prevu Error Boundary]', error)
+    try {
+      console.error('[Prevu Error Boundary]', error?.message || error)
+    } catch {
+      // Safe fallback to prevent cascading boundary errors
+    }
   }, [error])
 
   return (

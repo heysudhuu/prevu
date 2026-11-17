@@ -39,11 +39,14 @@ interface AnalyticsClientProps {
 }
 
 export default function AnalyticsClient({
-  stats,
-  resources,
-  users,
-  initialTraffic
+  stats = {},
+  resources = [],
+  users = [],
+  initialTraffic = null
 }: AnalyticsClientProps) {
+  const safeResources = useMemo(() => Array.isArray(resources) ? resources : [], [resources])
+  const safeUsers = useMemo(() => Array.isArray(users) ? users : [], [users])
+
   const [traffic, setTraffic] = useState<LiveAnalyticsSummary | null>(initialTraffic || null)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [autoRefresh, setAutoRefresh] = useState(true)
@@ -81,30 +84,30 @@ export default function AnalyticsClient({
   // Calculate Semester Distribution
   const semesterBreakdown = useMemo(() => {
     const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 }
-    resources.forEach(r => {
+    safeResources.forEach(r => {
       const sem = r.subjects?.semester
       if (sem && counts[sem] !== undefined) counts[sem]++
     })
     return counts
-  }, [resources])
+  }, [safeResources])
 
   // Calculate Exam Pattern Distribution
   const examTypeBreakdown = useMemo(() => {
     const counts: Record<string, number> = { MST1: 0, MST2: 0, EST: 0, Other: 0 }
-    resources.forEach(r => {
+    safeResources.forEach(r => {
       const type = r.exam_types?.name
       if (type && counts[type] !== undefined) counts[type]++
       else counts.Other++
     })
     return counts
-  }, [resources])
+  }, [safeResources])
 
   // Top Downloaded Papers
   const topDownloaded = useMemo(() => {
-    return [...resources]
+    return [...safeResources]
       .sort((a, b) => (b.download_count || 0) - (a.download_count || 0))
       .slice(0, 5)
-  }, [resources])
+  }, [safeResources])
 
   const maxSemCount = Math.max(...Object.values(semesterBreakdown), 1)
 
@@ -629,19 +632,19 @@ ALTER TABLE IF EXISTS site_page_views DISABLE ROW LEVEL SECURITY;`
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard
             title="Total Published Papers"
-            value={resources.length}
+            value={safeResources.length}
             icon={FileText}
             description="Verified repository items"
           />
           <StatCard
             title="Student Registrations"
-            value={users.length}
+            value={safeUsers.length}
             icon={Users}
             description="Total active accounts"
           />
           <StatCard
             title="CU Verified Students"
-            value={users.filter(u => u.cu_verified).length}
+            value={safeUsers.filter(u => u.cu_verified).length}
             icon={TrendingUp}
             description="Institutional email verified"
           />

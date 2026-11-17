@@ -341,7 +341,7 @@ export function CustomSyllabusModal({
                   </div>
                   <textarea
                     rows={4}
-                    value={activeUnit.topics.join('\n')}
+                    value={(activeUnit?.topics || []).join('\n')}
                     onChange={e => handleTopicsTextChange(activeUnit.unitNumber, e.target.value)}
                     placeholder="Enter key topics for Unit 1, one per line..."
                     className="w-full p-3 rounded-xl bg-prevu-surface border border-prevu-surface-light text-xs text-prevu-text-muted focus:text-white focus:outline-none focus:border-purple-500 transition-colors leading-relaxed"

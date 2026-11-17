@@ -603,7 +603,7 @@ function UploadFormContent() {
           subjectCode={subjectCode}
           examType={uploadCategory === 'study_material' ? materialType : examType}
           examYear={examYear}
-          fileName={files.length > 1 ? `${files.length} files: ${files.map(f => f.name).join(', ')}` : files[0]?.name}
+          fileName={files.length > 1 ? `${files.length} files: ${files.map(f => f?.name || 'file').join(', ')}` : files[0]?.name || ''}
           isAdminUpload={isAdminUpload}
           isStudyMaterial={uploadCategory === 'study_material'}
           onUploadAnother={() => {
@@ -712,7 +712,7 @@ function UploadFormContent() {
                         </span>
                       </div>
                       <p className="text-[11px] text-prevu-text-muted truncate max-w-[280px] sm:max-w-md">
-                        Detected from {autoDetected.detectedFrom.join(' • ')}. Fields have been automatically selected.
+                        Detected from {(autoDetected.detectedFrom || []).join(' • ') || 'document analysis'}. Fields have been automatically selected.
                       </p>
                     </div>
                   </div>

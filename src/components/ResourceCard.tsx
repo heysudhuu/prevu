@@ -109,7 +109,7 @@ export function ResourceCard({ resource, isBookmarked = false, initialUpvoted = 
             </a>
           ) : (
             <Link href={`/paper/${resource.id}`} className="hover:underline">
-              {resource.subjects?.name}
+              {resource.original_filename || resource.subjects?.name || 'Untitled Resource'}
             </Link>
           )}
         </CardTitle>
@@ -120,11 +120,16 @@ export function ResourceCard({ resource, isBookmarked = false, initialUpvoted = 
             href={subjectUrl}
             className="text-[10px] font-mono font-bold text-prevu-accent bg-prevu-accent/10 hover:bg-prevu-accent/20 px-2 py-0.5 rounded border border-prevu-accent/25 transition-colors"
           >
-            {resource.subjects?.code}
+            {resource.subjects?.code || 'CSE'}
           </Link>
           <span className="text-[11px] font-mono text-prevu-text-muted">
-            Sem {resource.subjects?.semester}
+            Sem {resource.subjects?.semester || 1}
           </span>
+          {resource.subjects?.name && resource.original_filename && resource.original_filename !== resource.subjects.name && (
+            <span className="text-[10px] text-zinc-400 truncate max-w-[140px]" title={resource.subjects.name}>
+              {resource.subjects.name}
+            </span>
+          )}
           {resource.channel_name && (
             <span className="text-[10px] font-mono text-red-300 bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20 truncate max-w-[120px]">
               {resource.channel_name}

@@ -17,7 +17,7 @@ export default async function RecentPapersSection() {
         subjects ( name, code ),
         exam_types ( name )
       `)
-      .eq('is_verified', true)
+      .eq('status', 'approved')
       .order('created_at', { ascending: false })
       .limit(12)
 

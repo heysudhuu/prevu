@@ -23,7 +23,7 @@ export default async function StudyMaterialPage({
     search?: string
   }>
 }) {
-  const supabase = await createClient()
+  const supabase = await createClient(true)
   const params = await searchParams
 
   const [

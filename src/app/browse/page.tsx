@@ -28,7 +28,7 @@ export default async function BrowsePage({
     page?: string
   }>
 }) {
-  const supabase = await createClient()
+  const supabase = await createClient(true)
   const [bookmarkIds, userUpvotedIds, upvoteCounts] = await Promise.all([
     getUserBookmarkIds(),
     getUserUpvotedResourceIds(),

@@ -4,17 +4,27 @@ import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { getFormDataOptions, checkHashExists, uploadResource, prepareDirectUpload, completeDirectUpload } from './actions'
+import { getFormDataOptions, checkHashExists, uploadResource, prepareDirectUpload, completeDirectUpload, uploadExternalLinkResource } from './actions'
 import { createClient } from '@/utils/supabase/client'
 import { 
   Upload, AlertCircle, Sparkles, BookOpen, Layers, Eye, FileText, 
   CheckCircle2, CloudUpload, Clipboard, Loader2, ShieldCheck, Check, 
-  Wand2, AlertTriangle, Sparkle, Calendar, ShieldAlert 
+  Wand2, AlertTriangle, Sparkle, Calendar, ShieldAlert,
+  Link as LinkIcon, ExternalLink, FolderOpen, Play, Video
 } from 'lucide-react'
 import UploadCelebrationMascot from '@/components/animations/UploadCelebrationMascot'
 import FigmaDropdown, { FigmaDropdownOption } from '@/components/ui/FigmaDropdown'
 import { analyzeImageQuality, autoEnhanceDocumentScan, type QualityAnalysisResult } from '@/lib/scanner/scanQuality'
 import { detectMetadataFromFile, type DetectedMetadata } from '@/lib/scanner/autoDetect'
+import { parseGDriveUrl, parseYouTubeUrl, type ParsedYouTubeUrl, type ParsedGDriveUrl } from '@/lib/links/urlParsers'
+
+function YouTubeIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+    </svg>
+  )
+}
 
 type Subject = { id: number, name: string, code: string, year: number, semester: number, branch_id: number }
 
@@ -218,6 +228,20 @@ function UploadFormContent() {
   const [materialType, setMaterialType] = useState('Notes')
   const [unitNumber, setUnitNumber] = useState<string>('Unit 1')
   const [examYear, setExamYear] = useState<number>(new Date().getFullYear())
+
+  // Contribution format state: 'file' | 'gdrive' | 'youtube'
+  const initialFormatParam = searchParams.get('format')
+  const [contributionFormat, setContributionFormat] = useState<'file' | 'gdrive' | 'youtube'>(
+    initialFormatParam === 'gdrive' ? 'gdrive' : initialFormatParam === 'youtube' ? 'youtube' : 'file'
+  )
+  const [gdriveScope, setGdriveScope] = useState<'subject' | 'semester_bundle'>('subject')
+  const [gdriveUrl, setGdriveUrl] = useState('')
+  const [gdriveTitle, setGdriveTitle] = useState('')
+  const [gdriveDescription, setGdriveDescription] = useState('')
+  const [youtubeUrl, setYoutubeUrl] = useState('')
+  const [youtubeTitle, setYoutubeTitle] = useState('')
+  const [youtubeChannel, setYoutubeChannel] = useState('')
+  const [youtubeDescription, setYoutubeDescription] = useState('')
 
   const [files, setFiles] = useState<File[]>([])
   const [fileHash, setFileHash] = useState<string>('')
@@ -509,6 +533,89 @@ function UploadFormContent() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+
+    // 1. LINK CONTRIBUTION FLOW (Google Drive / YouTube)
+    if (contributionFormat === 'gdrive' || contributionFormat === 'youtube') {
+      const isGdrive = contributionFormat === 'gdrive'
+      const targetUrl = isGdrive ? gdriveUrl.trim() : youtubeUrl.trim()
+      const targetTitle = isGdrive ? gdriveTitle.trim() : youtubeTitle.trim()
+
+      if (!targetUrl) {
+        setError(`Please enter a valid ${isGdrive ? 'Google Drive' : 'YouTube'} link.`)
+        return
+      }
+
+      if (!targetTitle) {
+        setError(`Please provide a descriptive title for this ${isGdrive ? 'Drive folder/file' : 'YouTube video/playlist'}.`)
+        return
+      }
+
+      if (isGdrive) {
+        const parsed = parseGDriveUrl(targetUrl)
+        if (!parsed.isValid) {
+          setError('Please provide a valid Google Drive link (e.g. drive.google.com/drive/folders/... or drive.google.com/file/...)')
+          return
+        }
+      } else {
+        const parsed = parseYouTubeUrl(targetUrl)
+        if (!parsed.isValid) {
+          setError('Please provide a valid YouTube video (youtube.com/watch?v=...) or playlist link.')
+          return
+        }
+      }
+
+      const isSemBundle = isGdrive && gdriveScope === 'semester_bundle'
+      if (!isSemBundle && !subjectName.trim()) {
+        setError('Please enter or select the subject name.')
+        return
+      }
+
+      setError(null)
+      setIsUploading(true)
+      setUploadStage('uploading')
+      setUploadProgress(40)
+      setUploadProgressText(`Publishing ${isGdrive ? 'Google Drive resource' : 'YouTube recommendation'} to Prevu...`)
+
+      try {
+        const res = await uploadExternalLinkResource({
+          format: contributionFormat,
+          title: targetTitle,
+          url: targetUrl,
+          bundle_scope: isSemBundle ? 'semester_bundle' : 'subject',
+          year: selectedYear,
+          semester: selectedSemester,
+          subject_name: isSemBundle ? undefined : subjectName.trim(),
+          subject_code: isSemBundle ? undefined : subjectCode.trim(),
+          resource_category: isReappear ? 'reappear' : 'regular',
+          exam_type: isReappear ? reappearType : (isStudy ? materialType : examType),
+          material_type: isStudy ? materialType : undefined,
+          channel_name: !isGdrive ? youtubeChannel.trim() : undefined,
+          description: isGdrive ? gdriveDescription.trim() : youtubeDescription.trim(),
+          unit: isStudy ? unitNumber : null
+        })
+
+        if (res.error) {
+          setError(res.error)
+          setIsUploading(false)
+          setUploadStage('idle')
+          return
+        }
+
+        setUploadProgress(100)
+        setIsAdminUpload(!!res.isAdminUpload)
+        setSuccess(true)
+        setIsUploading(false)
+        setUploadStage('complete')
+      } catch (err: unknown) {
+        console.error('External link contribution error:', err)
+        setError(err instanceof Error ? err.message : 'An error occurred while sharing link.')
+        setIsUploading(false)
+        setUploadStage('idle')
+      }
+      return
+    }
+
+    // 2. STANDARD FILE UPLOAD FLOW
     if (files.length === 0) {
       setError('Please select at least 1 file (up to 3) to upload.')
       return
@@ -724,7 +831,7 @@ function UploadFormContent() {
           </CardHeader>
 
           <CardContent className="space-y-5">
-            {/* Primary Classification: Regular Resource vs Reappear Resource */}
+            {/* 1. Resource Classification: Regular Resource vs Reappear Resource */}
             <div className="space-y-2">
               <label className="text-[11px] font-mono font-medium text-prevu-text-muted uppercase tracking-wider">
                 1. Resource Classification
@@ -754,6 +861,56 @@ function UploadFormContent() {
                 >
                   <ShieldAlert className="w-4 h-4 text-amber-400" />
                   <span>Reappear Resource</span>
+                </button>
+              </div>
+            </div>
+
+            {/* 2. Contribution Format: File Upload vs Google Drive vs YouTube Recommendation */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-mono font-medium text-prevu-text-muted uppercase tracking-wider">
+                  2. Contribution Format
+                </label>
+                <span className="text-[10px] font-mono text-prevu-accent">Direct Files · Google Drive · YouTube</span>
+              </div>
+              <div className="p-1 bg-prevu-bg/95 rounded-2xl border border-prevu-surface-light grid grid-cols-3 gap-1 shadow-inner">
+                <button
+                  type="button"
+                  onClick={() => setContributionFormat('file')}
+                  className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
+                    contributionFormat === 'file'
+                      ? 'bg-prevu-surface-light text-white shadow-md border border-prevu-accent/40'
+                      : 'text-prevu-text-muted hover:text-white hover:bg-prevu-surface/40'
+                  }`}
+                >
+                  <FileText className="w-3.5 h-3.5 text-prevu-accent shrink-0" />
+                  <span className="truncate">File Upload</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setContributionFormat('gdrive')}
+                  className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
+                    contributionFormat === 'gdrive'
+                      ? 'bg-gradient-to-r from-blue-600/30 to-emerald-600/30 text-emerald-300 border border-emerald-500/50 shadow-md font-extrabold'
+                      : 'text-prevu-text-muted hover:text-white hover:bg-prevu-surface/40'
+                  }`}
+                >
+                  <FolderOpen className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span className="truncate">Google Drive</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setContributionFormat('youtube')}
+                  className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
+                    contributionFormat === 'youtube'
+                      ? 'bg-gradient-to-r from-red-600/30 to-rose-600/30 text-rose-300 border border-red-500/50 shadow-md font-extrabold'
+                      : 'text-prevu-text-muted hover:text-white hover:bg-prevu-surface/40'
+                  }`}
+                >
+                  <YouTubeIcon className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                  <span className="truncate">YouTube Video</span>
                 </button>
               </div>
             </div>
@@ -1050,230 +1207,512 @@ function UploadFormContent() {
                 </div>
               )}
 
-              {/* File Upload Box (Supports 1 to 3 files at one time) */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs font-semibold text-prevu-text-muted" htmlFor="file">
-                      {isStudy ? 'Document / Notes Files' : 'Question Paper Files'}
-                    </label>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                      {files.length} / 3 Files Selected
+              {/* 3A. File Upload Box (Active when contributionFormat === 'file') */}
+              {contributionFormat === 'file' && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs font-semibold text-prevu-text-muted" htmlFor="file">
+                        {isStudy ? 'Document / Notes Files' : 'Question Paper Files'}
+                      </label>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                        {files.length} / 3 Files Selected
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-prevu-text-muted font-mono">Upload 1 to 3 files (Max 50MB each)</span>
+                  </div>
+
+                  {/* Selected Files List */}
+                  {files.length > 0 && (
+                    <div className="space-y-2 p-3 rounded-2xl bg-prevu-bg/90 border border-prevu-surface-light">
+                      {files.map((f, idx) => {
+                        const quality = qualityMap[f.name]
+                        const isImage = f.type.startsWith('image/')
+                        return (
+                          <div
+                            key={idx}
+                            className="p-3 rounded-xl bg-prevu-surface/60 border border-purple-500/30 text-xs space-y-2 transition-all"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <span className="w-6 h-6 rounded-lg bg-purple-600/30 text-purple-300 flex items-center justify-center text-[10px] font-mono font-bold shrink-0">
+                                  #{idx + 1}
+                                </span>
+                                <div className="min-w-0">
+                                  <p className="font-semibold text-white truncate max-w-[220px] sm:max-w-xs">{f.name}</p>
+                                  <p className="text-[10px] font-mono text-prevu-text-muted">{(f.size / (1024 * 1024)).toFixed(2)} MB</p>
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveFile(idx)}
+                                className="p-1 rounded-lg text-prevu-text-muted hover:text-red-400 hover:bg-red-500/10 transition-colors text-xs font-bold cursor-pointer"
+                                title="Remove file"
+                              >
+                                ✕
+                              </button>
+                            </div>
+
+                            {/* Scan Quality & Readability Indicator (Feature 5) */}
+                            {isImage && quality && (
+                              <div className="pt-2 border-t border-prevu-surface-light/60">
+                                {!quality.isAcceptable ? (
+                                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-300">
+                                    <div className="flex items-start gap-1.5 min-w-0 text-[11px]">
+                                      <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                                      <span>
+                                        {quality.issues[0]} <span className="font-mono text-[10px] text-amber-400">({quality.score}% Score)</span>
+                                      </span>
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleEnhanceFile(idx)}
+                                      disabled={enhancingIndex === idx}
+                                      className="h-7 text-[10px] font-bold border-amber-500/40 text-amber-300 hover:bg-amber-500/20 shrink-0"
+                                    >
+                                      {enhancingIndex === idx ? (
+                                        <>
+                                          <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                                          <span>Enhancing...</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Sparkles className="w-3 h-3 mr-1 text-amber-400" />
+                                          <span>Auto-Enhance Contrast</span>
+                                        </>
+                                      )}
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 px-1 font-medium">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                    <span>Scan sharpness & readability verified (Clarity: {quality.score}%)</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* Drag-and-drop zone / file picker */}
+                  {files.length < 3 ? (
+                    <div
+                      ref={dropZoneRef}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`relative group flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2 border-dashed cursor-pointer transition-all duration-200 select-none ${
+                        isDragging
+                          ? isStudy
+                            ? 'border-emerald-400 bg-emerald-500/10 scale-[1.01]'
+                            : 'border-prevu-accent bg-prevu-accent/10 scale-[1.01]'
+                          : 'border-prevu-surface-light bg-prevu-bg/60 hover:border-prevu-accent/50 hover:bg-prevu-surface/30'
+                      }`}
+                    >
+                      {/* Hidden real file input */}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        id="file"
+                        multiple
+                        accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+
+                      {/* Icon */}
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-200 ${
+                        isDragging
+                          ? isStudy ? 'bg-emerald-500/20 text-emerald-300' : 'bg-prevu-accent/20 text-prevu-accent'
+                          : 'bg-prevu-surface-light text-prevu-text-muted group-hover:text-prevu-accent group-hover:bg-prevu-accent/10'
+                      }`}>
+                        <CloudUpload className="w-6 h-6" />
+                      </div>
+
+                      {/* Text */}
+                      <div className="text-center space-y-1 pointer-events-none">
+                        <p className={`text-sm font-bold transition-colors ${
+                          isDragging
+                            ? isStudy ? 'text-emerald-300' : 'text-prevu-accent'
+                            : 'text-prevu-text group-hover:text-white'
+                        }`}>
+                          {isDragging ? 'Release to add files' : 'Drag & drop files here'}
+                        </p>
+                        <p className="text-[11px] text-prevu-text-muted">
+                          or <span className={`font-semibold ${ isStudy ? 'text-emerald-400' : 'text-prevu-accent' }`}>click to browse</span>
+                        </p>
+                      </div>
+
+                      {/* Hints row */}
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="flex items-center gap-1 px-2 py-1 rounded-lg bg-prevu-surface-light/60 text-[10px] text-prevu-text-muted font-mono">
+                          <Clipboard className="w-3 h-3" /> Ctrl+V to paste
+                        </span>
+                        <span className="flex items-center gap-1 px-2 py-1 rounded-lg bg-prevu-surface-light/60 text-[10px] text-prevu-text-muted font-mono">
+                          Max 50 MB · up to 3 files
+                        </span>
+                      </div>
+
+                      {/* Accepted types */}
+                      <p className="text-[10px] text-prevu-text-muted/60 font-mono">
+                        PDF · JPG · PNG · DOC · XLS · PPT
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="p-2.5 rounded-xl bg-purple-950/20 border border-purple-500/30 text-center text-xs text-purple-300">
+                      Maximum 3 files reached. Remove a file above to replace it.
+                    </div>
+                  )}
+
+                  {/* Duplicate Detection Alert */}
+                  {duplicateData && !duplicateAcknowledged && (
+                    <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl space-y-3">
+                      <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        <span>Possible Duplicate Resource Detected</span>
+                      </div>
+                      
+                      <div className="text-xs text-prevu-text-muted space-y-1 bg-prevu-bg/80 p-3 rounded-xl border border-prevu-surface-light">
+                        <p className="text-white font-semibold">
+                          {duplicateData.subjects?.name || 'Resource'} {duplicateData.subjects?.code ? `(${duplicateData.subjects.code})` : ''} — {duplicateData.exam_year} {duplicateData.exam_types?.name || 'File'}
+                        </p>
+                        <p className="text-[11px] font-mono text-prevu-text-muted truncate">
+                          File: {duplicateData.original_filename}
+                        </p>
+                      </div>
+
+                      <p className="text-[11px] text-prevu-text-muted leading-relaxed">
+                        A file with the identical fingerprint already exists in the vault. If this is a revised version, clearer scan, or additional chapter notes, click <strong>Upload Anyway</strong> to proceed.
+                      </p>
+
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <Button size="sm" variant="outline" asChild className="h-8 text-xs border-amber-500/40 text-amber-300 hover:bg-amber-500/15">
+                          <a href={`/paper/${duplicateData.id}`} target="_blank" rel="noopener noreferrer">
+                            <Eye className="w-3.5 h-3.5 mr-1" /> View Existing
+                          </a>
+                        </Button>
+                        <Button 
+                          type="button" 
+                          size="sm" 
+                          onClick={() => setDuplicateAcknowledged(true)} 
+                          className="h-8 text-xs bg-amber-500 text-black font-bold hover:bg-amber-400"
+                        >
+                          Upload Anyway
+                        </Button>
+                        <Button 
+                          type="button" 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => {
+                            setFiles([])
+                            setFileHash('')
+                            setDuplicateData(null)
+                            setDuplicateAcknowledged(false)
+                            const el = document.getElementById('file') as HTMLInputElement
+                            if (el) el.value = ''
+                          }} 
+                          className="h-8 text-xs text-prevu-text-muted hover:text-white"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {duplicateData && duplicateAcknowledged && (
+                    <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-between text-xs text-amber-300">
+                      <span className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 shrink-0 text-amber-400" />
+                        <span>Duplicate acknowledged. Your upload will be submitted for moderation review.</span>
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 3B. Google Drive Contribution Box (Active when contributionFormat === 'gdrive') */}
+              {contributionFormat === 'gdrive' && (
+                <div className="space-y-4 p-4 rounded-2xl bg-[#090d13] border border-emerald-500/30">
+                  <div className="flex items-center justify-between pb-2 border-b border-prevu-surface-light/50">
+                    <div className="flex items-center gap-2">
+                      <FolderOpen className="w-4 h-4 text-emerald-400" />
+                      <span className="text-xs font-bold text-white uppercase tracking-wider font-mono">
+                        Google Drive Resource Sharing
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                      Direct Access
                     </span>
                   </div>
-                  <span className="text-[10px] text-prevu-text-muted font-mono">Upload 1 to 3 files (Max 50MB each)</span>
-                </div>
 
-                {/* Selected Files List */}
-                {files.length > 0 && (
-                  <div className="space-y-2 p-3 rounded-2xl bg-prevu-bg/90 border border-prevu-surface-light">
-                    {files.map((f, idx) => {
-                      const quality = qualityMap[f.name]
-                      const isImage = f.type.startsWith('image/')
-                      return (
-                        <div
-                          key={idx}
-                          className="p-3 rounded-xl bg-prevu-surface/60 border border-purple-500/30 text-xs space-y-2 transition-all"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <span className="w-6 h-6 rounded-lg bg-purple-600/30 text-purple-300 flex items-center justify-center text-[10px] font-mono font-bold shrink-0">
-                                #{idx + 1}
-                              </span>
-                              <div className="min-w-0">
-                                <p className="font-semibold text-white truncate max-w-[220px] sm:max-w-xs">{f.name}</p>
-                                <p className="text-[10px] font-mono text-prevu-text-muted">{(f.size / (1024 * 1024)).toFixed(2)} MB</p>
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveFile(idx)}
-                              className="p-1 rounded-lg text-prevu-text-muted hover:text-red-400 hover:bg-red-500/10 transition-colors text-xs font-bold cursor-pointer"
-                              title="Remove file"
-                            >
-                              ✕
-                            </button>
-                          </div>
-
-                          {/* Scan Quality & Readability Indicator (Feature 5) */}
-                          {isImage && quality && (
-                            <div className="pt-2 border-t border-prevu-surface-light/60">
-                              {!quality.isAcceptable ? (
-                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-300">
-                                  <div className="flex items-start gap-1.5 min-w-0 text-[11px]">
-                                    <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                                    <span>
-                                      {quality.issues[0]} <span className="font-mono text-[10px] text-amber-400">({quality.score}% Score)</span>
-                                    </span>
-                                  </div>
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleEnhanceFile(idx)}
-                                    disabled={enhancingIndex === idx}
-                                    className="h-7 text-[10px] font-bold border-amber-500/40 text-amber-300 hover:bg-amber-500/20 shrink-0"
-                                  >
-                                    {enhancingIndex === idx ? (
-                                      <>
-                                        <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                                        <span>Enhancing...</span>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Sparkles className="w-3 h-3 mr-1 text-amber-400" />
-                                        <span>Auto-Enhance Contrast</span>
-                                      </>
-                                    )}
-                                  </Button>
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 px-1 font-medium">
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                  <span>Scan sharpness & readability verified (Clarity: {quality.score}%)</span>
-                                </div>
-                              )}
-                            </div>
-                          )}
+                  {/* Drive Scope: Single Subject vs Semester All-in-One Mega Drive */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-mono text-prevu-text-muted uppercase">
+                      Drive Coverage Scope
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setGdriveScope('subject')}
+                        className={`p-2.5 rounded-xl border text-left text-xs font-semibold transition-all cursor-pointer ${
+                          gdriveScope === 'subject'
+                            ? 'bg-emerald-500/15 border-emerald-500/50 text-white shadow-sm'
+                            : 'bg-prevu-bg border-prevu-surface-light text-prevu-text-muted hover:text-white'
+                        }`}
+                      >
+                        <div className="font-bold flex items-center gap-1.5">
+                          <FileText className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Single Subject Drive</span>
                         </div>
-                      )
-                    })}
-                  </div>
-                )}
+                        <div className="text-[10px] text-prevu-text-muted font-normal mt-0.5">
+                          Files or folders for chosen course
+                        </div>
+                      </button>
 
-                {/* Drag-and-drop zone / file picker */}
-                {files.length < 3 ? (
-                  <div
-                    ref={dropZoneRef}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    onClick={() => fileInputRef.current?.click()}
-                    className={`relative group flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2 border-dashed cursor-pointer transition-all duration-200 select-none ${
-                      isDragging
-                        ? isStudy
-                          ? 'border-emerald-400 bg-emerald-500/10 scale-[1.01]'
-                          : 'border-prevu-accent bg-prevu-accent/10 scale-[1.01]'
-                        : 'border-prevu-surface-light bg-prevu-bg/60 hover:border-prevu-accent/50 hover:bg-prevu-surface/30'
-                    }`}
-                  >
-                    {/* Hidden real file input */}
+                      <button
+                        type="button"
+                        onClick={() => setGdriveScope('semester_bundle')}
+                        className={`p-2.5 rounded-xl border text-left text-xs font-semibold transition-all cursor-pointer ${
+                          gdriveScope === 'semester_bundle'
+                            ? 'bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border-cyan-500/50 text-white shadow-sm'
+                            : 'bg-prevu-bg border-prevu-surface-light text-prevu-text-muted hover:text-white'
+                        }`}
+                      >
+                        <div className="font-bold flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>Semester All-in-One Mega Drive</span>
+                        </div>
+                        <div className="text-[10px] text-prevu-text-muted font-normal mt-0.5">
+                          Complete notes &amp; PYQs for Sem {selectedSemester}
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Google Drive Link Input with Live Validation */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-mono text-prevu-text-muted uppercase" htmlFor="gdrive-url">
+                        Google Drive URL *
+                      </label>
+                      {gdriveUrl && (
+                        <span className={`text-[10px] font-mono flex items-center gap-1 font-bold ${
+                          parseGDriveUrl(gdriveUrl).isValid ? 'text-emerald-400' : 'text-amber-400'
+                        }`}>
+                          {parseGDriveUrl(gdriveUrl).isValid ? (
+                            <>
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span>Valid Drive Link</span>
+                            </>
+                          ) : (
+                            <>
+                              <AlertCircle className="w-3 h-3" />
+                              <span>drive.google.com required</span>
+                            </>
+                          )}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="relative">
+                      <input
+                        id="gdrive-url"
+                        type="url"
+                        value={gdriveUrl}
+                        onChange={(e) => setGdriveUrl(e.target.value)}
+                        placeholder="https://drive.google.com/drive/folders/... or /file/d/..."
+                        className="w-full px-3 py-2 text-xs rounded-xl bg-prevu-bg border border-prevu-surface-light text-white placeholder:text-prevu-text-muted/50 focus:outline-none focus:border-emerald-500/60 font-mono"
+                      />
+                    </div>
+
+                    {/* Sharing Permission Notice Banner */}
+                    <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-2 text-[11px] text-amber-300">
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                      <span>
+                        <strong>Sharing setting required:</strong> Right-click folder in Google Drive &rarr; Share &rarr; Set General Access to <strong>&ldquo;Anyone with the link can view&rdquo;</strong> so peers can access it.
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Resource Title Input */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-mono text-prevu-text-muted uppercase" htmlFor="gdrive-title">
+                      Folder / Resource Title *
+                    </label>
                     <input
-                      ref={fileInputRef}
-                      type="file"
-                      id="file"
-                      multiple
-                      accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-                      onChange={handleFileChange}
-                      className="hidden"
+                      id="gdrive-title"
+                      type="text"
+                      value={gdriveTitle}
+                      onChange={(e) => setGdriveTitle(e.target.value)}
+                      placeholder={gdriveScope === 'semester_bundle' ? `e.g. Semester ${selectedSemester} CSE All Subjects Notes & PYQs Mega Drive` : 'e.g. Operating Systems Complete Lecture Slides & Handwritten Notes'}
+                      className="w-full px-3 py-2 text-xs rounded-xl bg-prevu-bg border border-prevu-surface-light text-white placeholder:text-prevu-text-muted/50 focus:outline-none focus:border-emerald-500/60"
                     />
-
-                    {/* Icon */}
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-200 ${
-                      isDragging
-                        ? isStudy ? 'bg-emerald-500/20 text-emerald-300' : 'bg-prevu-accent/20 text-prevu-accent'
-                        : 'bg-prevu-surface-light text-prevu-text-muted group-hover:text-prevu-accent group-hover:bg-prevu-accent/10'
-                    }`}>
-                      <CloudUpload className="w-6 h-6" />
-                    </div>
-
-                    {/* Text */}
-                    <div className="text-center space-y-1 pointer-events-none">
-                      <p className={`text-sm font-bold transition-colors ${
-                        isDragging
-                          ? isStudy ? 'text-emerald-300' : 'text-prevu-accent'
-                          : 'text-prevu-text group-hover:text-white'
-                      }`}>
-                        {isDragging ? 'Release to add files' : 'Drag & drop files here'}
-                      </p>
-                      <p className="text-[11px] text-prevu-text-muted">
-                        or <span className={`font-semibold ${ isStudy ? 'text-emerald-400' : 'text-prevu-accent' }`}>click to browse</span>
-                      </p>
-                    </div>
-
-                    {/* Hints row */}
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="flex items-center gap-1 px-2 py-1 rounded-lg bg-prevu-surface-light/60 text-[10px] text-prevu-text-muted font-mono">
-                        <Clipboard className="w-3 h-3" /> Ctrl+V to paste
-                      </span>
-                      <span className="flex items-center gap-1 px-2 py-1 rounded-lg bg-prevu-surface-light/60 text-[10px] text-prevu-text-muted font-mono">
-                        Max 50 MB · up to 3 files
-                      </span>
-                    </div>
-
-                    {/* Accepted types */}
-                    <p className="text-[10px] text-prevu-text-muted/60 font-mono">
-                      PDF · JPG · PNG · DOC · XLS · PPT
-                    </p>
-                  </div>
-                ) : (
-                  <div className="p-2.5 rounded-xl bg-purple-950/20 border border-purple-500/30 text-center text-xs text-purple-300">
-                    Maximum 3 files reached. Remove a file above to replace it.
-                  </div>
-                )}
-              </div>
-              
-              {/* Duplicate Detection Alert */}
-              {duplicateData && !duplicateAcknowledged && (
-                <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
-                    <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>Possible Duplicate Resource Detected</span>
-                  </div>
-                  
-                  <div className="text-xs text-prevu-text-muted space-y-1 bg-prevu-bg/80 p-3 rounded-xl border border-prevu-surface-light">
-                    <p className="text-white font-semibold">
-                      {duplicateData.subjects?.name || 'Resource'} {duplicateData.subjects?.code ? `(${duplicateData.subjects.code})` : ''} — {duplicateData.exam_year} {duplicateData.exam_types?.name || 'File'}
-                    </p>
-                    <p className="text-[11px] font-mono text-prevu-text-muted truncate">
-                      File: {duplicateData.original_filename}
-                    </p>
                   </div>
 
-                  <p className="text-[11px] text-prevu-text-muted leading-relaxed">
-                    A file with the identical fingerprint already exists in the vault. If this is a revised version, clearer scan, or additional chapter notes, click <strong>Upload Anyway</strong> to proceed.
-                  </p>
-
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    <Button size="sm" variant="outline" asChild className="h-8 text-xs border-amber-500/40 text-amber-300 hover:bg-amber-500/15">
-                      <a href={`/paper/${duplicateData.id}`} target="_blank" rel="noopener noreferrer">
-                        <Eye className="w-3.5 h-3.5 mr-1" /> View Existing
-                      </a>
-                    </Button>
-                    <Button 
-                      type="button" 
-                      size="sm" 
-                      onClick={() => setDuplicateAcknowledged(true)} 
-                      className="h-8 text-xs bg-amber-500 text-black font-bold hover:bg-amber-400"
-                    >
-                      Upload Anyway
-                    </Button>
-                    <Button 
-                      type="button" 
-                      size="sm" 
-                      variant="ghost" 
-                      onClick={() => {
-                        setFiles([])
-                        setFileHash('')
-                        setDuplicateData(null)
-                        setDuplicateAcknowledged(false)
-                        const el = document.getElementById('file') as HTMLInputElement
-                        if (el) el.value = ''
-                      }} 
-                      className="h-8 text-xs text-prevu-text-muted hover:text-white"
-                    >
-                      Cancel
-                    </Button>
+                  {/* Description / Contents Overview */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-mono text-prevu-text-muted uppercase" htmlFor="gdrive-desc">
+                      Included Topics &amp; Contents (Optional)
+                    </label>
+                    <textarea
+                      id="gdrive-desc"
+                      rows={2}
+                      value={gdriveDescription}
+                      onChange={(e) => setGdriveDescription(e.target.value)}
+                      placeholder="e.g. Contains Unit 1 to 5 PPTs, 2021-2024 solved EST papers, and lab manual solutions."
+                      className="w-full px-3 py-2 text-xs rounded-xl bg-prevu-bg border border-prevu-surface-light text-white placeholder:text-prevu-text-muted/50 focus:outline-none focus:border-emerald-500/60 resize-none font-mono"
+                    />
                   </div>
                 </div>
               )}
 
-              {duplicateData && duplicateAcknowledged && (
-                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-between text-xs text-amber-300">
-                  <span className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 shrink-0 text-amber-400" />
-                    <span>Duplicate acknowledged. Your upload will be submitted for moderation review.</span>
-                  </span>
+              {/* 3C. YouTube Recommendation Box (Active when contributionFormat === 'youtube') */}
+              {contributionFormat === 'youtube' && (
+                <div className="space-y-4 p-4 rounded-2xl bg-[#090d13] border border-red-500/30">
+                  <div className="flex items-center justify-between pb-2 border-b border-prevu-surface-light/50">
+                    <div className="flex items-center gap-2">
+                      <YouTubeIcon className="w-4 h-4 text-red-400" />
+                      <span className="text-xs font-bold text-white uppercase tracking-wider font-mono">
+                        YouTube Video / Playlist Recommendation
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-red-500/10 text-red-300 border border-red-500/30">
+                      Peer Curated
+                    </span>
+                  </div>
+
+                  {/* YouTube Link Input with Live Preview */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-mono text-prevu-text-muted uppercase" htmlFor="youtube-url">
+                        YouTube Video or Playlist URL *
+                      </label>
+                      {youtubeUrl && (
+                        <span className={`text-[10px] font-mono flex items-center gap-1 font-bold ${
+                          parseYouTubeUrl(youtubeUrl).isValid ? 'text-emerald-400' : 'text-amber-400'
+                        }`}>
+                          {parseYouTubeUrl(youtubeUrl).isValid ? (
+                            <>
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span>{parseYouTubeUrl(youtubeUrl).isPlaylist ? 'Valid Playlist' : 'Valid Video'}</span>
+                            </>
+                          ) : (
+                            <>
+                              <AlertCircle className="w-3 h-3" />
+                              <span>youtube.com/watch or youtu.be required</span>
+                            </>
+                          )}
+                        </span>
+                      )}
+                    </div>
+
+                    <input
+                      id="youtube-url"
+                      type="url"
+                      value={youtubeUrl}
+                      onChange={(e) => setYoutubeUrl(e.target.value)}
+                      placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
+                      className="w-full px-3 py-2 text-xs rounded-xl bg-prevu-bg border border-prevu-surface-light text-white placeholder:text-prevu-text-muted/50 focus:outline-none focus:border-red-500/60 font-mono"
+                    />
+                  </div>
+
+                  {/* Live Video Preview Card */}
+                  {parseYouTubeUrl(youtubeUrl).isValid && (
+                    <div className="p-3 rounded-xl bg-prevu-bg border border-prevu-surface-light flex items-center gap-3">
+                      {parseYouTubeUrl(youtubeUrl).thumbnailUrl ? (
+                        <div className="relative w-28 h-16 rounded-lg overflow-hidden bg-black shrink-0 border border-white/10">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={parseYouTubeUrl(youtubeUrl).thumbnailUrl!}
+                            alt="Video thumbnail"
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                            <Play className="w-5 h-5 text-white drop-shadow-md" />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="w-28 h-16 rounded-lg bg-red-950/40 border border-red-500/30 flex items-center justify-center shrink-0">
+                          <YouTubeIcon className="w-6 h-6 text-red-400" />
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-bold text-white truncate">
+                          {youtubeTitle || 'Ready to embed in subject hub'}
+                        </div>
+                        <div className="text-[10px] font-mono text-prevu-text-muted mt-0.5">
+                          {youtubeChannel ? `Channel: ${youtubeChannel}` : 'Select or enter channel name below'}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Popular Channel Quick Select Pills */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-mono text-prevu-text-muted uppercase">
+                      Channel / Creator Name
+                    </label>
+                    <input
+                      type="text"
+                      value={youtubeChannel}
+                      onChange={(e) => setYoutubeChannel(e.target.value)}
+                      placeholder="e.g. Gate Smashers, Neso Academy, Abdul Bari"
+                      className="w-full px-3 py-2 text-xs rounded-xl bg-prevu-bg border border-prevu-surface-light text-white placeholder:text-prevu-text-muted/50 focus:outline-none focus:border-red-500/60"
+                    />
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      <span className="text-[10px] font-mono text-prevu-text-muted">Quick select:</span>
+                      {['Gate Smashers', 'Neso Academy', 'Knowledge Gate', 'Abdul Bari', "Jenny's Lectures", 'Bhagwan Singh Vishwakarma'].map(ch => (
+                        <button
+                          key={ch}
+                          type="button"
+                          onClick={() => setYoutubeChannel(ch)}
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-mono border transition-colors cursor-pointer ${
+                            youtubeChannel === ch
+                              ? 'bg-red-500/20 border-red-500/50 text-red-300 font-bold'
+                              : 'bg-prevu-surface/60 border-prevu-surface-light text-prevu-text-muted hover:text-white'
+                          }`}
+                        >
+                          {ch}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Lecture Title Input */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-mono text-prevu-text-muted uppercase" htmlFor="youtube-title">
+                      Lecture / Playlist Title *
+                    </label>
+                    <input
+                      id="youtube-title"
+                      type="text"
+                      value={youtubeTitle}
+                      onChange={(e) => setYoutubeTitle(e.target.value)}
+                      placeholder="e.g. CPU Scheduling Algorithms (FCFS, SJF, Round Robin) with Solved Numericals"
+                      className="w-full px-3 py-2 text-xs rounded-xl bg-prevu-bg border border-prevu-surface-light text-white placeholder:text-prevu-text-muted/50 focus:outline-none focus:border-red-500/60"
+                    />
+                  </div>
+
+                  {/* Covered Units / Notes */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-mono text-prevu-text-muted uppercase" htmlFor="youtube-desc">
+                      Key Concepts Covered (Optional)
+                    </label>
+                    <textarea
+                      id="youtube-desc"
+                      rows={2}
+                      value={youtubeDescription}
+                      onChange={(e) => setYoutubeDescription(e.target.value)}
+                      placeholder="e.g. Covers Unit 2 processes and thread states with clear diagrams. Perfect for MST exam."
+                      className="w-full px-3 py-2 text-xs rounded-xl bg-prevu-bg border border-prevu-surface-light text-white placeholder:text-prevu-text-muted/50 focus:outline-none focus:border-red-500/60 resize-none font-mono"
+                    />
+                  </div>
                 </div>
               )}
               
@@ -1433,18 +1872,37 @@ function UploadFormContent() {
               type="submit" 
               form="upload-form" 
               className={`w-full py-3 text-sm flex items-center justify-center gap-2 font-bold shadow-lg transition-all ${
-                isReappear
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black shadow-amber-500/25 cursor-pointer'
-                  : isStudy 
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-500/25' 
-                    : 'shadow-prevu-accent/25'
+                contributionFormat === 'gdrive'
+                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-500/25 cursor-pointer'
+                  : contributionFormat === 'youtube'
+                    ? 'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white shadow-red-500/25 cursor-pointer'
+                    : isReappear
+                      ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black shadow-amber-500/25 cursor-pointer'
+                      : isStudy 
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-500/25 cursor-pointer' 
+                        : 'shadow-prevu-accent/25 cursor-pointer'
               }`}
-              disabled={isUploading || files.length === 0 || !subjectName.trim() || (!!duplicateData && !duplicateAcknowledged)}
+              disabled={
+                isUploading ||
+                (contributionFormat === 'file' && (files.length === 0 || !subjectName.trim() || (!!duplicateData && !duplicateAcknowledged))) ||
+                (contributionFormat === 'gdrive' && (!gdriveUrl.trim() || !gdriveTitle.trim() || (gdriveScope !== 'semester_bundle' && !subjectName.trim()))) ||
+                (contributionFormat === 'youtube' && (!youtubeUrl.trim() || !youtubeTitle.trim() || !subjectName.trim()))
+              }
             >
               {isUploading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span>Processing Upload ({uploadProgress}%)...</span>
+                </>
+              ) : contributionFormat === 'gdrive' ? (
+                <>
+                  <FolderOpen className="w-4 h-4" />
+                  <span>Publish Google Drive Resource</span>
+                </>
+              ) : contributionFormat === 'youtube' ? (
+                <>
+                  <YouTubeIcon className="w-4 h-4" />
+                  <span>Recommend YouTube Lecture</span>
                 </>
               ) : (
                 <>

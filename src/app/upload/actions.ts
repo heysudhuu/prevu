@@ -6,6 +6,7 @@ import { authAdmin } from '@/lib/firebase/server'
 import { v4 as uuidv4 } from 'uuid'
 import { revalidatePath } from 'next/cache'
 import { isSuperAdminEmail } from '@/lib/auth/admin-check'
+import { parseGDriveUrl, parseYouTubeUrl } from '@/lib/links/urlParsers'
 
 export async function checkHashExists(hash: string) {
   const supabase = getSupabaseAdmin()
@@ -676,6 +677,252 @@ export async function completeDirectUpload(
   } catch (err: unknown) {
     console.error('Unhandled completeDirectUpload error:', err)
     const message = err instanceof Error ? err.message : 'An unexpected error occurred while saving records.'
+    return { error: message }
+  }
+}
+
+export interface UploadExternalLinkInput {
+  format: 'gdrive' | 'youtube' | 'external_link'
+  title: string
+  url: string
+  bundle_scope?: 'subject' | 'semester_bundle'
+  year: number
+  semester: number
+  subject_name?: string
+  subject_code?: string
+  subject_id?: string
+  resource_category: 'regular' | 'reappear' | 'study_material'
+  exam_type?: string
+  material_type?: string
+  channel_name?: string
+  description?: string
+  unit?: string | null
+}
+
+export interface UploadExternalLinkResponse {
+  error?: string
+  success?: boolean
+  id?: string
+  isAdminUpload?: boolean
+}
+
+/**
+ * Server action to contribute a Google Drive cloud bundle or YouTube video/playlist recommendation
+ */
+export async function uploadExternalLinkResource(
+  input: UploadExternalLinkInput
+): Promise<UploadExternalLinkResponse> {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get('session')?.value || cookieStore.get('__session')?.value
+
+    if (!token) {
+      return { error: 'Please log in to share cloud drives or recommend YouTube lectures.' }
+    }
+
+    let decoded
+    try {
+      decoded = await authAdmin.verifyIdToken(token)
+    } catch {
+      return { error: 'Invalid or expired authentication session. Please log in again.' }
+    }
+
+    const supabase = getSupabaseAdmin()
+    const email = decoded.email?.toLowerCase() || ''
+    const isSuperAdmin = isSuperAdminEmail(email)
+
+    const { data: userData } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', decoded.uid)
+      .maybeSingle()
+
+    const isAdmin = isSuperAdmin || userData?.role === 'admin'
+    const status = isAdmin ? 'approved' : 'pending'
+
+    // 1. Validate URL based on format
+    let cleanUrl = input.url?.trim() || ''
+    let youtubeId: string | null = null
+
+    if (input.format === 'gdrive') {
+      const parsed = parseGDriveUrl(cleanUrl)
+      if (!parsed.isValid) {
+        return { error: 'Invalid Google Drive link. Please enter a valid drive.google.com or docs.google.com URL.' }
+      }
+      cleanUrl = parsed.cleanUrl || cleanUrl
+    } else if (input.format === 'youtube') {
+      const parsed = parseYouTubeUrl(cleanUrl)
+      if (!parsed.isValid) {
+        return { error: 'Invalid YouTube link. Please enter a valid YouTube video (youtube.com/watch?v=... or youtu.be/...) or playlist URL.' }
+      }
+      youtubeId = parsed.id
+    } else {
+      if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+        return { error: 'Please enter a valid HTTP/HTTPS link.' }
+      }
+    }
+
+    if (!input.title || !input.title.trim()) {
+      return { error: 'Please provide a clear title for this resource.' }
+    }
+
+    // 2. Resolve Branch
+    let branchId = 1
+    const { data: branchData } = await supabase.from('branches').select('id').eq('name', 'BE-CSE').maybeSingle()
+    if (branchData) {
+      branchId = branchData.id
+    } else {
+      const { data: newBranch } = await supabase.from('branches').insert({ name: 'BE-CSE' }).select('id').maybeSingle()
+      if (newBranch) branchId = newBranch.id
+    }
+
+    // 3. Resolve Subject
+    let resolvedSubjectId: number
+    const isSemesterBundle = input.bundle_scope === 'semester_bundle'
+    const subjectName = isSemesterBundle
+      ? `Semester ${input.semester} All-in-One Mega Drive`
+      : (input.subject_name?.trim() || 'General Engineering')
+
+    const subjectCode = isSemesterBundle
+      ? `SEM${input.semester}-ALL`
+      : ((input.subject_code || 'CSE').trim().toUpperCase())
+
+    const { data: existingSubject } = await supabase
+      .from('subjects')
+      .select('id')
+      .ilike('name', subjectName)
+      .eq('year', input.year)
+      .eq('semester', input.semester)
+      .maybeSingle()
+
+    if (existingSubject) {
+      resolvedSubjectId = existingSubject.id
+    } else {
+      const { data: newSubject, error: subError } = await supabase
+        .from('subjects')
+        .insert({
+          branch_id: branchId,
+          year: input.year,
+          semester: input.semester,
+          name: subjectName,
+          code: subjectCode
+        })
+        .select('id')
+        .single()
+
+      if (subError || !newSubject) {
+        return { error: `Failed to resolve subject: ${subError?.message}` }
+      }
+      resolvedSubjectId = newSubject.id
+    }
+
+    // 4. Resolve Exam / Category Type
+    const targetTypeName = input.format === 'gdrive'
+      ? (isSemesterBundle ? 'Semester Mega Drive' : 'Google Drive Bundle')
+      : (input.format === 'youtube' ? 'YouTube Lecture' : (input.material_type || 'Study Material'))
+
+    let resolvedExamTypeId = 14 // default study material
+    const { data: existingET } = await supabase
+      .from('exam_types')
+      .select('id')
+      .ilike('name', targetTypeName)
+      .maybeSingle()
+
+    if (existingET) {
+      resolvedExamTypeId = existingET.id
+    } else {
+      const { data: newET } = await supabase
+        .from('exam_types')
+        .insert({ name: targetTypeName })
+        .select('id')
+        .maybeSingle()
+
+      if (newET) resolvedExamTypeId = newET.id
+    }
+
+    // 5. Insert resource with graceful fallback for column availability
+    const mimeType = input.format === 'gdrive'
+      ? 'link/gdrive'
+      : (input.format === 'youtube' ? 'link/youtube' : 'link/external')
+
+    const fileHash = `link-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+
+    // Try full insert with dedicated metadata columns
+    const fullPayload: Record<string, any> = {
+      subject_id: resolvedSubjectId,
+      exam_type_id: resolvedExamTypeId,
+      exam_year: new Date().getFullYear(),
+      file_path: cleanUrl,
+      file_type: mimeType,
+      original_filename: input.title.trim(),
+      file_hash: fileHash,
+      uploaded_by: decoded.uid,
+      status: status,
+      admin_note: input.description?.trim() || null,
+      unit: input.unit || null,
+      resource_format: input.format,
+      external_url: cleanUrl,
+      bundle_scope: input.bundle_scope || 'subject',
+      channel_name: input.channel_name?.trim() || null,
+      youtube_id: youtubeId || null
+    }
+
+    const { data: inserted, error: insertError } = await supabase
+      .from('resources')
+      .insert(fullPayload)
+      .select('id')
+      .maybeSingle()
+
+    if (insertError) {
+      // Fallback: insert standard schema fields if dedicated columns are not yet migrated
+      console.warn('Full insert failed, falling back to core schema fields:', insertError.message)
+      const fallbackPayload = {
+        subject_id: resolvedSubjectId,
+        exam_type_id: resolvedExamTypeId,
+        exam_year: new Date().getFullYear(),
+        file_path: cleanUrl,
+        file_type: mimeType,
+        original_filename: input.title.trim(),
+        file_hash: fileHash,
+        uploaded_by: decoded.uid,
+        status: status,
+        admin_note: input.description ? `${input.description} [Channel: ${input.channel_name || 'N/A'}]` : null,
+        unit: input.unit || null
+      }
+
+      const { data: fbInserted, error: fbError } = await supabase
+        .from('resources')
+        .insert(fallbackPayload)
+        .select('id')
+        .maybeSingle()
+
+      if (fbError || !fbInserted) {
+        return { error: `Database error while saving link: ${fbError?.message || insertError.message}` }
+      }
+
+      revalidatePath('/study-material')
+      revalidatePath('/browse')
+      revalidatePath('/reappear')
+      revalidatePath('/admin')
+      revalidatePath('/')
+      revalidatePath('/#reappear-rescue')
+
+      return { success: true, id: fbInserted.id, isAdminUpload: isAdmin }
+    }
+
+    revalidatePath('/study-material')
+    revalidatePath('/browse')
+    reappear_revalidate: {
+      revalidatePath('/reappear')
+      revalidatePath('/admin')
+      revalidatePath('/')
+      revalidatePath('/#reappear-rescue')
+    }
+
+    return { success: true, id: inserted?.id, isAdminUpload: isAdmin }
+  } catch (err: unknown) {
+    console.error('Unhandled uploadExternalLinkResource error:', err)
+    const message = err instanceof Error ? err.message : 'An unexpected error occurred while sharing link.'
     return { error: message }
   }
 }

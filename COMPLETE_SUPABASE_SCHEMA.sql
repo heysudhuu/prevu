@@ -82,8 +82,21 @@ CREATE TABLE IF NOT EXISTS resources (
     status resource_status DEFAULT 'pending',
     admin_note TEXT,
     download_count INTEGER DEFAULT 0,
+    unit TEXT,
+    resource_format TEXT DEFAULT 'file',
+    external_url TEXT,
+    bundle_scope TEXT DEFAULT 'subject',
+    channel_name TEXT,
+    youtube_id TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+ALTER TABLE resources ADD COLUMN IF NOT EXISTS unit TEXT;
+ALTER TABLE resources ADD COLUMN IF NOT EXISTS resource_format TEXT DEFAULT 'file';
+ALTER TABLE resources ADD COLUMN IF NOT EXISTS external_url TEXT;
+ALTER TABLE resources ADD COLUMN IF NOT EXISTS bundle_scope TEXT DEFAULT 'subject';
+ALTER TABLE resources ADD COLUMN IF NOT EXISTS channel_name TEXT;
+ALTER TABLE resources ADD COLUMN IF NOT EXISTS youtube_id TEXT;
 
 -- 7. OTP Verifications Table
 CREATE TABLE IF NOT EXISTS otp_verifications (

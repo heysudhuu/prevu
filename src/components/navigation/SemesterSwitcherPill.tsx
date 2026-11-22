@@ -16,7 +16,11 @@ const SEMESTERS = [
   { sem: 8, year: 4, label: 'Semester 8', tag: 'Senior' },
 ]
 
-export default function SemesterSwitcherPill() {
+interface SemesterSwitcherPillProps {
+  compact?: boolean
+}
+
+export default function SemesterSwitcherPill({ compact = false }: SemesterSwitcherPillProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -89,14 +93,17 @@ export default function SemesterSwitcherPill() {
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         suppressHydrationWarning
-        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-prevu-surface-light/80 hover:bg-prevu-surface-elevated text-prevu-text hover:text-white border border-prevu-surface-light hover:border-prevu-accent/50 shadow-sm transition-all cursor-pointer group"
+        className={compact 
+          ? "inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-semibold bg-[#161b22] hover:bg-[#21262d] text-emerald-400 border border-[#30363d] hover:border-emerald-500/40 shadow-sm transition-all cursor-pointer group"
+          : "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-prevu-surface-light/80 hover:bg-prevu-surface-elevated text-prevu-text hover:text-white border border-prevu-surface-light hover:border-prevu-accent/50 shadow-sm transition-all cursor-pointer group"
+        }
         title="Quick-switch your active semester"
       >
-        <span className="w-2 h-2 rounded-full bg-emerald-400 group-hover:bg-prevu-accent transition-colors animate-pulse" />
-        <span className="font-mono text-prevu-accent font-bold" suppressHydrationWarning>
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 group-hover:bg-prevu-accent transition-colors animate-pulse" />
+        <span className="font-mono text-emerald-400 font-bold" suppressHydrationWarning>
           Sem {mounted ? activeSem : 3}
         </span>
-        <ChevronDown className={`w-3.5 h-3.5 text-prevu-text-muted transition-transform duration-200 ${isOpen ? 'rotate-180 text-white' : ''}`} />
+        <ChevronDown className={`w-3 h-3 text-prevu-text-muted transition-transform duration-200 ${isOpen ? 'rotate-180 text-white' : ''}`} />
       </button>
 
       <AnimatePresence>

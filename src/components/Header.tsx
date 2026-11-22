@@ -5,6 +5,7 @@ import { isUserAdmin } from '@/lib/auth/admin-check'
 import HeaderNav from '@/components/HeaderNav'
 import { Terminal } from 'lucide-react'
 import SemesterSwitcherPill from '@/components/navigation/SemesterSwitcherPill'
+import LiveExamRadarRibbon from '@/components/navigation/LiveExamRadarRibbon'
 import ThemeSwitcherDropdown from '@/components/theme/ThemeSwitcherDropdown'
 
 export default async function Header() {
@@ -29,33 +30,43 @@ export default async function Header() {
   }
 
   return (
-    <header className="border-b border-[#30363d]/70 bg-[#010409]/90 backdrop-blur-2xl sticky top-0 z-50 shadow-xl shadow-black/60">
-      <div className="container mx-auto px-4 max-w-7xl 2xl:max-w-[1720px] h-16 flex items-center justify-between">
-        
-        {/* Brand Logo, Semester Switcher & Interactive Theme Dropdown */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <Link 
-            href="/" 
-            className="group font-mono text-xl sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-2.5 hover:text-emerald-400 transition-colors shrink-0"
-          >
-            <div className="w-8 h-8 rounded-xl bg-[#238636] flex items-center justify-center text-white shadow-md shadow-[#238636]/40 group-hover:scale-105 transition-transform shrink-0">
-              <Terminal className="w-4 h-4 text-white" />
+    <>
+      {/* 1. TOP LIVE ACADEMIC RADAR RIBBON (High-Attention, Zero Header Bloat) */}
+      <LiveExamRadarRibbon />
+
+      {/* 2. MASTER COMPACT HEADER */}
+      <header className="border-b border-[#30363d]/70 bg-[#010409]/92 backdrop-blur-2xl sticky top-0 z-50 shadow-xl shadow-black/60">
+        <div className="container mx-auto px-3 sm:px-4 max-w-7xl 2xl:max-w-[1720px] h-14 flex items-center justify-between gap-2 sm:gap-4">
+          
+          {/* Brand Logo & Compact Semester Compound: [prevu / Sem 1 ▾] */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <Link 
+              href="/" 
+              className="group font-mono text-lg sm:text-xl font-extrabold tracking-tight text-white flex items-center gap-2 hover:text-emerald-400 transition-colors shrink-0"
+              title="Prevu Academic Repository"
+            >
+              <div className="w-7 h-7 rounded-lg bg-[#238636] flex items-center justify-center text-white shadow-md shadow-[#238636]/40 group-hover:scale-105 transition-transform shrink-0">
+                <Terminal className="w-3.5 h-3.5 text-white" />
+              </div>
+              <span className="font-extrabold tracking-tight">prevu</span>
+            </Link>
+
+            <span className="text-[#30363d] font-mono text-xs select-none">/</span>
+
+            {/* Compact Semester Selector: Sem 1, Sem 2... */}
+            <SemesterSwitcherPill compact />
+
+            {/* Terminal Theme Switcher on widescreen (accessible inside More menu on compact viewports) */}
+            <div className="hidden xl:inline-flex items-center ml-1">
+              <ThemeSwitcherDropdown />
             </div>
-            <span className="font-extrabold tracking-tight">prevu</span>
-          </Link>
-
-          <SemesterSwitcherPill />
-
-          {/* Interactive Theme Switcher Dropdown */}
-          <div className="hidden sm:inline-flex items-center">
-            <ThemeSwitcherDropdown />
           </div>
+
+          {/* Dynamic Compact Capsule Navigation & Actions */}
+          <HeaderNav user={user} isAdmin={isAdmin} />
+
         </div>
-
-        {/* Dynamic Navigation & Mobile Menu */}
-        <HeaderNav user={user} isAdmin={isAdmin} />
-
-      </div>
-    </header>
+      </header>
+    </>
   )
 }

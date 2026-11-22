@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import SignOutButton from '@/components/auth/SignOutButton'
+import ThemeSwitcherDropdown from '@/components/theme/ThemeSwitcherDropdown'
 import {
   ShieldCheck,
   ShieldAlert,
@@ -26,23 +27,13 @@ import {
   ChevronDown,
   Search,
   ArrowRight,
-  Plus
+  Plus,
+  MoreHorizontal
 } from 'lucide-react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import dynamic from 'next/dynamic'
 import SmartExamAlertsModal from '@/components/notifications/SmartExamAlertsModal'
 import { getUnreadNotificationCountAction } from '@/app/requests/actions'
 import { CBT_SUBJECTS } from '@/lib/cbt/cbtRegistry'
-
-const ExamCountdownTicker = dynamic(
-  () => import('@/components/exam/ExamCountdownTicker'),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-7 w-28 rounded-xl bg-[#161b22] border border-purple-500/20 animate-pulse" />
-    )
-  }
-)
 
 interface HeaderNavProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -65,6 +56,9 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
   const [reappearMenuOpen, setReappearMenuOpen] = useState(false)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+
+  // Hover state for animated gliding motion pill
+  const [hoveredNav, setHoveredNav] = useState<string | null>(null)
 
   // Search inside CBT dropdown
   const [cbtSearchQuery, setCbtSearchQuery] = useState('')
@@ -171,35 +165,31 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
     }
   ]
 
-  // 2. REAPPEAR DESTINATIONS (Questions Bank, Syllabus, Notes, PYQs)
+  // 2. REAPPEAR DESTINATIONS (Matching Backlog Rescue Hub hierarchy)
   const reappearLinks = [
     {
+      href: '/reappear?tab=pyqs',
+      label: 'Reappear PYQs & Solved Papers',
+      desc: 'High-frequency remedial papers & derivations',
+      icon: <FileText className="w-4 h-4 text-amber-400" />
+    },
+    {
+      href: '/reappear?tab=materials&filter=notes',
+      label: '80/20 Reappear Crash Notes',
+      desc: 'One-night essential revision & high-yield formulas',
+      icon: <BookOpen className="w-4 h-4 text-emerald-400" />
+    },
+    {
       href: '/reappear?tab=materials&filter=questions',
-      label: 'Reappear Question Bank',
-      desc: 'Repeated 10-mark high-yield prompts',
-      icon: <Sparkles className="w-3.5 h-3.5 text-amber-400" />,
-      badge: '10 Marks'
+      label: 'Reappear Questions Bank',
+      desc: 'Past remedial exam questions & solution steps',
+      icon: <Sparkles className="w-4 h-4 text-purple-400" />
     },
     {
       href: '/reappear?tab=materials&filter=syllabus',
       label: 'Reappear Syllabus & Passing Plan',
-      desc: '24/60 pass threshold blueprint',
-      icon: <Target className="w-3.5 h-3.5 text-rose-400" />,
-      badge: '24/60'
-    },
-    {
-      href: '/reappear?tab=materials&filter=notes',
-      label: '80/20 Reappear Notes',
-      desc: 'One-night essential crash revision',
-      icon: <BookOpen className="w-3.5 h-3.5 text-emerald-400" />,
-      badge: 'Crash'
-    },
-    {
-      href: '/reappear?tab=pyqs',
-      label: 'Reappear PYQs & Solved Papers',
-      desc: 'Past remedial question papers',
-      icon: <FileText className="w-3.5 h-3.5 text-amber-400" />,
-      badge: 'Remedial'
+      desc: 'Course blueprint & unit-wise passing threshold',
+      icon: <Target className="w-4 h-4 text-rose-400" />
     }
   ]
 
@@ -207,7 +197,7 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
   const moreLinks = [
     {
       href: '/study-planner',
-      label: 'Study Planner',
+      label: 'Smart Study Planner',
       desc: 'Personal revision schedule',
       icon: <Brain className="w-3.5 h-3.5 text-purple-400" />
     },
@@ -255,26 +245,37 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
     <div className="flex items-center justify-between gap-1.5 lg:gap-3 flex-1 ml-1 sm:ml-3 min-w-0">
 
       {/* ============================================================ */}
-      {/* DESKTOP PRIMARY NAVIGATION (COMPACT, PROFESSIONAL HIERARCHY) */}
+      {/* DESKTOP FRAMER MOTION CAPSULE DOCK (COMPACT & SLEEK) */}
       {/* ============================================================ */}
-      <nav aria-label="Main Navigation" className="hidden lg:flex items-center gap-0.5 shrink-0 p-0.5 rounded-xl bg-[#090d13]/70 border border-[#30363d]/50 backdrop-blur-md relative">
+      <nav 
+        aria-label="Main Navigation" 
+        onMouseLeave={() => setHoveredNav(null)}
+        className="hidden lg:flex items-center gap-0.5 shrink-0 px-1 py-0.5 rounded-full bg-[#0d1117]/90 border border-[#30363d]/80 backdrop-blur-xl shadow-lg shadow-black/40 relative"
+      >
         
-        {/* 1. STUDY HUB (PYQs, Study Material, Subjects, Vault) */}
+        {/* 1. STUDY HUB ▾ */}
         <div ref={studyHubRef} className="relative">
           <button
             type="button"
+            onMouseEnter={() => setHoveredNav('study-hub')}
             onClick={() => {
               setStudyHubOpen(!studyHubOpen)
               setCbtMenuOpen(false)
               setReappearMenuOpen(false)
               setMoreMenuOpen(false)
             }}
-            className={`px-2.5 py-1.5 rounded-lg text-xs transition-all inline-flex items-center gap-1 cursor-pointer whitespace-nowrap ${
-              isStudyHubActive || studyHubOpen
-                ? 'bg-[#161b22] text-emerald-300 font-bold border border-emerald-500/30 shadow-sm'
-                : 'text-[#8b949e] hover:text-white hover:bg-[#161b22]/60 font-semibold'
+            className={`relative px-2.5 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1 cursor-pointer whitespace-nowrap transition-colors z-10 ${
+              isStudyHubActive || studyHubOpen ? 'text-emerald-300 font-bold' : 'text-[#8b949e] hover:text-white'
             }`}
           >
+            {/* Animated Motion Highlight */}
+            {(hoveredNav === 'study-hub' || studyHubOpen || isStudyHubActive) && (
+              <motion.div
+                layoutId="capsuleHighlight"
+                className="absolute inset-0 rounded-full bg-[#21262d]/90 border border-[#30363d] -z-10 shadow-sm"
+                transition={shouldReduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 450, damping: 32 }}
+              />
+            )}
             <FileText className="w-3.5 h-3.5 text-emerald-400" />
             <span>Study Hub</span>
             <ChevronDown className={`w-3 h-3 text-[#7d8590] transition-transform duration-150 ${studyHubOpen ? 'rotate-180 text-white' : ''}`} />
@@ -287,7 +288,7 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 4, scale: 0.98 }}
                 transition={{ duration: 0.12 }}
-                className="absolute top-full left-0 mt-1.5 w-64 p-1.5 rounded-xl bg-[#161b22]/98 backdrop-blur-xl border border-[#30363d] shadow-2xl shadow-black/80 z-50 space-y-0.5"
+                className="absolute top-full left-0 mt-2 w-64 p-1.5 rounded-xl bg-[#161b22]/98 backdrop-blur-xl border border-[#30363d] shadow-2xl shadow-black/80 z-50 space-y-0.5"
               >
                 <div className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-[#7d8590] font-bold border-b border-[#30363d]/60 mb-1 flex items-center justify-between">
                   <span>Academic Vault</span>
@@ -299,7 +300,7 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                     key={item.href}
                     href={item.href}
                     onClick={() => setStudyHubOpen(false)}
-                    className={`px-2.5 py-2 rounded-lg flex items-center justify-between gap-2 hover:bg-[#21262d] transition-colors group ${
+                    className={`px-2.5 py-1.5 rounded-lg flex items-center justify-between gap-2 hover:bg-[#21262d] transition-colors group ${
                       pathname === item.href ? 'bg-[#21262d] text-white' : 'text-[#8b949e] hover:text-white'
                     }`}
                   >
@@ -328,24 +329,30 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
           </AnimatePresence>
         </div>
 
-        {/* 2. CBT ARENA (Shows All Subjects Available) */}
+        {/* 2. CBT ▾ */}
         <div ref={cbtRef} className="relative">
           <button
             type="button"
+            onMouseEnter={() => setHoveredNav('cbt')}
             onClick={() => {
               setCbtMenuOpen(!cbtMenuOpen)
               setStudyHubOpen(false)
               setReappearMenuOpen(false)
               setMoreMenuOpen(false)
             }}
-            className={`px-2.5 py-1.5 rounded-lg text-xs transition-all inline-flex items-center gap-1 cursor-pointer whitespace-nowrap ${
-              isCbtActive || cbtMenuOpen
-                ? 'bg-cyan-500/15 text-cyan-300 font-bold border border-cyan-500/30 shadow-sm'
-                : 'text-[#8b949e] hover:text-white hover:bg-[#161b22]/60 font-semibold'
+            className={`relative px-2.5 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1 cursor-pointer whitespace-nowrap transition-colors z-10 ${
+              isCbtActive || cbtMenuOpen ? 'text-cyan-300 font-bold' : 'text-[#8b949e] hover:text-white'
             }`}
           >
+            {(hoveredNav === 'cbt' || cbtMenuOpen || isCbtActive) && (
+              <motion.div
+                layoutId="capsuleHighlight"
+                className="absolute inset-0 rounded-full bg-[#21262d]/90 border border-[#30363d] -z-10 shadow-sm"
+                transition={shouldReduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 450, damping: 32 }}
+              />
+            )}
             <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-            <span>CBT Arena</span>
+            <span>CBT</span>
             <ChevronDown className={`w-3 h-3 text-[#7d8590] transition-transform duration-150 ${cbtMenuOpen ? 'rotate-180 text-white' : ''}`} />
           </button>
 
@@ -356,12 +363,12 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 4, scale: 0.98 }}
                 transition={{ duration: 0.12 }}
-                className="absolute top-full left-0 mt-1.5 w-72 p-2 rounded-xl bg-[#161b22]/98 backdrop-blur-xl border border-[#30363d] shadow-2xl shadow-black/80 z-50 space-y-1.5"
+                className="absolute top-full left-0 mt-2 w-72 p-2 rounded-xl bg-[#161b22]/98 backdrop-blur-xl border border-[#30363d] shadow-2xl shadow-black/80 z-50 space-y-1.5"
               >
                 <div className="flex items-center justify-between border-b border-[#30363d]/60 pb-1.5 px-1">
                   <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-cyan-300 uppercase tracking-wider">
                     <Sparkles className="w-3 h-3 text-cyan-400" />
-                    <span>CBT Subjects</span>
+                    <span>CBT Mock Testing</span>
                   </div>
                   <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/25">
                     Sem {activeSem} Focus
@@ -385,7 +392,7 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                 <div className="max-h-48 overflow-y-auto space-y-0.5 pr-1 scrollbar-thin">
                   {currentSemCbt.length > 0 && (
                     <div className="text-[9px] font-mono text-[#7d8590] uppercase px-1 pt-0.5">
-                      Semester {activeSem}
+                      Semester {activeSem} Subjects
                     </div>
                   )}
 
@@ -413,7 +420,7 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                   {otherSemCbt.length > 0 && (
                     <>
                       <div className="text-[9px] font-mono text-[#7d8590] uppercase px-1 pt-1.5 border-t border-[#30363d]/50">
-                        All Open Electives &amp; Subjects
+                        All Electives &amp; Tests
                       </div>
                       {otherSemCbt.map(sub => (
                         <Link
@@ -452,7 +459,7 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                     onClick={() => setCbtMenuOpen(false)}
                     className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
                   >
-                    <span>View All CBT Arena &rarr;</span>
+                    <span>View All CBT Tests &rarr;</span>
                   </Link>
                   <Link
                     href="/cbt/contribute"
@@ -468,22 +475,28 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
           </AnimatePresence>
         </div>
 
-        {/* 3. REAPPEAR SECTION (Questions, Syllabus, Notes, PYQs) */}
+        {/* 3. REAPPEAR ▾ */}
         <div ref={reappearRef} className="relative">
           <button
             type="button"
+            onMouseEnter={() => setHoveredNav('reappear')}
             onClick={() => {
               setReappearMenuOpen(!reappearMenuOpen)
               setStudyHubOpen(false)
               setCbtMenuOpen(false)
               setMoreMenuOpen(false)
             }}
-            className={`px-2.5 py-1.5 rounded-lg text-xs transition-all inline-flex items-center gap-1 cursor-pointer whitespace-nowrap ${
-              isReappearActive || reappearMenuOpen
-                ? 'bg-amber-500/15 text-amber-300 font-bold border border-amber-500/30 shadow-sm'
-                : 'text-[#8b949e] hover:text-white hover:bg-[#161b22]/60 font-semibold'
+            className={`relative px-2.5 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1 cursor-pointer whitespace-nowrap transition-colors z-10 ${
+              isReappearActive || reappearMenuOpen ? 'text-amber-300 font-bold' : 'text-[#8b949e] hover:text-white'
             }`}
           >
+            {(hoveredNav === 'reappear' || reappearMenuOpen || isReappearActive) && (
+              <motion.div
+                layoutId="capsuleHighlight"
+                className="absolute inset-0 rounded-full bg-[#21262d]/90 border border-[#30363d] -z-10 shadow-sm"
+                transition={shouldReduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 450, damping: 32 }}
+              />
+            )}
             <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
             <span>Reappear</span>
             <ChevronDown className={`w-3 h-3 text-[#7d8590] transition-transform duration-150 ${reappearMenuOpen ? 'rotate-180 text-white' : ''}`} />
@@ -496,14 +509,14 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 4, scale: 0.98 }}
                 transition={{ duration: 0.12 }}
-                className="absolute top-full left-0 mt-1.5 w-68 p-1.5 rounded-xl bg-[#161b22]/98 backdrop-blur-xl border border-amber-500/30 shadow-2xl shadow-black/80 z-50 space-y-0.5"
+                className="absolute top-full left-0 mt-2 w-80 sm:w-88 p-2.5 rounded-2xl bg-[#0d1117]/98 backdrop-blur-2xl border border-amber-500/40 shadow-2xl shadow-black/90 z-50 space-y-1"
               >
-                <div className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-amber-400 font-bold border-b border-[#30363d]/60 mb-1 flex items-center justify-between">
-                  <div className="flex items-center gap-1">
-                    <ShieldAlert className="w-3 h-3 text-amber-400" />
-                    <span>Backlog Rescue</span>
+                <div className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-amber-400 font-bold border-b border-[#30363d]/60 mb-1.5 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+                    <span>BACKLOG RESCUE HUB</span>
                   </div>
-                  <span className="text-[9px] text-amber-300 font-mono">100% Pass Hub</span>
+                  <span className="text-[10px] text-amber-400 font-mono font-bold tracking-wider">100% VERIFIED</span>
                 </div>
 
                 {reappearLinks.map(item => (
@@ -511,35 +524,29 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                     key={item.href}
                     href={item.href}
                     onClick={() => setReappearMenuOpen(false)}
-                    className="px-2 py-1.5 rounded-lg flex items-center justify-between gap-2 hover:bg-[#21262d] text-[#8b949e] hover:text-white transition-colors group"
+                    className="p-2 sm:p-2.5 rounded-xl flex items-center gap-3 hover:bg-[#161b22] text-[#8b949e] hover:text-white transition-colors group"
                   >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-6 h-6 rounded-md bg-[#0d1117] border border-[#30363d] flex items-center justify-center shrink-0">
-                        {item.icon}
+                    <div className="w-8 h-8 rounded-lg bg-[#0d1117] border border-[#30363d] flex items-center justify-center shrink-0 group-hover:border-amber-500/40 transition-colors">
+                      {item.icon}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs sm:text-sm font-bold text-white group-hover:text-amber-300 transition-colors truncate">
+                        {item.label}
                       </div>
-                      <div className="min-w-0">
-                        <div className="text-xs font-semibold text-white group-hover:text-amber-300 transition-colors truncate">
-                          {item.label}
-                        </div>
-                        <div className="text-[10px] text-[#7d8590] truncate leading-tight">
-                          {item.desc}
-                        </div>
+                      <div className="text-[11px] text-[#8b949e] group-hover:text-[#c9d1d9] transition-colors line-clamp-1 leading-tight mt-0.5">
+                        {item.desc}
                       </div>
                     </div>
-                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/25 shrink-0">
-                      {item.badge}
-                    </span>
                   </Link>
                 ))}
 
-                {/* Upload Reappear Resource CTA inside dropdown */}
-                <div className="pt-1.5 border-t border-[#30363d]/60 px-1">
+                <div className="pt-2 border-t border-[#30363d]/60 px-0.5">
                   <Link
                     href={`/upload?category=reappear&semester=${activeSem}`}
                     onClick={() => setReappearMenuOpen(false)}
-                    className="w-full py-1.5 px-2.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+                    className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md shadow-amber-500/25 transition-all"
                   >
-                    <Upload className="w-3 h-3 text-amber-400" />
+                    <Upload className="w-4 h-4 text-black" />
                     <span>Upload Reappear Resource</span>
                   </Link>
                 </div>
@@ -551,34 +558,46 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
         {/* 4. COMMUNITY (Direct Link) */}
         <Link
           href="/requests"
-          className={`px-2.5 py-1.5 rounded-lg text-xs transition-colors inline-flex items-center gap-1 whitespace-nowrap ${
-            isCommunityActive
-              ? 'bg-[#161b22] text-purple-300 font-bold border border-purple-500/30 shadow-sm'
-              : 'text-[#8b949e] hover:text-white hover:bg-[#161b22]/60 font-semibold'
+          onMouseEnter={() => setHoveredNav('community')}
+          className={`relative px-2.5 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1 cursor-pointer whitespace-nowrap transition-colors z-10 ${
+            isCommunityActive ? 'text-purple-300 font-bold' : 'text-[#8b949e] hover:text-white'
           }`}
         >
+          {(hoveredNav === 'community' || isCommunityActive) && (
+            <motion.div
+              layoutId="capsuleHighlight"
+              className="absolute inset-0 rounded-full bg-[#21262d]/90 border border-[#30363d] -z-10 shadow-sm"
+              transition={shouldReduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 450, damping: 32 }}
+            />
+          )}
           <MessageSquare className="w-3.5 h-3.5 text-purple-400" />
           <span>Community</span>
         </Link>
 
-        {/* 5. MORE (Study Planner, Leaderboard, Exam Prep, Faculty) */}
+        {/* 5. ⋯ (More Tools & Theme Switcher) */}
         <div ref={moreRef} className="relative">
           <button
             type="button"
+            onMouseEnter={() => setHoveredNav('more')}
             onClick={() => {
               setMoreMenuOpen(!moreMenuOpen)
               setStudyHubOpen(false)
               setCbtMenuOpen(false)
               setReappearMenuOpen(false)
             }}
-            className={`px-2 py-1.5 rounded-lg text-xs font-semibold transition-all inline-flex items-center gap-1 cursor-pointer whitespace-nowrap ${
-              isMoreActive || moreMenuOpen
-                ? 'bg-[#161b22] text-white font-bold'
-                : 'text-[#8b949e] hover:text-white hover:bg-[#161b22]/60'
+            className={`relative px-2 py-1 rounded-full text-xs font-semibold inline-flex items-center justify-center cursor-pointer whitespace-nowrap transition-colors z-10 ${
+              isMoreActive || moreMenuOpen ? 'text-white font-bold' : 'text-[#8b949e] hover:text-white'
             }`}
+            title="More Academic Tools"
           >
-            <span>More</span>
-            <ChevronDown className={`w-3 h-3 text-[#7d8590] transition-transform duration-150 ${moreMenuOpen ? 'rotate-180 text-white' : ''}`} />
+            {(hoveredNav === 'more' || moreMenuOpen || isMoreActive) && (
+              <motion.div
+                layoutId="capsuleHighlight"
+                className="absolute inset-0 rounded-full bg-[#21262d]/90 border border-[#30363d] -z-10 shadow-sm"
+                transition={shouldReduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 450, damping: 32 }}
+              />
+            )}
+            <MoreHorizontal className="w-4 h-4 text-[#8b949e]" />
           </button>
 
           <AnimatePresence>
@@ -588,7 +607,7 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 4, scale: 0.98 }}
                 transition={{ duration: 0.12 }}
-                className="absolute top-full right-0 mt-1.5 w-64 p-1.5 rounded-xl bg-[#161b22]/98 backdrop-blur-xl border border-[#30363d] shadow-2xl shadow-black/80 z-50 space-y-0.5 text-xs"
+                className="absolute top-full right-0 mt-2 w-64 p-1.5 rounded-xl bg-[#161b22]/98 backdrop-blur-xl border border-[#30363d] shadow-2xl shadow-black/80 z-50 space-y-0.5 text-xs"
               >
                 <div className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-[#7d8590] font-bold border-b border-[#30363d]/60 mb-1">
                   Workspace Tools
@@ -599,7 +618,7 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                     key={item.href}
                     href={item.href}
                     onClick={() => setMoreMenuOpen(false)}
-                    className="p-2 rounded-lg flex items-center gap-2.5 hover:bg-[#21262d] text-[#8b949e] hover:text-white transition-colors"
+                    className="p-1.5 rounded-lg flex items-center gap-2.5 hover:bg-[#21262d] text-[#8b949e] hover:text-white transition-colors"
                   >
                     <div className="w-6 h-6 rounded-md bg-[#0d1117] border border-[#30363d] flex items-center justify-center shrink-0">
                       {item.icon}
@@ -610,6 +629,14 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                     </div>
                   </Link>
                 ))}
+
+                {/* Theme Switcher inside More */}
+                <div className="pt-1.5 border-t border-[#30363d]/60 px-1">
+                  <div className="text-[10px] font-mono text-[#7d8590] uppercase px-1 pb-1">
+                    Theme Engine
+                  </div>
+                  <ThemeSwitcherDropdown />
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -618,25 +645,19 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
       </nav>
 
       {/* ============================================================ */}
-      {/* ACTIONS & TOOLS (RIGHT) */}
+      {/* ACTIONS & TOOLS (RIGHT: ULTRA-CLEAN & COMPACT) */}
       {/* ============================================================ */}
       <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
-
-        {/* Live Exam Countdown Ticker */}
-        <div className="hidden xl:block shrink-0">
-          <ExamCountdownTicker />
-        </div>
 
         {/* Global Omni-Search Command Palette Button */}
         <button
           type="button"
           onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-[#30363d] bg-[#161b22] hover:bg-[#21262d] text-[#7d8590] hover:text-white text-xs font-mono transition-all cursor-pointer shadow-sm group shrink-0"
+          className="inline-flex items-center gap-1 px-2 py-1 rounded-xl border border-[#30363d] bg-[#161b22] hover:bg-[#21262d] text-[#7d8590] hover:text-white text-xs font-mono transition-all cursor-pointer shadow-sm group shrink-0"
           title="Open Command Palette (Ctrl+K)"
         >
           <Search className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
-          <span className="text-[11px] hidden sm:inline">Search</span>
-          <kbd className="px-1.5 py-0.5 rounded bg-[#0d1117] border border-[#30363d] text-[10px] text-[#7d8590] group-hover:text-emerald-400 hidden sm:inline">
+          <kbd className="px-1.5 py-0.5 rounded bg-[#0d1117] border border-[#30363d] text-[10px] text-[#7d8590] group-hover:text-emerald-400">
             ⌘K
           </kbd>
         </button>
@@ -645,16 +666,16 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
         <button
           type="button"
           onClick={() => setAlertsModalOpen(true)}
-          className={`w-8 h-8 rounded-xl border transition-all flex items-center justify-center cursor-pointer relative shrink-0 ${
+          className={`w-7.5 h-7.5 sm:w-8 sm:h-8 rounded-xl border transition-all flex items-center justify-center cursor-pointer relative shrink-0 ${
             unreadCount > 0
               ? 'border-purple-500/60 bg-purple-500/15 text-white shadow-sm shadow-purple-500/30'
-              : 'border-prevu-surface-light bg-prevu-surface/60 hover:bg-prevu-surface hover:border-purple-500/40 text-prevu-text-muted hover:text-white'
+              : 'border-[#30363d] bg-[#161b22] hover:bg-[#21262d] text-[#7d8590] hover:text-white'
           }`}
           title={unreadCount > 0 ? `${unreadCount} unread community alerts` : 'Smart Exam Alerts & Notifications'}
         >
           <Bell className={`w-3.5 h-3.5 ${unreadCount > 0 ? 'text-purple-300' : 'text-purple-400'}`} />
           {unreadCount > 0 ? (
-            <span className="min-w-[16px] h-4 px-1 rounded-full bg-gradient-to-r from-rose-500 to-amber-500 text-white text-[9px] font-extrabold absolute -top-1 -right-1 flex items-center justify-center shadow-md shadow-rose-500/40 border border-[#0d0d14] animate-pulse">
+            <span className="min-w-[15px] h-3.5 px-1 rounded-full bg-gradient-to-r from-rose-500 to-amber-500 text-white text-[9px] font-extrabold absolute -top-1 -right-1 flex items-center justify-center shadow-md shadow-rose-500/40 border border-[#0d0d14] animate-pulse">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           ) : (
@@ -662,11 +683,11 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
           )}
         </button>
 
-        {/* Admin Quick Console Pill */}
+        {/* Admin Quick Console Pill (Only for Admins) */}
         {isAdmin && (
           <Link
             href="/admin/dashboard"
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-purple-500/40 bg-purple-950/40 hover:bg-purple-900/50 text-purple-200 text-xs font-bold transition-all shadow-sm shrink-0"
+            className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl border border-purple-500/40 bg-purple-950/40 hover:bg-purple-900/50 text-purple-200 text-xs font-bold transition-all shadow-sm shrink-0"
             title="Administrator Moderation Console"
           >
             <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
@@ -674,16 +695,15 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
           </Link>
         )}
 
-        {/* Upload Paper Primary CTA */}
+        {/* Upload Primary CTA */}
         <Button
           size="sm"
           asChild
-          className="h-8 px-3.5 text-xs font-bold bg-gradient-to-r from-purple-600 to-prevu-accent hover:from-purple-500 hover:to-prevu-accent-light text-white shadow-md shadow-purple-600/25 shrink-0 cursor-pointer"
+          className="h-7.5 px-3 text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-500/20 shrink-0 cursor-pointer"
         >
           <Link href="/upload" className="flex items-center gap-1.5">
-            <Upload className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Upload Paper</span>
-            <span className="sm:hidden">Upload</span>
+            <Plus className="w-3.5 h-3.5" />
+            <span>Upload Paper</span>
           </Link>
         </Button>
 
@@ -693,26 +713,26 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
             <button
               type="button"
               onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="flex items-center gap-1.5 p-1 pl-1.5 rounded-xl border border-prevu-surface-light bg-prevu-surface/80 hover:bg-prevu-surface text-prevu-text hover:text-white transition-all cursor-pointer"
+              className="flex items-center gap-1 p-0.5 pl-1 rounded-xl border border-[#30363d] bg-[#161b22] hover:bg-[#21262d] text-[#e6edf3] transition-all cursor-pointer"
               title="Open User Profile & Settings"
             >
               <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white text-[11px] font-bold shadow-sm">
                 {userInitial}
               </div>
-              <ChevronDown className={`w-3.5 h-3.5 text-prevu-text-muted transition-transform duration-200 ${userMenuOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-3 h-3 text-[#7d8590] transition-transform duration-150 ${userMenuOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {/* User Dropdown Menu */}
             <AnimatePresence>
               {userMenuOpen && (
                 <motion.div
-                  initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                  initial={{ opacity: 0, y: 6, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 8, scale: 0.96 }}
-                  transition={{ duration: 0.15 }}
+                  exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                  transition={{ duration: 0.12 }}
                   className="absolute right-0 top-full mt-2 w-64 p-2.5 rounded-2xl bg-[#0d1117]/98 backdrop-blur-2xl border border-prevu-surface-light shadow-2xl shadow-black/90 z-50 space-y-1.5 text-xs"
                 >
-                  <div className="p-2.5 rounded-xl bg-prevu-bg border border-prevu-surface-light/60">
+                  <div className="p-2 rounded-xl bg-prevu-bg border border-prevu-surface-light/60">
                     <p className="font-bold text-white truncate">{userDisplayName}</p>
                     <p className="text-[10px] font-mono text-prevu-text-muted truncate mt-0.5">{user.email || 'CU Scholar'}</p>
                   </div>
@@ -721,7 +741,7 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                     <Link
                       href="/admin/dashboard"
                       onClick={() => setUserMenuOpen(false)}
-                      className="p-2.5 rounded-xl bg-purple-950/40 border border-purple-500/40 text-purple-200 hover:text-white hover:bg-purple-900/50 flex items-center gap-2.5 font-bold transition-all shadow-sm"
+                      className="p-2 rounded-xl bg-purple-950/40 border border-purple-500/40 text-purple-200 hover:text-white hover:bg-purple-900/50 flex items-center gap-2 font-bold transition-all shadow-sm"
                     >
                       <ShieldCheck className="w-4 h-4 text-purple-400" />
                       <div className="flex-1">
@@ -748,8 +768,8 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
             </AnimatePresence>
           </div>
         ) : (
-          <Button size="sm" variant="outline" asChild className="h-8 px-3 text-xs font-bold border-prevu-surface-light shrink-0">
-            <Link href="/login" className="flex items-center gap-1.5">
+          <Button size="sm" variant="outline" asChild className="h-7.5 px-3 text-xs font-bold border-[#30363d] shrink-0">
+            <Link href="/login" className="flex items-center gap-1">
               <LogIn className="w-3.5 h-3.5 text-prevu-accent" />
               <span>Log In</span>
             </Link>
@@ -760,9 +780,9 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label="Toggle Navigation Menu"
-          className="p-1.5 rounded-xl border border-prevu-surface-light bg-prevu-surface/90 text-prevu-text hover:text-prevu-accent transition-colors lg:hidden shrink-0"
+          className="p-1.5 rounded-xl border border-[#30363d] bg-[#161b22] text-[#8b949e] hover:text-white transition-colors lg:hidden shrink-0"
         >
-          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
         </button>
 
       </div>
@@ -779,11 +799,6 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
             transition={{ duration: 0.2 }}
             className="absolute top-16 left-0 right-0 p-4 bg-[#09090d]/98 backdrop-blur-2xl border-b border-prevu-surface-light shadow-2xl z-50 lg:hidden space-y-4 max-h-[85vh] overflow-y-auto"
           >
-            {/* Mobile Ticker */}
-            <div className="pb-3 border-b border-prevu-surface-light flex items-center justify-between gap-2">
-              <ExamCountdownTicker />
-            </div>
-
             {/* Mobile Study Hub */}
             <div className="space-y-1">
               <div className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 px-2 font-bold flex items-center justify-between">
@@ -840,33 +855,33 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
             <div className="space-y-1 pt-2 border-t border-prevu-surface-light">
               <div className="text-[10px] font-mono uppercase tracking-wider text-amber-400 px-2 font-bold flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
-                  <ShieldAlert className="w-3.5 h-3.5" />
-                  <span>Reappear Hub</span>
+                  <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+                  <span>BACKLOG RESCUE HUB</span>
                 </span>
-                <span className="text-[9px] text-amber-300">100% Pass</span>
+                <span className="text-[10px] text-amber-400 font-mono font-bold tracking-wider">100% VERIFIED</span>
               </div>
               {reappearLinks.map(link => (
                 <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 rounded-xl text-xs font-semibold text-[#8b949e] hover:text-white hover:bg-prevu-surface flex items-center justify-between"
+                  className="p-2 rounded-xl text-xs font-semibold text-[#8b949e] hover:text-white hover:bg-prevu-surface flex items-center gap-2.5"
                 >
-                  <span className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-md bg-[#0d1117] border border-[#30363d] flex items-center justify-center shrink-0">
                     {link.icon}
-                    <span>{link.label}</span>
-                  </span>
-                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/25">
-                    {link.badge}
-                  </span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-white text-xs truncate">{link.label}</div>
+                    <div className="text-[10px] text-[#8b949e] truncate">{link.desc}</div>
+                  </div>
                 </Link>
               ))}
               <Link
-                href="/upload?category=reappear"
+                href={`/upload?category=reappear&semester=${activeSem}`}
                 onClick={() => setMobileMenuOpen(false)}
-                className="mt-1 p-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 bg-amber-500/15 border border-amber-500/30 text-amber-300"
+                className="mt-1 p-2.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 text-black shadow-md shadow-amber-500/20"
               >
-                <Upload className="w-3.5 h-3.5" />
+                <Upload className="w-3.5 h-3.5 text-black" />
                 <span>Upload Reappear Resource</span>
               </Link>
             </div>

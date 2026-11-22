@@ -244,18 +244,38 @@ export async function getPendingResources() {
 
   const resourcesWithUrls = await Promise.all(
     (data || []).map(async resource => {
-      try {
-        const { data: urlData } = await supabaseAdmin.storage
-          .from('resources')
-          .createSignedUrl(resource.file_path, 60 * 60)
-
+      // If resource is external youtube or gdrive/cloud link
+      if (resource.resource_format === 'youtube') {
+        const previewUrl = resource.external_url || (resource.youtube_id ? `https://www.youtube.com/watch?v=${resource.youtube_id}` : null)
         return {
           ...resource,
-          previewUrl: urlData?.signedUrl || null
+          previewUrl
         }
-      } catch {
-        return { ...resource, previewUrl: null }
       }
+
+      if (resource.resource_format === 'gdrive' || resource.resource_format === 'external_link') {
+        return {
+          ...resource,
+          previewUrl: resource.external_url || null
+        }
+      }
+
+      if (resource.file_path) {
+        try {
+          const { data: urlData } = await supabaseAdmin.storage
+            .from('resources')
+            .createSignedUrl(resource.file_path, 60 * 60)
+
+          return {
+            ...resource,
+            previewUrl: urlData?.signedUrl || null
+          }
+        } catch {
+          return { ...resource, previewUrl: null }
+        }
+      }
+
+      return { ...resource, previewUrl: null }
     })
   )
 
@@ -474,6 +494,255 @@ export async function toggleUserSuspension(userId: string, currentStatus?: strin
   return { success: true, status: nextStatus }
 }
 
+function extractYouTubeId(url: string): string | null {
+  try {
+    const u = new URL(url)
+    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1).split('?')[0]
+    if (u.searchParams.get('v')) return u.searchParams.get('v')
+    if (u.searchParams.get('list')) return u.searchParams.get('list')
+    const parts = u.pathname.split('/')
+    const embedIdx = parts.indexOf('embed')
+    if (embedIdx !== -1 && parts[embedIdx + 1]) return parts[embedIdx + 1]
+    return null
+  } catch {
+    return null
+  }
+}
+
+export interface UpdateResourceDetailsInput {
+  id: string
+  title?: string
+  subject_name?: string
+  subject_code?: string
+  semester?: number
+  year?: number
+  exam_type?: string
+  exam_year?: number
+  unit?: string | null
+  resource_format?: 'file' | 'gdrive' | 'youtube' | 'external_link'
+  external_url?: string | null
+  channel_name?: string | null
+  status?: 'pending' | 'approved' | 'rejected' | 'archived'
+  admin_note?: string | null
+}
+
+/**
+ * Updates full resource details, re-routes between sections/categories,
+ * and updates status (pending, approved, rejected, archived).
+ */
+export async function updateResourceDetails(input: UpdateResourceDetailsInput) {
+  const session = await getAdminSession()
+  if (!session) return { error: 'Unauthorized' }
+
+  const supabaseAdmin = await getAdminDb()
+  const updateData: Record<string, any> = {}
+
+  if (input.title !== undefined) {
+    updateData.original_filename = input.title.trim()
+  }
+
+  if (input.exam_year !== undefined) {
+    updateData.exam_year = Number(input.exam_year)
+  }
+
+  if (input.unit !== undefined) {
+    updateData.unit = input.unit ? input.unit.trim() : null
+  }
+
+  if (input.resource_format !== undefined) {
+    updateData.resource_format = input.resource_format
+  }
+
+  if (input.external_url !== undefined) {
+    const cleanUrl = input.external_url ? input.external_url.trim() : null
+    updateData.external_url = cleanUrl
+    if (input.resource_format === 'youtube' && cleanUrl) {
+      const ytId = extractYouTubeId(cleanUrl)
+      if (ytId) updateData.youtube_id = ytId
+    }
+  }
+
+  if (input.channel_name !== undefined) {
+    updateData.channel_name = input.channel_name ? input.channel_name.trim() : null
+  }
+
+  if (input.status !== undefined) {
+    updateData.status = input.status
+    if (input.status === 'approved' && input.admin_note === undefined) {
+      updateData.admin_note = null
+    }
+  }
+
+  if (input.admin_note !== undefined) {
+    updateData.admin_note = input.admin_note ? input.admin_note.trim() : null
+  }
+
+  // Handle semester / year / subject
+  const sem = input.semester ? Number(input.semester) : undefined
+  const yr = input.year ? Number(input.year) : (sem ? Math.ceil(sem / 2) : undefined)
+
+  if (input.subject_name && input.subject_name.trim()) {
+    const cleanSubName = input.subject_name.trim()
+    let subQuery = supabaseAdmin
+      .from('subjects')
+      .select('id, name, code, year, semester')
+      .ilike('name', cleanSubName)
+
+    if (sem) subQuery = subQuery.eq('semester', sem)
+    if (yr) subQuery = subQuery.eq('year', yr)
+
+    const { data: existingSub } = await subQuery.maybeSingle()
+
+    if (existingSub) {
+      updateData.subject_id = existingSub.id
+      if (input.subject_code && input.subject_code.trim().toUpperCase() !== existingSub.code) {
+        await supabaseAdmin
+          .from('subjects')
+          .update({ code: input.subject_code.trim().toUpperCase() })
+          .eq('id', existingSub.id)
+      }
+    } else {
+      const { data: newSub } = await supabaseAdmin
+        .from('subjects')
+        .insert({
+          branch_id: 1,
+          year: yr || 1,
+          semester: sem || 1,
+          name: cleanSubName,
+          code: (input.subject_code || 'CSE').toUpperCase()
+        })
+        .select('id')
+        .single()
+      if (newSub) updateData.subject_id = newSub.id
+    }
+  } else if (sem) {
+    // If subject_name not specified but semester changed, find subject or update
+    const { data: currentRes } = await supabaseAdmin
+      .from('resources')
+      .select('subject_id, subjects(name, code, semester, year)')
+      .eq('id', input.id)
+      .maybeSingle()
+
+    const currentSub = currentRes?.subjects as any
+    if (currentSub?.name) {
+      const { data: existingSub } = await supabaseAdmin
+        .from('subjects')
+        .select('id')
+        .ilike('name', currentSub.name)
+        .eq('semester', sem)
+        .maybeSingle()
+
+      if (existingSub) {
+        updateData.subject_id = existingSub.id
+      } else {
+        const { data: newSub } = await supabaseAdmin
+          .from('subjects')
+          .insert({
+            branch_id: 1,
+            year: yr || Math.ceil(sem / 2),
+            semester: sem,
+            name: currentSub.name,
+            code: currentSub.code || 'CSE'
+          })
+          .select('id')
+          .single()
+        if (newSub) updateData.subject_id = newSub.id
+      }
+    }
+  }
+
+  // Handle Exam Type / Category
+  if (input.exam_type && input.exam_type.trim()) {
+    const cleanET = input.exam_type.trim()
+    const { data: existingET } = await supabaseAdmin
+      .from('exam_types')
+      .select('id')
+      .or(`name.ilike.${cleanET.replace(/\s+/g, '')},name.ilike.${cleanET}`)
+      .maybeSingle()
+
+    if (existingET) {
+      updateData.exam_type_id = existingET.id
+    } else {
+      const { data: newET } = await supabaseAdmin
+        .from('exam_types')
+        .insert({ name: cleanET })
+        .select('id')
+        .single()
+      if (newET) updateData.exam_type_id = newET.id
+    }
+  }
+
+  const { error } = await supabaseAdmin
+    .from('resources')
+    .update(updateData)
+    .eq('id', input.id)
+
+  if (error) return { error: error.message }
+
+  await logAdminAction({
+    adminEmail: session.email,
+    adminId: session.uid,
+    action: 'UPDATE_RESOURCE_DETAILS',
+    targetType: 'paper',
+    targetId: input.id,
+    details: { updateData, input }
+  })
+
+  revalidatePath('/admin')
+  revalidatePath('/admin/dashboard')
+  revalidatePath('/admin/papers')
+  revalidatePath('/admin/moderation')
+  revalidatePath('/browse')
+  revalidatePath('/study-material')
+  revalidatePath('/reappear')
+  revalidatePath(`/paper/${input.id}`)
+  revalidatePath('/')
+
+  return { success: true }
+}
+
+/**
+ * Revokes approval of an approved resource and moves it back to pending moderation.
+ * Useful when an admin mistakenly approved a paper or needs to re-verify it.
+ */
+export async function revokeResourceApproval(id: string, reason?: string) {
+  const session = await getAdminSession()
+  if (!session) return { error: 'Unauthorized' }
+
+  const supabaseAdmin = await getAdminDb()
+
+  const { error } = await supabaseAdmin
+    .from('resources')
+    .update({
+      status: 'pending',
+      admin_note: reason || 'Approval revoked by admin. Returned to moderation queue.'
+    })
+    .eq('id', id)
+
+  if (error) return { error: error.message }
+
+  await logAdminAction({
+    adminEmail: session.email,
+    adminId: session.uid,
+    action: 'REVOKE_PAPER_APPROVAL',
+    targetType: 'paper',
+    targetId: id,
+    details: { reason }
+  })
+
+  revalidatePath('/admin')
+  revalidatePath('/admin/dashboard')
+  revalidatePath('/admin/papers')
+  revalidatePath('/admin/moderation')
+  revalidatePath('/browse')
+  revalidatePath('/study-material')
+  revalidatePath('/reappear')
+  revalidatePath(`/paper/${id}`)
+  revalidatePath('/')
+
+  return { success: true }
+}
+
 /**
  * Approves a resource with optional edited metadata
  */
@@ -498,13 +767,16 @@ export async function approveResource(
     updateData.exam_year = metadata.exam_year
   }
 
-  if (metadata?.subject_name && metadata?.year && metadata?.semester) {
+  const effectiveSemester = metadata?.semester
+  const effectiveYear = metadata?.year || (effectiveSemester ? Math.ceil(effectiveSemester / 2) : 1)
+
+  if (metadata?.subject_name && effectiveSemester) {
     const { data: existingSub } = await supabaseAdmin
       .from('subjects')
       .select('id')
       .ilike('name', metadata.subject_name.trim())
-      .eq('year', metadata.year)
-      .eq('semester', metadata.semester)
+      .eq('year', effectiveYear)
+      .eq('semester', effectiveSemester)
       .maybeSingle()
 
     if (existingSub) {
@@ -514,8 +786,8 @@ export async function approveResource(
         .from('subjects')
         .insert({
           branch_id: 1,
-          year: metadata.year,
-          semester: metadata.semester,
+          year: effectiveYear,
+          semester: effectiveSemester,
           name: metadata.subject_name.trim(),
           code: (metadata.subject_code || 'CSE').toUpperCase()
         })
@@ -535,6 +807,13 @@ export async function approveResource(
 
     if (existingET) {
       updateData.exam_type_id = existingET.id
+    } else {
+      const { data: newET } = await supabaseAdmin
+        .from('exam_types')
+        .insert({ name: metadata.exam_type.trim() })
+        .select('id')
+        .single()
+      if (newET) updateData.exam_type_id = newET.id
     }
   }
 
@@ -559,6 +838,9 @@ export async function approveResource(
   revalidatePath('/admin/papers')
   revalidatePath('/admin/moderation')
   revalidatePath('/browse')
+  revalidatePath('/study-material')
+  revalidatePath('/reappear')
+  revalidatePath(`/paper/${id}`)
   revalidatePath('/')
   return { success: true }
 }

@@ -34,6 +34,7 @@ import {
   updateResourceDetails,
   revokeResourceApproval
 } from '../actions'
+import { getCleanResourceCardTitle } from '@/components/ResourceCard'
 
 function YouTubeIcon({ className }: { className?: string }) {
   return (
@@ -454,7 +455,7 @@ export default function PapersManagementClient({
             </div>
 
             <div className="font-bold text-prevu-text text-xs leading-snug">
-              {p.original_filename || p.subjects?.name || 'Untitled Resource'}
+              {getCleanResourceCardTitle(p)}
             </div>
 
             <div className="flex items-center gap-2 text-[11px] text-prevu-text-muted">

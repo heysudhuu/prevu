@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { approveResource, rejectResource, updateResourceDetails } from '../actions'
+import { getCleanResourceCardTitle } from '@/components/ResourceCard'
 
 function YouTubeIcon({ className }: { className?: string }) {
   return (
@@ -605,7 +606,7 @@ export default function ModerationClient({ initialResources }: ModerationClientP
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <h3 className="text-base font-bold text-prevu-text leading-snug">
-                            {resource.original_filename || resource.subjects?.name || 'Untitled Resource'}
+                            {getCleanResourceCardTitle(resource)}
                           </h3>
                           <div className="flex flex-wrap items-center gap-2 mt-1">
                             <span className="text-xs font-mono font-semibold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">

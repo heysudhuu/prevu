@@ -1,16 +1,6 @@
 'use client'
 
-import dynamic from 'next/dynamic'
-
-const ExamCountdownTicker = dynamic(
-  () => import('@/components/exam/ExamCountdownTicker'),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-6 w-24 rounded-lg bg-[#161b22] border border-purple-500/20 animate-pulse" />
-    )
-  }
-)
+import ExamCountdownTicker from '@/components/exam/ExamCountdownTicker'
 
 export default function LiveExamRadarRibbon() {
   return (

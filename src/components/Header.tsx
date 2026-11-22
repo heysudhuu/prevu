@@ -5,7 +5,6 @@ import { isUserAdmin } from '@/lib/auth/admin-check'
 import HeaderNav from '@/components/HeaderNav'
 import { Terminal } from 'lucide-react'
 import SemesterSwitcherPill from '@/components/navigation/SemesterSwitcherPill'
-import ThemeSwitcherDropdown from '@/components/theme/ThemeSwitcherDropdown'
 
 export default async function Header() {
   const token = (await cookies()).get('firebase-token')?.value
@@ -29,14 +28,15 @@ export default async function Header() {
   }
 
   return (
-    <header className="border-b border-[#30363d]/70 bg-[#010409]/90 backdrop-blur-2xl sticky top-0 z-50 shadow-xl shadow-black/60">
-      <div className="container mx-auto px-4 max-w-7xl 2xl:max-w-[1720px] h-16 flex items-center justify-between">
+    <header className="border-b border-[#30363d]/70 bg-[#010409]/92 backdrop-blur-2xl sticky top-0 z-50 shadow-xl shadow-black/60">
+      <div className="container mx-auto px-4 max-w-7xl 2xl:max-w-[1720px] h-16 flex items-center justify-between gap-2 sm:gap-4">
         
-        {/* Brand Logo, Semester Switcher & Interactive Theme Dropdown */}
+        {/* Brand Logo & Visible Semester Selector */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <Link 
             href="/" 
             className="group font-mono text-xl sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-2.5 hover:text-emerald-400 transition-colors shrink-0"
+            title="Prevu Academic Repository"
           >
             <div className="w-8 h-8 rounded-xl bg-[#238636] flex items-center justify-center text-white shadow-md shadow-[#238636]/40 group-hover:scale-105 transition-transform shrink-0">
               <Terminal className="w-4 h-4 text-white" />
@@ -44,15 +44,11 @@ export default async function Header() {
             <span className="font-extrabold tracking-tight">prevu</span>
           </Link>
 
+          {/* Visible Semester Selector */}
           <SemesterSwitcherPill />
-
-          {/* Interactive Theme Switcher Dropdown */}
-          <div className="hidden sm:inline-flex items-center">
-            <ThemeSwitcherDropdown />
-          </div>
         </div>
 
-        {/* Dynamic Navigation & Mobile Menu */}
+        {/* Dynamic Navigation & Actions */}
         <HeaderNav user={user} isAdmin={isAdmin} />
 
       </div>

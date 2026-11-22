@@ -23,7 +23,8 @@ import {
   ExternalLink,
   ChevronRight,
   Filter,
-  Target
+  Target,
+  Upload
 } from 'lucide-react'
 
 const PDFViewerModal = dynamic(() => import('@/components/preview/PDFViewerModal'), {
@@ -850,39 +851,51 @@ export default function ReappearRescueSection() {
             Specialized remedial question papers (PYQs), high-frequency repeated prompts, and concise one-night revision guides engineered to help you clear any semester backlog on the first attempt.
           </p>
 
-          {/* Sub-Tab Selector: Reappear PYQs vs 80/20 Study Material */}
-          <div className="flex items-center justify-center gap-2 mt-6 p-1.5 rounded-2xl bg-[#161b22] border border-[#30363d] shadow-xl">
-            <button
-              type="button"
-              onClick={() => setActiveSubTab('pyqs')}
-              className={`px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-                activeSubTab === 'pyqs'
-                  ? 'bg-amber-500 text-black shadow-md shadow-amber-500/30 font-extrabold'
-                  : 'text-[#7d8590] hover:text-white hover:bg-[#21262d]'
-              }`}
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>Reappear PYQs &amp; Solved Papers</span>
-              <span className={`px-1.5 py-0.5 rounded text-[10px] ${activeSubTab === 'pyqs' ? 'bg-black/20 text-black' : 'bg-[#21262d] text-[#7d8590]'}`}>
-                Sem {selectedSem}
-              </span>
-            </button>
+          {/* Sub-Tab Selector: Reappear PYQs vs 80/20 Study Material & Upload Action */}
+          <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
+            <div className="flex items-center justify-center gap-2 p-1.5 rounded-2xl bg-[#161b22] border border-[#30363d] shadow-xl">
+              <button
+                type="button"
+                onClick={() => setActiveSubTab('pyqs')}
+                className={`px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                  activeSubTab === 'pyqs'
+                    ? 'bg-amber-500 text-black shadow-md shadow-amber-500/30 font-extrabold'
+                    : 'text-[#7d8590] hover:text-white hover:bg-[#21262d]'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Reappear PYQs &amp; Solved Papers</span>
+                <span className={`px-1.5 py-0.5 rounded text-[10px] ${activeSubTab === 'pyqs' ? 'bg-black/20 text-black' : 'bg-[#21262d] text-[#7d8590]'}`}>
+                  Sem {selectedSem}
+                </span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setActiveSubTab('materials')}
-              className={`px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-                activeSubTab === 'materials'
-                  ? 'bg-emerald-500 text-black shadow-md shadow-emerald-500/30 font-extrabold'
-                  : 'text-[#7d8590] hover:text-white hover:bg-[#21262d]'
-              }`}
+              <button
+                type="button"
+                onClick={() => setActiveSubTab('materials')}
+                className={`px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                  activeSubTab === 'materials'
+                    ? 'bg-emerald-500 text-black shadow-md shadow-emerald-500/30 font-extrabold'
+                    : 'text-[#7d8590] hover:text-white hover:bg-[#21262d]'
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>80/20 Reappear Crash Material</span>
+                <span className={`px-1.5 py-0.5 rounded text-[10px] ${activeSubTab === 'materials' ? 'bg-black/20 text-black' : 'bg-[#21262d] text-[#7d8590]'}`}>
+                  One-Night
+                </span>
+              </button>
+            </div>
+
+            {/* Direct Upload Reappear Resource Action Button */}
+            <Link
+              href={`/upload?category=reappear&semester=${selectedSem}`}
+              className="px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black shadow-lg shadow-amber-500/25 border border-amber-300/40"
+              title="Upload Reappear Question Papers, Notes, or Syllabi"
             >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>80/20 Reappear Crash Material</span>
-              <span className={`px-1.5 py-0.5 rounded text-[10px] ${activeSubTab === 'materials' ? 'bg-black/20 text-black' : 'bg-[#21262d] text-[#7d8590]'}`}>
-                One-Night
-              </span>
-            </button>
+              <Upload className="w-4 h-4 text-black" />
+              <span>Upload Reappear Resource</span>
+            </Link>
           </div>
         </div>
 

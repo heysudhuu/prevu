@@ -119,7 +119,9 @@ export async function uploadResource(formData: FormData) {
       return { 
         error: resourceCategory === 'study_material'
           ? 'Please fill in Subject Name, Material Type, Academic Year, and select at least one file (up to 3).'
-          : 'All fields are required. Please fill in Subject Name, Exam Type, Year, and select at least one file (up to 3).' 
+          : resourceCategory === 'reappear'
+            ? 'Please fill in Subject Name, Reappear Resource Type, Academic Year, and select at least one file (up to 3).'
+            : 'All fields are required. Please fill in Subject Name, Exam Type, Year, and select at least one file (up to 3).' 
       }
     }
 
@@ -291,6 +293,7 @@ export async function uploadResource(formData: FormData) {
     revalidatePath('/browse')
     revalidatePath('/admin')
     revalidatePath('/')
+    revalidatePath('/#reappear-rescue')
 
     return { success: true, count: validFiles.length, isAdminUpload: isAdmin }
   } catch (err: unknown) {
@@ -449,7 +452,9 @@ export async function prepareDirectUpload(
       return {
         error: resourceCategory === 'study_material'
           ? 'Please fill in Subject Name, Material Type, Academic Year, and select at least one file.'
-          : 'All fields are required. Please fill in Subject Name, Exam Type, Year, and select at least one file.'
+          : resourceCategory === 'reappear'
+            ? 'Please fill in Subject Name, Reappear Resource Type, Academic Year, and select at least one file.'
+            : 'All fields are required. Please fill in Subject Name, Exam Type, Year, and select at least one file.'
       }
     }
 
@@ -663,6 +668,7 @@ export async function completeDirectUpload(
     revalidatePath('/browse')
     revalidatePath('/admin')
     revalidatePath('/')
+    revalidatePath('/#reappear-rescue')
 
     return { success: true, count: input.files.length, isAdminUpload: isAdmin }
   } catch (err: unknown) {

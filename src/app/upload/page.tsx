@@ -9,7 +9,7 @@ import { createClient } from '@/utils/supabase/client'
 import { 
   Upload, AlertCircle, Sparkles, BookOpen, Layers, Eye, FileText, 
   CheckCircle2, CloudUpload, Clipboard, Loader2, ShieldCheck, Check, 
-  Wand2, AlertTriangle, Sparkle, Calendar 
+  Wand2, AlertTriangle, Sparkle, Calendar, ShieldAlert 
 } from 'lucide-react'
 import UploadCelebrationMascot from '@/components/animations/UploadCelebrationMascot'
 import FigmaDropdown, { FigmaDropdownOption } from '@/components/ui/FigmaDropdown'
@@ -62,6 +62,13 @@ const STUDY_MATERIAL_OPTIONS: FigmaDropdownOption[] = [
   { value: 'Book', label: 'Reference Book / Textbook', subtitle: 'Prescribed standard textbook PDF', icon: '📚' },
   { value: 'Cheatsheet', label: 'Formula Sheet & Cheatsheet', subtitle: 'Quick memory formulas & theorems', icon: '⚡', badge: 'Quick' },
   { value: 'Study Material', label: 'General Slides & PPTs', subtitle: 'Department lecture presentation slides', icon: '💡' },
+]
+
+const REAPPEAR_TYPE_OPTIONS: FigmaDropdownOption[] = [
+  { value: 'Reappear Syllabus', label: 'Reappear Syllabus', subtitle: 'Official remedial marking roadmap & passing blueprint', icon: '📑', badge: 'Blueprint' },
+  { value: 'Reappear PYQ', label: 'Reappear PYQ', subtitle: 'High-frequency repeated remedial examination papers', icon: '⚡', badge: 'High Repeat' },
+  { value: 'Reappear Study Material', label: 'Reappear Study Material', subtitle: 'One-night essential revision notes & 80/20 derivations', icon: '📝', badge: 'One-Night' },
+  { value: 'Reappear Question Paper', label: 'Reappear Question Paper', subtitle: 'Full remedial test paper with marking schemes', icon: '📄', badge: 'Official' },
 ]
 
 const EXAM_YEAR_OPTIONS: FigmaDropdownOption[] = [
@@ -177,11 +184,19 @@ function uploadFileWithProgress(
 
 function UploadFormContent() {
   const searchParams = useSearchParams()
-  const initialCategory = (searchParams.get('category') === 'study-material' || searchParams.get('type') === 'study-material')
+  const initialCategoryParam = searchParams.get('category') || searchParams.get('type')
+  const isInitialReappear = initialCategoryParam === 'reappear' || initialCategoryParam === 'remedial' || initialCategoryParam === 'backlog'
+
+  const [resourceClassification, setResourceClassification] = useState<'regular' | 'reappear'>(
+    isInitialReappear ? 'reappear' : 'regular'
+  )
+
+  const initialRegularCategory = (initialCategoryParam === 'study-material' || initialCategoryParam === 'notes')
     ? 'study_material' 
     : 'exam_paper'
 
-  const [uploadCategory, setUploadCategory] = useState<'exam_paper' | 'study_material'>(initialCategory)
+  const [uploadCategory, setUploadCategory] = useState<'exam_paper' | 'study_material'>(initialRegularCategory)
+  const [reappearType, setReappearType] = useState<string>('Reappear PYQ')
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [selectedYear, setSelectedYear] = useState<number>(1)
   const [selectedSemester, setSelectedSemester] = useState<number>(1)
@@ -226,11 +241,24 @@ function UploadFormContent() {
     loadOptions()
   }, [])
 
-  // Sync category if query param changes
+  // Sync category and semester if query param changes
   useEffect(() => {
     const cat = searchParams.get('category') || searchParams.get('type')
-    if (cat === 'study-material' || cat === 'notes') {
+    if (cat === 'reappear' || cat === 'remedial' || cat === 'backlog') {
+      setResourceClassification('reappear')
+    } else if (cat === 'study-material' || cat === 'notes') {
+      setResourceClassification('regular')
       setUploadCategory('study_material')
+    } else if (cat === 'exam-paper' || cat === 'pyq') {
+      setResourceClassification('regular')
+      setUploadCategory('exam_paper')
+    }
+
+    const semParam = searchParams.get('semester') || searchParams.get('sem')
+    if (semParam && !isNaN(parseInt(semParam))) {
+      const s = parseInt(semParam)
+      setSelectedSemester(s)
+      setSelectedYear(Math.ceil(s / 2))
     }
   }, [searchParams])
 
@@ -485,16 +513,17 @@ function UploadFormContent() {
     
     try {
       // 1. Prepare direct upload session (metadata only, fast & lightweight JSON, bypasses 6MB payload limits)
+      const isReappear = resourceClassification === 'reappear'
       const prepareResult = await prepareDirectUpload({
         subject_name: subjectName.trim(),
         subject_code: subjectCode.trim(),
         year: selectedYear,
         semester: selectedSemester,
-        resource_category: uploadCategory,
-        material_type: uploadCategory === 'study_material' ? materialType : undefined,
-        exam_type: uploadCategory === 'exam_paper' ? examType : undefined,
+        resource_category: isReappear ? 'reappear' : uploadCategory,
+        material_type: (!isReappear && uploadCategory === 'study_material') ? materialType : undefined,
+        exam_type: isReappear ? reappearType : (uploadCategory === 'exam_paper' ? examType : undefined),
         exam_year: examYear,
-        unit: uploadCategory === 'study_material' ? unitNumber : null,
+        unit: (!isReappear && uploadCategory === 'study_material') ? unitNumber : null,
         file_hash: fileHash || `hash-${Date.now()}`,
         files: files.map(f => ({
           name: f.name,
@@ -595,17 +624,20 @@ function UploadFormContent() {
     }
   }
 
+  const isReappear = resourceClassification === 'reappear'
+  const isStudy = !isReappear && uploadCategory === 'study_material'
+
   if (success) {
     return (
       <div className="flex min-h-[85vh] items-center justify-center p-4 py-12">
         <UploadCelebrationMascot 
           subjectName={subjectName}
           subjectCode={subjectCode}
-          examType={uploadCategory === 'study_material' ? materialType : examType}
+          examType={isReappear ? reappearType : (uploadCategory === 'study_material' ? materialType : examType)}
           examYear={examYear}
           fileName={files.length > 1 ? `${files.length} files: ${files.map(f => f?.name || 'file').join(', ')}` : files[0]?.name || ''}
           isAdminUpload={isAdminUpload}
-          isStudyMaterial={uploadCategory === 'study_material'}
+          isStudyMaterial={isStudy}
           onUploadAnother={() => {
             setSuccess(false)
             setFiles([])
@@ -629,13 +661,11 @@ function UploadFormContent() {
     )
   }
 
-  const isStudy = uploadCategory === 'study_material'
-
   return (
     <div className="relative flex min-h-[85vh] items-center justify-center p-4 py-10 overflow-hidden bg-prevu-bg">
       {/* Background ambient lighting */}
       <div className={`absolute top-10 left-1/2 -translate-x-1/2 w-[550px] h-[550px] rounded-full blur-[150px] pointer-events-none transition-colors duration-700 ${
-        isStudy ? 'bg-emerald-500/15' : 'bg-prevu-accent/15'
+        isReappear ? 'bg-amber-500/15' : (isStudy ? 'bg-emerald-500/15' : 'bg-prevu-accent/15')
       }`} />
       
       <div className="relative z-10 w-full max-w-xl">
@@ -643,55 +673,114 @@ function UploadFormContent() {
           <CardHeader className="space-y-1 pb-4">
             <div className="flex items-center justify-between gap-2">
               <div className={`flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider ${
-                isStudy ? 'text-emerald-400' : 'text-prevu-accent'
+                isReappear ? 'text-amber-400' : (isStudy ? 'text-emerald-400' : 'text-prevu-accent')
               }`}>
-                <Sparkles className="w-4 h-4" />
-                <span>Prevu Academic Vault</span>
+                {isReappear ? <ShieldAlert className="w-4 h-4 text-amber-400" /> : <Sparkles className="w-4 h-4" />}
+                <span>{isReappear ? 'Prevu Reappear Rescue Desk' : 'Prevu Academic Vault'}</span>
               </div>
-              <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-prevu-surface-light text-prevu-text-muted border border-prevu-surface-light">
-                BE-CSE All Years
+              <span className={`text-[11px] font-mono px-2 py-0.5 rounded-full border ${
+                isReappear 
+                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' 
+                  : 'bg-prevu-surface-light text-prevu-text-muted border-prevu-surface-light'
+              }`}>
+                {isReappear ? '⚡ Remedial & Backlog' : 'BE-CSE All Years'}
               </span>
             </div>
 
             <CardTitle className="text-2xl font-bold tracking-tight text-white">
-              {isStudy ? 'Upload Study Material & Notes' : 'Upload Past Exam Paper'}
+              {isReappear 
+                ? 'Upload Reappear / Remedial Resource' 
+                : (isStudy ? 'Upload Study Material & Notes' : 'Upload Past Exam Paper')}
             </CardTitle>
             <CardDescription className="text-xs sm:text-sm text-prevu-text-muted">
-              {isStudy 
-                ? 'Share notes, syllabus guides, assignments, and revision materials for fellow students.' 
-                : 'Share past exam papers (MST 1, MST 2, EST) for BE-CSE students.'}
+              {isReappear
+                ? 'Contribute reappear syllabus blueprints, repeated PYQs, crash notes, and remedial test papers to help students pass backlogs.'
+                : (isStudy 
+                    ? 'Share notes, syllabus guides, assignments, and revision materials for fellow students.' 
+                    : 'Share past exam papers (MST 1, MST 2, EST) for BE-CSE students.')}
             </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-5">
-            {/* Category Selector Tabs */}
-            <div className="p-1 bg-prevu-bg/90 rounded-2xl border border-prevu-surface-light flex items-center gap-1 shadow-inner">
-              <button
-                type="button"
-                onClick={() => setUploadCategory('exam_paper')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 ${
-                  !isStudy
-                    ? 'bg-prevu-accent text-white shadow-lg shadow-prevu-accent/30'
-                    : 'text-prevu-text-muted hover:text-white hover:bg-prevu-surface-light/40'
-                }`}
-              >
-                <FileText className="w-4 h-4" />
-                <span>Question Paper (PYQ)</span>
-              </button>
+            {/* Primary Classification: Regular Resource vs Reappear Resource */}
+            <div className="space-y-2">
+              <label className="text-[11px] font-mono font-medium text-prevu-text-muted uppercase tracking-wider">
+                1. Resource Classification
+              </label>
+              <div className="p-1 bg-prevu-bg/95 rounded-2xl border border-prevu-surface-light flex items-center gap-1.5 shadow-inner">
+                <button
+                  type="button"
+                  onClick={() => setResourceClassification('regular')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
+                    !isReappear
+                      ? 'bg-prevu-surface-light text-white shadow-md border border-prevu-accent/40'
+                      : 'text-prevu-text-muted hover:text-white hover:bg-prevu-surface/40'
+                  }`}
+                >
+                  <FileText className="w-4 h-4 text-prevu-accent" />
+                  <span>Regular Resource</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setUploadCategory('study_material')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 ${
-                  isStudy
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/25'
-                    : 'text-prevu-text-muted hover:text-white hover:bg-prevu-surface-light/40'
-                }`}
-              >
-                <BookOpen className="w-4 h-4" />
-                <span>Study Material & Notes</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setResourceClassification('reappear')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
+                    isReappear
+                      ? 'bg-gradient-to-r from-amber-500/25 to-orange-500/20 text-amber-300 border border-amber-500/50 shadow-lg shadow-amber-500/10'
+                      : 'text-prevu-text-muted hover:text-white hover:bg-prevu-surface/40'
+                  }`}
+                >
+                  <ShieldAlert className="w-4 h-4 text-amber-400" />
+                  <span>Reappear Resource</span>
+                </button>
+              </div>
             </div>
+
+            {/* Sub-Category Selector for Regular Resources */}
+            {!isReappear && (
+              <div className="space-y-2 animate-in fade-in duration-200">
+                <label className="text-[11px] font-mono font-medium text-prevu-text-muted uppercase tracking-wider">
+                  2. Regular Category
+                </label>
+                <div className="p-1 bg-prevu-bg/90 rounded-2xl border border-prevu-surface-light flex items-center gap-1 shadow-inner">
+                  <button
+                    type="button"
+                    onClick={() => setUploadCategory('exam_paper')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
+                      !isStudy
+                        ? 'bg-prevu-accent text-white shadow-lg shadow-prevu-accent/30'
+                        : 'text-prevu-text-muted hover:text-white hover:bg-prevu-surface-light/40'
+                    }`}
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>Question Paper (PYQ)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setUploadCategory('study_material')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
+                      isStudy
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/25'
+                        : 'text-prevu-text-muted hover:text-white hover:bg-prevu-surface-light/40'
+                    }`}
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    <span>Study Material & Notes</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Reappear Info Alert */}
+            {isReappear && (
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5 animate-in fade-in duration-200">
+                <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <div className="text-xs text-amber-200/90 leading-relaxed">
+                  <span className="font-semibold text-amber-300">Reappear Resource Mode:</span> Your upload will be indexed in the Reappear section and verified under remedial curriculum standards. Select the exact Reappear resource type below.
+                </div>
+              </div>
+            )}
 
             <form id="upload-form" onSubmit={handleSubmit} className="space-y-5">
               
@@ -809,9 +898,22 @@ function UploadFormContent() {
                 </div>
               </div>
 
-              {/* Dynamic Row: If Study Material -> Material Type; If Exam Paper -> Exam Type */}
+              {/* Dynamic Row: Reappear Type OR Study Material Type OR Regular Exam Type */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {isStudy ? (
+                {isReappear ? (
+                  /* Figma-style Reappear Resource Type Selector */
+                  <div className="space-y-1.5 sm:col-span-1">
+                    <FigmaDropdown
+                      label="Reappear Resource Type"
+                      value={reappearType}
+                      onChange={(val) => setReappearType(val)}
+                      options={REAPPEAR_TYPE_OPTIONS}
+                      variant="amber"
+                      icon={<ShieldAlert className="w-4 h-4 text-amber-400" />}
+                      required
+                    />
+                  </div>
+                ) : isStudy ? (
                   /* Figma-style Study Material Type Selector */
                   <div className="space-y-1.5 sm:col-span-1">
                     <FigmaDropdown
@@ -842,11 +944,11 @@ function UploadFormContent() {
                 {/* Academic Session / Exam Year with Figma Dropdown */}
                 <div className="space-y-1.5 sm:col-span-1">
                   <FigmaDropdown
-                    label={isStudy ? 'Academic Session / Year' : 'Exam Year'}
+                    label={isReappear ? 'Target Academic Year' : (isStudy ? 'Academic Session / Year' : 'Exam Year')}
                     value={examYear}
                     onChange={(val) => setExamYear(Number(val))}
                     options={EXAM_YEAR_OPTIONS}
-                    variant={isStudy ? 'emerald' : 'violet'}
+                    variant={isReappear ? 'amber' : (isStudy ? 'emerald' : 'violet')}
                     icon={<Calendar className="w-4 h-4 text-prevu-text-muted" />}
                     required
                   />
@@ -1264,9 +1366,11 @@ function UploadFormContent() {
               type="submit" 
               form="upload-form" 
               className={`w-full py-3 text-sm flex items-center justify-center gap-2 font-bold shadow-lg transition-all ${
-                isStudy 
-                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-500/25' 
-                  : 'shadow-prevu-accent/25'
+                isReappear
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black shadow-amber-500/25 cursor-pointer'
+                  : isStudy 
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-500/25' 
+                    : 'shadow-prevu-accent/25'
               }`}
               disabled={isUploading || files.length === 0 || !subjectName.trim() || (!!duplicateData && !duplicateAcknowledged)}
             >
@@ -1279,9 +1383,11 @@ function UploadFormContent() {
                 <>
                   <Upload className="w-4 h-4" />
                   <span>
-                    {isStudy 
-                      ? `Submit Study Material (${files.length} file${files.length === 1 ? '' : 's'})` 
-                      : `Submit Question Paper (${files.length} file${files.length === 1 ? '' : 's'})`}
+                    {isReappear
+                      ? `Submit Reappear Resource (${files.length} file${files.length === 1 ? '' : 's'})`
+                      : isStudy 
+                        ? `Submit Study Material (${files.length} file${files.length === 1 ? '' : 's'})` 
+                        : `Submit Question Paper (${files.length} file${files.length === 1 ? '' : 's'})`}
                   </span>
                 </>
               )}

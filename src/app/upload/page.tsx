@@ -278,6 +278,28 @@ function UploadFormContent() {
     loadOptions()
   }, [])
 
+  // Proactive Session Keep-Alive: Keep authentication valid indefinitely while student is on the upload page
+  useEffect(() => {
+    const keepSessionAlive = async () => {
+      if (typeof window !== 'undefined' && auth.currentUser) {
+        try {
+          const freshToken = await auth.currentUser.getIdToken(false)
+          await refreshAuthCookie(freshToken)
+        } catch {
+          try {
+            const forcedToken = await auth.currentUser.getIdToken(true)
+            await refreshAuthCookie(forcedToken)
+          } catch {}
+        }
+      }
+    }
+
+    keepSessionAlive()
+    // Proactively refresh every 2 minutes while user is preparing documents / watching previews
+    const intervalId = setInterval(keepSessionAlive, 2 * 60 * 1000)
+    return () => clearInterval(intervalId)
+  }, [])
+
   // Sync category and semester if query param changes
   useEffect(() => {
     const cat = searchParams.get('category') || searchParams.get('type')

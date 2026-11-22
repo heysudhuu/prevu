@@ -714,7 +714,7 @@ export async function uploadExternalLinkResource(
 ): Promise<UploadExternalLinkResponse> {
   try {
     const cookieStore = await cookies()
-    const token = cookieStore.get('session')?.value || cookieStore.get('__session')?.value
+    const token = cookieStore.get('firebase-token')?.value || cookieStore.get('session')?.value || cookieStore.get('__session')?.value
 
     if (!token) {
       return { error: 'Please log in to share cloud drives or recommend YouTube lectures.' }

@@ -17,6 +17,8 @@ import FigmaDropdown, { FigmaDropdownOption } from '@/components/ui/FigmaDropdow
 import { analyzeImageQuality, autoEnhanceDocumentScan, type QualityAnalysisResult } from '@/lib/scanner/scanQuality'
 import { detectMetadataFromFile, type DetectedMetadata } from '@/lib/scanner/autoDetect'
 import { parseGDriveUrl, parseYouTubeUrl, type ParsedYouTubeUrl, type ParsedGDriveUrl } from '@/lib/links/urlParsers'
+import { auth } from '@/lib/firebase/client'
+import { refreshAuthCookie } from '@/app/login/actions'
 
 function YouTubeIcon({ className }: { className?: string }) {
   return (
@@ -534,6 +536,16 @@ function UploadFormContent() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
+    // Proactively refresh and sync Firebase auth cookie before submission
+    if (typeof window !== 'undefined' && auth.currentUser) {
+      try {
+        const freshToken = await auth.currentUser.getIdToken(false)
+        await refreshAuthCookie(freshToken)
+      } catch (authErr) {
+        console.warn('Proactive token sync error:', authErr)
+      }
+    }
+
     // 1. LINK CONTRIBUTION FLOW (Google Drive / YouTube)
     if (contributionFormat === 'gdrive' || contributionFormat === 'youtube') {
       const isGdrive = contributionFormat === 'gdrive'
@@ -577,7 +589,7 @@ function UploadFormContent() {
       setUploadProgressText(`Publishing ${isGdrive ? 'Google Drive resource' : 'YouTube recommendation'} to Prevu...`)
 
       try {
-        const res = await uploadExternalLinkResource({
+        let res = await uploadExternalLinkResource({
           format: contributionFormat,
           title: targetTitle,
           url: targetUrl,
@@ -593,6 +605,36 @@ function UploadFormContent() {
           description: isGdrive ? gdriveDescription.trim() : youtubeDescription.trim(),
           unit: isStudy ? unitNumber : null
         })
+
+        // Auto-recovery: If session expired on the server, force refresh token and retry submission once
+        if (res.error && (res.error.toLowerCase().includes('log in') || res.error.toLowerCase().includes('expired'))) {
+          if (auth.currentUser) {
+            try {
+              const forcedToken = await auth.currentUser.getIdToken(true)
+              const refResult = await refreshAuthCookie(forcedToken)
+              if (refResult.success) {
+                res = await uploadExternalLinkResource({
+                  format: contributionFormat,
+                  title: targetTitle,
+                  url: targetUrl,
+                  bundle_scope: isSemBundle ? 'semester_bundle' : 'subject',
+                  year: selectedYear,
+                  semester: selectedSemester,
+                  subject_name: isSemBundle ? undefined : subjectName.trim(),
+                  subject_code: isSemBundle ? undefined : subjectCode.trim(),
+                  resource_category: isReappear ? 'reappear' : 'regular',
+                  exam_type: isReappear ? reappearType : (isStudy ? materialType : examType),
+                  material_type: isStudy ? materialType : undefined,
+                  channel_name: !isGdrive ? youtubeChannel.trim() : undefined,
+                  description: isGdrive ? gdriveDescription.trim() : youtubeDescription.trim(),
+                  unit: isStudy ? unitNumber : null
+                })
+              }
+            } catch (retryErr) {
+              console.warn('Auth retry failed:', retryErr)
+            }
+          }
+        }
 
         if (res.error) {
           setError(res.error)
@@ -1859,9 +1901,20 @@ function UploadFormContent() {
               )}
 
               {error && (
-                <div className="p-3 bg-red-500/10 border border-red-500/25 rounded-xl flex items-start gap-2.5 text-xs text-red-400">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>{error}</span>
+                <div className="p-3 bg-red-500/10 border border-red-500/25 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs text-red-400">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                  {(error.toLowerCase().includes('log in') || error.toLowerCase().includes('expired')) && (
+                    <a
+                      href="/login?redirect=/upload"
+                      className="px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-200 border border-red-500/40 font-bold text-xs shrink-0 transition-colors inline-flex items-center gap-1 self-start sm:self-auto"
+                    >
+                      <span>Log In Again</span>
+                      <span>&rarr;</span>
+                    </a>
+                  )}
                 </div>
               )}
             </form>

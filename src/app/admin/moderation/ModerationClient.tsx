@@ -209,7 +209,7 @@ export default function ModerationClient({ initialResources }: ModerationClientP
     let res: { success?: boolean; error?: string }
 
     if (isEditing) {
-      res = await updateResourceDetails({
+      const payload: Parameters<typeof updateResourceDetails>[0] = {
         id: resource.id,
         title: editTitle,
         subject_name: editSubjectName,
@@ -218,12 +218,19 @@ export default function ModerationClient({ initialResources }: ModerationClientP
         exam_year: Number(editExamYear),
         semester: Number(editSemester),
         year: Math.ceil(Number(editSemester) / 2),
-        resource_format: editFormat,
-        external_url: editFormat !== 'file' ? editExternalUrl : null,
-        channel_name: editFormat === 'youtube' ? editChannelName : null,
         unit: editUnit ? editUnit : null,
         status: 'approved'
-      })
+      }
+
+      if (editFormat !== 'file') {
+        payload.resource_format = editFormat
+        if (editExternalUrl.trim()) payload.external_url = editExternalUrl.trim()
+        if (editFormat === 'youtube' && editChannelName.trim()) {
+          payload.channel_name = editChannelName.trim()
+        }
+      }
+
+      res = await updateResourceDetails(payload)
     } else {
       res = await approveResource(resource.id)
     }

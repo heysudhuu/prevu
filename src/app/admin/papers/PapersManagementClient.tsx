@@ -361,7 +361,7 @@ export default function PapersManagementClient({
     if (!editingPaper) return
     setIsSavingEdit(true)
 
-    const res = await updateResourceDetails({
+    const payload: Parameters<typeof updateResourceDetails>[0] = {
       id: editingPaper.id,
       title: editTitle,
       subject_name: editSubjectName,
@@ -370,13 +370,20 @@ export default function PapersManagementClient({
       exam_year: Number(editExamYear),
       semester: Number(editSemester),
       year: Math.ceil(Number(editSemester) / 2),
-      resource_format: editFormat,
-      external_url: editFormat !== 'file' ? editExternalUrl : null,
-      channel_name: editFormat === 'youtube' ? editChannelName : null,
       unit: editUnit ? editUnit : null,
       status: editStatus as any,
       admin_note: editAdminNote ? editAdminNote : null
-    })
+    }
+
+    if (editFormat !== 'file') {
+      payload.resource_format = editFormat
+      if (editExternalUrl.trim()) payload.external_url = editExternalUrl.trim()
+      if (editFormat === 'youtube' && editChannelName.trim()) {
+        payload.channel_name = editChannelName.trim()
+      }
+    }
+
+    const res = await updateResourceDetails(payload)
 
     if (res.success) {
       setPapers(prev =>

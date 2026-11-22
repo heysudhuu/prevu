@@ -166,7 +166,7 @@ export function PendingResourceCard({ resource, existingPapers = [] }: { resourc
   const handleApprove = async () => {
     setIsLoading(true)
     if (isEditing) {
-      await updateResourceDetails({
+      const payload: Parameters<typeof updateResourceDetails>[0] = {
         id: resource.id,
         title: editTitle,
         subject_name: subjectName,
@@ -176,11 +176,18 @@ export function PendingResourceCard({ resource, existingPapers = [] }: { resourc
         year: academicYear,
         semester: semester,
         unit: unit ? unit : null,
-        resource_format: format,
-        external_url: format !== 'file' ? externalUrl : null,
-        channel_name: format === 'youtube' ? channelName : null,
         status: 'approved'
-      })
+      }
+
+      if (format !== 'file') {
+        payload.resource_format = format
+        if (externalUrl.trim()) payload.external_url = externalUrl.trim()
+        if (format === 'youtube' && channelName.trim()) {
+          payload.channel_name = channelName.trim()
+        }
+      }
+
+      await updateResourceDetails(payload)
     } else {
       await approveResource(resource.id)
     }

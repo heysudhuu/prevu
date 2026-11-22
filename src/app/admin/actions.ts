@@ -549,21 +549,25 @@ export async function updateResourceDetails(input: UpdateResourceDetailsInput) {
     updateData.unit = input.unit ? input.unit.trim() : null
   }
 
-  if (input.resource_format !== undefined) {
+  if (input.resource_format && input.resource_format !== 'file') {
     updateData.resource_format = input.resource_format
   }
 
-  if (input.external_url !== undefined) {
-    const cleanUrl = input.external_url ? input.external_url.trim() : null
+  if (input.external_url && input.external_url.trim()) {
+    const cleanUrl = input.external_url.trim()
     updateData.external_url = cleanUrl
+    // For link-based resources, file_path also mirrors the external link
+    if (input.resource_format && input.resource_format !== 'file') {
+      updateData.file_path = cleanUrl
+    }
     if (input.resource_format === 'youtube' && cleanUrl) {
       const ytId = extractYouTubeId(cleanUrl)
       if (ytId) updateData.youtube_id = ytId
     }
   }
 
-  if (input.channel_name !== undefined) {
-    updateData.channel_name = input.channel_name ? input.channel_name.trim() : null
+  if (input.channel_name && input.channel_name.trim()) {
+    updateData.channel_name = input.channel_name.trim()
   }
 
   if (input.status !== undefined) {
@@ -672,10 +676,28 @@ export async function updateResourceDetails(input: UpdateResourceDetailsInput) {
     }
   }
 
-  const { error } = await supabaseAdmin
+  let { error } = await supabaseAdmin
     .from('resources')
     .update(updateData)
     .eq('id', input.id)
+
+  // Resilient fallback: if extended columns (e.g. channel_name, resource_format) are not yet present in Supabase table
+  if (error && error.message && error.message.includes("schema cache")) {
+    console.warn("Retrying resource update with core schema columns:", error.message)
+    const coreUpdateData = { ...updateData }
+    delete coreUpdateData.channel_name
+    delete coreUpdateData.resource_format
+    delete coreUpdateData.external_url
+    delete coreUpdateData.youtube_id
+    delete coreUpdateData.bundle_scope
+
+    const retryRes = await supabaseAdmin
+      .from('resources')
+      .update(coreUpdateData)
+      .eq('id', input.id)
+
+    error = retryRes.error
+  }
 
   if (error) return { error: error.message }
 

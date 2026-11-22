@@ -35,7 +35,9 @@ export default async function Home() {
       <CurriculumStudyMaterialSection />
 
       {/* 4. Reappear & Remedial Hub — Reappear PYQs & 80/20 Crash Material for All Semesters 1 - 8 */}
-      <ReappearRescueSection />
+      <Suspense fallback={null}>
+        <ReappearRescueSection />
+      </Suspense>
 
       {/* 5. Real Contributor Hall of Fame & Top Karma Achievers */}
       <KarmaAchieversSection />

@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
+import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
 import {
@@ -819,13 +820,578 @@ export const ALL_SEMESTER_REAPPEAR_MATERIALS: Record<number, ReappearMaterialIte
   ]
 }
 
-export default function ReappearRescueSection() {
-  const [selectedSem, setSelectedSem] = useState<number>(4)
-  const [activeSubTab, setActiveSubTab] = useState<'pyqs' | 'materials'>('pyqs')
+// Complete Reappear Question Bank for All 8 Semesters
+export interface ReappearQuestionItem {
+  id: string
+  code: string
+  name: string
+  sem: number
+  marks: string
+  repeatScore: string
+  topic: string
+  questionText: string
+  solutionSummary: string
+  yearHistory: string[]
+}
+
+export const ALL_SEMESTER_REAPPEAR_QUESTIONS: Record<number, ReappearQuestionItem[]> = {
+  1: [
+    {
+      id: 'rq-1-1',
+      code: '22MAT-101',
+      name: 'Engineering Mathematics - I',
+      sem: 1,
+      marks: '10 Marks',
+      repeatScore: '94% Repeat Rate',
+      topic: 'Matrices & Eigenvalues',
+      questionText: 'State and prove Cayley-Hamilton Theorem. Verify it for matrix A = [[2, -1, 1], [-1, 2, -1], [1, -1, 2]] and compute A^(-1) and A^4.',
+      solutionSummary: 'Step 1: Write characteristic equation det(A - λI) = 0. Step 2: Show matrix A satisfies λ^3 - tr(A)λ^2 + ... = 0. Step 3: Multiply by A^(-1) to isolate A^(-1).',
+      yearHistory: ['EST 2024 Remedial', 'EST 2023 Solved', 'EST 2022 Archive']
+    },
+    {
+      id: 'rq-1-2',
+      code: '22PHY-101',
+      name: 'Engineering Physics',
+      sem: 1,
+      marks: '10 Marks',
+      repeatScore: '90% Repeat Rate',
+      topic: 'Fiber Optics & Lasers',
+      questionText: 'Derive expression for Numerical Aperture (NA) and Acceptance Angle of a step-index optical fiber in terms of core and cladding refractive indices (n1, n2).',
+      solutionSummary: 'Step 1: Apply Snell Law at launching face. Step 2: Critical angle condition at core-cladding boundary sin(θc) = n2/n1. Step 3: NA = sqrt(n1^2 - n2^2).',
+      yearHistory: ['EST 2024 Remedial', 'EST 2023 Solved']
+    },
+    {
+      id: 'rq-1-3',
+      code: '22EE101',
+      name: 'Basic Electrical Engineering',
+      sem: 1,
+      marks: '10 Marks',
+      repeatScore: '86% Repeat Rate',
+      topic: 'Network Theorems',
+      questionText: 'State and prove Thevenin Theorem. Find the load current flowing through resistor RL = 10 ohms for the given circuit having dependent voltage source.',
+      solutionSummary: 'Step 1: Calculate Open-Circuit Voltage Voc across terminals AB. Step 2: Find Rth by deactivating independent sources. Step 3: IL = Vth / (Rth + RL).',
+      yearHistory: ['EST 2023 Solved', 'EST 2022 Archive']
+    }
+  ],
+  2: [
+    {
+      id: 'rq-2-1',
+      code: '22MAT-102',
+      name: 'Engineering Mathematics - II',
+      sem: 2,
+      marks: '10 Marks',
+      repeatScore: '93% Repeat Rate',
+      topic: 'Laplace Transforms',
+      questionText: 'Find the Laplace transform of f(t) = t * e^(-2t) * sin(3t). Evaluate the integral from 0 to infinity of e^(-2t) * sin(3t) / t dt.',
+      solutionSummary: 'Use First Shifting Theorem together with frequency differentiation property: L{t * g(t)} = -d/ds[G(s)].',
+      yearHistory: ['EST 2024 Remedial', 'EST 2023 Solved', 'EST 2022 Archive']
+    },
+    {
+      id: 'rq-2-2',
+      code: '22CHY-101',
+      name: 'Engineering Chemistry',
+      sem: 2,
+      marks: '10 Marks',
+      repeatScore: '88% Repeat Rate',
+      topic: 'Fuels & Combustion',
+      questionText: 'Explain the difference between Proximate and Ultimate analysis of coal. Give complete experimental formulas for calculating % Moisture, % Volatile Matter, and % Carbon.',
+      solutionSummary: 'Proximate analysis gives physical constituents (moisture at 105C, VM at 925C, Ash at 750C); Ultimate analysis determines elemental C, H, N, S, O percentages.',
+      yearHistory: ['EST 2024 Remedial', 'EST 2023 Solved']
+    }
+  ],
+  3: [
+    {
+      id: 'rq-3-1',
+      code: '21CSH-201',
+      name: 'Data Structures & Algorithms',
+      sem: 3,
+      marks: '10 Marks',
+      repeatScore: '92% Repeat Rate',
+      topic: 'AVL Trees & Self-Balancing',
+      questionText: 'Explain the 4 AVL Tree rotation cases (LL, RR, LR, RL) with balance factors. Construct an AVL tree by inserting [14, 17, 11, 7, 53, 4, 13, 12] sequentially showing every rotation.',
+      solutionSummary: 'Step-by-step balance factor checking after each insertion. LR requires Left rotation on child followed by Right rotation on parent node.',
+      yearHistory: ['EST 2024 Remedial', 'EST 2023 Solved', 'EST 2022 Archive']
+    },
+    {
+      id: 'rq-3-2',
+      code: '22ECH-203',
+      name: 'Digital Electronics & Logic Design',
+      sem: 3,
+      marks: '10 Marks',
+      repeatScore: '89% Repeat Rate',
+      topic: 'K-Map Minimization',
+      questionText: 'Minimize the Boolean function F(A,B,C,D) = Σm(0, 1, 2, 4, 5, 6, 8, 9, 12, 13, 14) + d(3, 7, 11, 15) using Karnaugh Map and realize using minimum NAND gates.',
+      solutionSummary: 'Draw 4x4 Gray code map, group octets and quads incorporating don\'t-cares to achieve 2-term sum of products, then apply double inversion for NAND-NAND logic.',
+      yearHistory: ['EST 2024 Remedial', 'EST 2023 Solved']
+    }
+  ],
+  4: [
+    {
+      id: 'rq-4-1',
+      code: '22CSH-204',
+      name: 'Operating Systems',
+      sem: 4,
+      marks: '10 Marks',
+      repeatScore: '95% Repeat Rate',
+      topic: 'Deadlocks & Safety Algorithm',
+      questionText: 'Consider a system with 5 processes (P0-P4) and 3 resource types (A, B, C). Verify whether the system is in safe state using Banker Algorithm. Find safe sequence and evaluate if Request (1,0,2) by P1 can be granted.',
+      solutionSummary: 'Calculate Need = Max - Allocation. Check Need <= Work sequentially to obtain safe sequence <P1, P3, P4, P0, P2>. Verify request condition and update state matrices.',
+      yearHistory: ['EST 2024 Remedial', 'EST 2023 Solved', 'EST 2022 Archive']
+    },
+    {
+      id: 'rq-4-2',
+      code: '23CSH-243',
+      name: 'Database Management Systems',
+      sem: 4,
+      marks: '10 Marks',
+      repeatScore: '92% Repeat Rate',
+      topic: 'Normalization & 3NF/BCNF',
+      questionText: 'Given relation R(A, B, C, D, E) and FDs {A->BC, CD->E, B->D, E->A}. Find candidate keys using attribute closure. Decompose R into BCNF and check whether it is lossless and dependency preserving.',
+      solutionSummary: 'Compute attribute closures: (A)+ = ABCDE -> A is candidate key. (E)+ = EABCD -> E is candidate key. Check violations of BCNF where LHS is not superkey and decompose.',
+      yearHistory: ['EST 2024 Remedial', 'EST 2023 Solved']
+    }
+  ],
+  5: [
+    {
+      id: 'rq-5-1',
+      code: '21CSH-311',
+      name: 'Design & Analysis of Algorithms',
+      sem: 5,
+      marks: '10 Marks',
+      repeatScore: '94% Repeat Rate',
+      topic: 'Dynamic Programming',
+      questionText: 'Solve 0/1 Knapsack problem for n=4 items with values [10, 40, 30, 50] and weights [5, 4, 6, 3] with max capacity W=10 using DP table. Show full recurrence relation and backtrack the included items.',
+      solutionSummary: 'Table K[i][w] = max(val[i-1] + K[i-1][w-wt[i-1]], K[i-1][w]). Fill table from i=0..4, w=0..10. Backtrack from K[4][10] to find items {4, 2}. Max profit = 90.',
+      yearHistory: ['EST 2024 Remedial', 'EST 2023 Solved']
+    },
+    {
+      id: 'rq-5-2',
+      code: '23CSH-312',
+      name: 'Computer Networks',
+      sem: 5,
+      marks: '10 Marks',
+      repeatScore: '91% Repeat Rate',
+      topic: 'Subnetting & Routing',
+      questionText: 'An ISP has IP block 192.168.10.0/24. Subnet it using VLSM for 4 departments needing 60, 28, 14, and 6 hosts. Provide subnet mask, network address, valid host range, and broadcast address for each.',
+      solutionSummary: 'Sort descending by host count: Subnet A (/26, 62 hosts), Subnet B (/27, 30 hosts), Subnet C (/28, 14 hosts), Subnet D (/29, 6 hosts). Compute network and broadcast IPs.',
+      yearHistory: ['EST 2024 Remedial', 'EST 2023 Solved']
+    }
+  ],
+  6: [
+    {
+      id: 'rq-6-1',
+      code: '22CST-390',
+      name: 'Theory of Computation',
+      sem: 6,
+      marks: '10 Marks',
+      repeatScore: '92% Repeat Rate',
+      topic: 'Turing Machines',
+      questionText: 'Design a deterministic Turing Machine for accepting the context-sensitive language L = {a^n b^n c^n | n >= 1}. Write state transition table, instantaneous descriptions for input "aabbcc", and state diagram.',
+      solutionSummary: 'Mark "a" with X, move right matching first "b" with Y, move right matching first "c" with Z. Rewind left to X and repeat until all characters are verified.',
+      yearHistory: ['EST 2024 Remedial', 'EST 2023 Solved', 'EST 2022 Archive']
+    },
+    {
+      id: 'rq-6-2',
+      code: '23CST-304',
+      name: 'Compiler Design',
+      sem: 6,
+      marks: '10 Marks',
+      repeatScore: '89% Repeat Rate',
+      topic: 'Parsing & Grammars',
+      questionText: 'Given grammar S -> Aa | bAc | Bc | bBa, A -> d, B -> d. Compute First and Follow sets for all non-terminals. Check if the grammar is LL(1) and construct the predictive parsing table.',
+      solutionSummary: 'Calculate First(S), First(A), First(B). For Follow sets, trace appearances of A and B on RHS. Check First conflict at entry M[S, d] to establish if grammar is LL(1).',
+      yearHistory: ['EST 2024 Remedial', 'EST 2023 Solved']
+    }
+  ],
+  7: [
+    {
+      id: 'rq-7-1',
+      code: '22CST-354',
+      name: 'Parallel & Distributed Computing',
+      sem: 7,
+      marks: '10 Marks',
+      repeatScore: '88% Repeat Rate',
+      topic: 'Clock Synchronization',
+      questionText: 'Explain Lamport Logical Clocks and Vector Clocks. Prove how vector clocks overcome the limitation of Lamport clocks in distinguishing causally related events from concurrent events.',
+      solutionSummary: 'Lamport clock e1 -> e2 implies C(e1) < C(e2), but reverse does not hold. Vector clock V(e1) < V(e2) iff e1 causally precedes e2, enabling exact concurrency detection.',
+      yearHistory: ['EST 2024 Remedial', 'EST 2023 Solved']
+    },
+    {
+      id: 'rq-7-2',
+      code: '22CST-355',
+      name: 'Information Security',
+      sem: 7,
+      marks: '10 Marks',
+      repeatScore: '90% Repeat Rate',
+      topic: 'Public Key Cryptography',
+      questionText: 'Execute RSA algorithm for primes p = 7 and q = 17. Choose public key e = 5. Find private key d, encrypt message M = 19, and decrypt ciphertext C back to M.',
+      solutionSummary: 'n = 7 * 17 = 119. φ(n) = 6 * 16 = 96. Compute d = e^(-1) mod φ(n) -> 5d ≡ 1 mod 96 -> d = 77. C = M^e mod n = 19^5 mod 119. M = C^d mod 119.',
+      yearHistory: ['EST 2024 Remedial', 'EST 2023 Solved']
+    }
+  ],
+  8: [
+    {
+      id: 'rq-8-1',
+      code: '23CST-405',
+      name: 'Digital Forensics & Incident Response',
+      sem: 8,
+      marks: '10 Marks',
+      repeatScore: '87% Repeat Rate',
+      topic: 'Evidence Chain of Custody',
+      questionText: 'Detail the 6-step Chain of Custody process required in court-admissible digital evidence collection. Explain how MD5/SHA-256 write-blocker verification ensures non-repudiation.',
+      solutionSummary: 'Steps: Identification, Preservation (forensic bit-stream clone with write-blockers), Analysis, Documentation, Custody Transfer Log, Courtroom Presentation with dual hash match.',
+      yearHistory: ['EST 2024 Remedial', 'EST 2023 Solved']
+    },
+    {
+      id: 'rq-8-2',
+      code: '23CST-407',
+      name: 'Blockchain Technologies',
+      sem: 8,
+      marks: '10 Marks',
+      repeatScore: '89% Repeat Rate',
+      topic: 'Smart Contract Vulnerabilities',
+      questionText: 'Explain the Reentrancy Attack in Ethereum Solidity smart contracts with the famous DAO exploit example. Write vulnerable contract code and rewrite it securely using Checks-Effects-Interactions pattern.',
+      solutionSummary: 'Vulnerability occurs when contract makes external call before updating user balance mapping. Fix: change user balance to 0 BEFORE sending ether with call{value: ...}("").',
+      yearHistory: ['EST 2024 Remedial', 'EST 2023 Solved']
+    }
+  ]
+}
+
+// Complete Reappear Syllabus & Passing Blueprint for All 8 Semesters
+export interface ReappearSyllabusItem {
+  id: string
+  code: string
+  name: string
+  sem: number
+  estPassingMarks: string
+  totalPassingMarks: string
+  mustPassUnits: Array<{ unit: string; name: string; weight: string; expectedQuestions: string }>
+  highYieldStrategy: string
+  passingConfidence: string
+}
+
+export const ALL_SEMESTER_REAPPEAR_SYLLABUS: Record<number, ReappearSyllabusItem[]> = {
+  1: [
+    {
+      id: 'rs-1-1',
+      code: '22MAT-101',
+      name: 'Engineering Mathematics - I',
+      sem: 1,
+      estPassingMarks: '24 / 60 Marks in EST',
+      totalPassingMarks: '40 / 100 Overall',
+      passingConfidence: '96% Pass Probability with 2 Units',
+      mustPassUnits: [
+        { unit: 'Unit 1', name: 'Matrices, Eigenvalues & Cayley-Hamilton', weight: '18 Marks', expectedQuestions: 'Cayley-Hamilton proof & inverse, Diagonalization of symmetric matrix' },
+        { unit: 'Unit 3', name: 'Beta-Gamma Functions & Double Integrals', weight: '16 Marks', expectedQuestions: 'Relation between Beta and Gamma functions, Area evaluation using double integrals' }
+      ],
+      highYieldStrategy: 'Master only Unit 1 (Matrices) and Unit 3 (Beta-Gamma). These two units account for 34 marks in EST. You only need 24 marks to clear the paper.'
+    },
+    {
+      id: 'rs-1-2',
+      code: '22PHY-101',
+      name: 'Engineering Physics',
+      sem: 1,
+      estPassingMarks: '24 / 60 Marks in EST',
+      totalPassingMarks: '40 / 100 Overall',
+      passingConfidence: '94% Pass Probability with 2 Units',
+      mustPassUnits: [
+        { unit: 'Unit 2', name: 'Lasers & He-Ne Rate Equations', weight: '16 Marks', expectedQuestions: 'Population inversion, Einstein coefficients A & B, He-Ne laser construction' },
+        { unit: 'Unit 4', name: 'Fiber Optics & Optical Communication', weight: '16 Marks', expectedQuestions: 'Numerical aperture derivation, Acceptance angle, Step-index vs Graded-index' }
+      ],
+      highYieldStrategy: 'Unit 2 and Unit 4 have zero calculus derivations. Preparing these guarantees 32 marks in EST without touching complex wave equations.'
+    }
+  ],
+  2: [
+    {
+      id: 'rs-2-1',
+      code: '22MAT-102',
+      name: 'Engineering Mathematics - II',
+      sem: 2,
+      estPassingMarks: '24 / 60 Marks in EST',
+      totalPassingMarks: '40 / 100 Overall',
+      passingConfidence: '95% Pass Probability with 2 Units',
+      mustPassUnits: [
+        { unit: 'Unit 1', name: 'Laplace Transforms & Shifting Theorems', weight: '18 Marks', expectedQuestions: 'Laplace of unit step & Dirac delta, Inverse Laplace using Partial Fractions' },
+        { unit: 'Unit 2', name: 'Fourier Series & Half-Range Expansions', weight: '16 Marks', expectedQuestions: 'Euler coefficients a0, an, bn for odd/even functions, Dirichlet conditions' }
+      ],
+      highYieldStrategy: 'Laplace and Fourier series are standard plug-and-chug integration topics. Practicing 8 solved numericals guarantees 34 marks.'
+    },
+    {
+      id: 'rs-2-2',
+      code: '22CHY-101',
+      name: 'Engineering Chemistry',
+      sem: 2,
+      estPassingMarks: '24 / 60 Marks in EST',
+      totalPassingMarks: '40 / 100 Overall',
+      passingConfidence: '92% Pass Probability with 2 Units',
+      mustPassUnits: [
+        { unit: 'Unit 1', name: 'Water Technology & Hardness Calculation', weight: '16 Marks', expectedQuestions: 'EDTA titration method, Zeolite & Ion-exchange process, Boiler corrosion' },
+        { unit: 'Unit 3', name: 'Fuels & Combustion Calorific Values', weight: '16 Marks', expectedQuestions: 'Bomb calorimeter numerical, Proximate & Ultimate coal analysis formulas' }
+      ],
+      highYieldStrategy: 'Water technology and Coal proximate analysis repeat verbatim in 90% of remedial tests. Memorize the 4 standard diagrams.'
+    }
+  ],
+  3: [
+    {
+      id: 'rs-3-1',
+      code: '21CSH-201',
+      name: 'Data Structures & Algorithms',
+      sem: 3,
+      estPassingMarks: '24 / 60 Marks in EST',
+      totalPassingMarks: '40 / 100 Overall',
+      passingConfidence: '97% Pass Probability with 2 Units',
+      mustPassUnits: [
+        { unit: 'Unit 2', name: 'Trees, BST & AVL Balance Rotations', weight: '20 Marks', expectedQuestions: 'AVL Tree insertion with rotations (LL, RR, LR, RL), Tree traversals (In, Pre, Post)' },
+        { unit: 'Unit 3', name: 'Graphs & Shortest Path Algorithms', weight: '16 Marks', expectedQuestions: 'Dijkstra single-source algorithm step table, Prim and Kruskal MST algorithms' }
+      ],
+      highYieldStrategy: 'Trees and Graphs carry 36 marks out of 60 in EST. Drawing clear step-by-step tree rebalances guarantees full marks on Section B.'
+    },
+    {
+      id: 'rs-3-2',
+      code: '22ECH-203',
+      name: 'Digital Logic & Circuit Design',
+      sem: 3,
+      estPassingMarks: '24 / 60 Marks in EST',
+      totalPassingMarks: '40 / 100 Overall',
+      passingConfidence: '93% Pass Probability with 2 Units',
+      mustPassUnits: [
+        { unit: 'Unit 1', name: 'Boolean Algebra, K-Maps & Logic Gates', weight: '18 Marks', expectedQuestions: '4-variable & 5-variable K-Map minimization with don\'t cares, Universal NAND/NOR' },
+        { unit: 'Unit 2', name: 'Sequential Circuits & Flip-Flop Conversions', weight: '16 Marks', expectedQuestions: 'JK to D flip-flop excitation table conversion, 3-bit Synchronous Counter design' }
+      ],
+      highYieldStrategy: 'K-Maps and Flip-Flop excitation conversion tables have fixed algorithmic steps. Practice the 6 standard conversion templates.'
+    }
+  ],
+  4: [
+    {
+      id: 'rs-4-1',
+      code: '22CSH-204',
+      name: 'Operating Systems',
+      sem: 4,
+      estPassingMarks: '24 / 60 Marks in EST',
+      totalPassingMarks: '40 / 100 Overall',
+      passingConfidence: '98% Pass Probability with 2 Units',
+      mustPassUnits: [
+        { unit: 'Unit 2', name: 'CPU Scheduling & Banker Safety Algorithm', weight: '20 Marks', expectedQuestions: 'Round Robin & SJF Gantt charts with average waiting time, Banker deadlock safety' },
+        { unit: 'Unit 3', name: 'Virtual Memory & Page Replacement', weight: '18 Marks', expectedQuestions: 'FIFO, LRU, Optimal page fault counting with 3 frames, Belady anomaly explanation' }
+      ],
+      highYieldStrategy: 'Unit 2 and Unit 3 contain purely numerical questions (Gantt charts, Banker matrices, Page replacement). Solved numericals guarantee 38 marks.'
+    },
+    {
+      id: 'rs-4-2',
+      code: '23CSH-243',
+      name: 'Database Management Systems',
+      sem: 4,
+      estPassingMarks: '24 / 60 Marks in EST',
+      totalPassingMarks: '40 / 100 Overall',
+      passingConfidence: '95% Pass Probability with 2 Units',
+      mustPassUnits: [
+        { unit: 'Unit 2', name: 'Relational Model, Normalization (3NF/BCNF)', weight: '20 Marks', expectedQuestions: 'Attribute closure method, 3NF synthesis, BCNF lossless decomposition' },
+        { unit: 'Unit 3', name: 'Transaction Management & ACID Properties', weight: '16 Marks', expectedQuestions: 'Two-Phase Locking (2PL), Conflict serializability precedence graph test' }
+      ],
+      highYieldStrategy: 'Normalization attribute closure and Precedence Graph serializability tests appear in every remedial paper without exception.'
+    }
+  ],
+  5: [
+    {
+      id: 'rs-5-1',
+      code: '21CSH-311',
+      name: 'Design & Analysis of Algorithms',
+      sem: 5,
+      estPassingMarks: '24 / 60 Marks in EST',
+      totalPassingMarks: '40 / 100 Overall',
+      passingConfidence: '94% Pass Probability with 2 Units',
+      mustPassUnits: [
+        { unit: 'Unit 2', name: 'Dynamic Programming (Knapsack & MCM)', weight: '20 Marks', expectedQuestions: '0/1 Knapsack matrix filling & backtracking, Matrix Chain Multiplication table' },
+        { unit: 'Unit 1', name: 'Divide & Conquer and Master Theorem', weight: '16 Marks', expectedQuestions: 'Master theorem cases with recurrence relations, QuickSort worst-case analysis' }
+      ],
+      highYieldStrategy: 'Master Theorem (Unit 1) gives an easy 8 marks. 0/1 Knapsack & Matrix Chain (Unit 2) give 20 marks. Combined: 28 marks with 3 hours prep.'
+    },
+    {
+      id: 'rs-5-2',
+      code: '23CSH-312',
+      name: 'Computer Networks',
+      sem: 5,
+      estPassingMarks: '24 / 60 Marks in EST',
+      totalPassingMarks: '40 / 100 Overall',
+      passingConfidence: '93% Pass Probability with 2 Units',
+      mustPassUnits: [
+        { unit: 'Unit 2', name: 'IP Addressing, Subnetting & Routing', weight: '20 Marks', expectedQuestions: 'VLSM Subnet division calculation, Distance Vector vs Link State routing' },
+        { unit: 'Unit 3', name: 'Transport Layer Protocols (TCP/UDP)', weight: '16 Marks', expectedQuestions: 'TCP 3-way handshake diagram, Congestion control (Slow start, Congestion avoidance)' }
+      ],
+      highYieldStrategy: 'Subnetting numericals and the TCP 3-way handshake state diagram account for over 30 marks on every remedial exam.'
+    }
+  ],
+  6: [
+    {
+      id: 'rs-6-1',
+      code: '22CST-390',
+      name: 'Theory of Computation',
+      sem: 6,
+      estPassingMarks: '24 / 60 Marks in EST',
+      totalPassingMarks: '40 / 100 Overall',
+      passingConfidence: '96% Pass Probability with 2 Units',
+      mustPassUnits: [
+        { unit: 'Unit 1', name: 'Finite Automata (DFA, NFA & Subset Construction)', weight: '20 Marks', expectedQuestions: 'NFA with ε-moves to DFA conversion table, Regular Expression to DFA' },
+        { unit: 'Unit 3', name: 'Turing Machines & Decidability', weight: '18 Marks', expectedQuestions: 'Turing Machine for 0^n 1^n 2^n design, Halting Problem proof by contradiction' }
+      ],
+      highYieldStrategy: 'Subset construction method (Unit 1) is a mechanical conversion table. Turing Machine (Unit 3) uses standard rewind logic. Easy 38 marks.'
+    },
+    {
+      id: 'rs-6-2',
+      code: '23CST-304',
+      name: 'Compiler Design',
+      sem: 6,
+      estPassingMarks: '24 / 60 Marks in EST',
+      totalPassingMarks: '40 / 100 Overall',
+      passingConfidence: '91% Pass Probability with 2 Units',
+      mustPassUnits: [
+        { unit: 'Unit 2', name: 'Syntax Analysis & LL(1) / LR Parsers', weight: '22 Marks', expectedQuestions: 'First & Follow calculation, LL(1) parsing table construction, LR(0) items' },
+        { unit: 'Unit 4', name: 'Code Generation & Optimization', weight: '14 Marks', expectedQuestions: 'Three-Address Code (TAC) Quadruples and Triples, Basic Blocks DAG representation' }
+      ],
+      highYieldStrategy: 'First & Follow set calculation and Three-Address Code generation are guaranteed 20+ marks. Practice 4 grammar examples.'
+    }
+  ],
+  7: [
+    {
+      id: 'rs-7-1',
+      code: '22CST-354',
+      name: 'Parallel & Distributed Computing',
+      sem: 7,
+      estPassingMarks: '24 / 60 Marks in EST',
+      totalPassingMarks: '40 / 100 Overall',
+      passingConfidence: '92% Pass Probability with 2 Units',
+      mustPassUnits: [
+        { unit: 'Unit 2', name: 'Distributed Clocks & Mutual Exclusion', weight: '18 Marks', expectedQuestions: 'Lamport logical clocks and Vector clocks, Ricart-Agrawala mutual exclusion' },
+        { unit: 'Unit 3', name: 'Distributed Transactions & Consensus', weight: '16 Marks', expectedQuestions: 'Two-Phase Commit (2PC) protocol state diagrams, Paxos consensus overview' }
+      ],
+      highYieldStrategy: 'Vector clocks numerical tracing and Two-Phase Commit message exchange flowcharts appear in 88% of remedial papers.'
+    },
+    {
+      id: 'rs-7-2',
+      code: '22CST-355',
+      name: 'Information Security & Cryptography',
+      sem: 7,
+      estPassingMarks: '24 / 60 Marks in EST',
+      totalPassingMarks: '40 / 100 Overall',
+      passingConfidence: '94% Pass Probability with 2 Units',
+      mustPassUnits: [
+        { unit: 'Unit 2', name: 'Public Key Cryptography & RSA', weight: '20 Marks', expectedQuestions: 'RSA algorithm key generation numerical, Diffie-Hellman Key Exchange steps' },
+        { unit: 'Unit 3', name: 'Message Authentication & Digital Signatures', weight: '16 Marks', expectedQuestions: 'SHA-256 vs MD5 hash construction, HMAC operation and digital signature verification' }
+      ],
+      highYieldStrategy: 'RSA encryption/decryption numerical and Diffie-Hellman key exchange are guaranteed 20 marks in Section B.'
+    }
+  ],
+  8: [
+    {
+      id: 'rs-8-1',
+      code: '23CST-405',
+      name: 'Digital Forensics',
+      sem: 8,
+      estPassingMarks: '24 / 60 Marks in EST',
+      totalPassingMarks: '40 / 100 Overall',
+      passingConfidence: '90% Pass Probability with 2 Units',
+      mustPassUnits: [
+        { unit: 'Unit 1', name: 'Forensic Investigation & Chain of Custody', weight: '18 Marks', expectedQuestions: 'Legal Chain of Custody 6-step protocol, Bit-stream image acquisition with write-blockers' },
+        { unit: 'Unit 3', name: 'Operating System & Memory Forensics', weight: '16 Marks', expectedQuestions: 'Volatility framework analysis commands, Windows Registry forensic artifacts' }
+      ],
+      highYieldStrategy: 'Chain of Custody and Volatility CLI commands repeat on every paper. Memorize the 6 legal custody protocol steps.'
+    },
+    {
+      id: 'rs-8-2',
+      code: '23CST-407',
+      name: 'Blockchain Technologies',
+      sem: 8,
+      estPassingMarks: '24 / 60 Marks in EST',
+      totalPassingMarks: '40 / 100 Overall',
+      passingConfidence: '92% Pass Probability with 2 Units',
+      mustPassUnits: [
+        { unit: 'Unit 2', name: 'Smart Contracts & Security Vulnerabilities', weight: '20 Marks', expectedQuestions: 'Reentrancy attack analysis and fix, Gas optimization in Solidity functions' },
+        { unit: 'Unit 1', name: 'Distributed Ledgers & Consensus Mechanisms', weight: '16 Marks', expectedQuestions: 'Proof of Work vs Proof of Stake comparison, Merkle tree verification' }
+      ],
+      highYieldStrategy: 'Smart contract reentrancy vulnerability explanation and PoW vs PoS comparison guarantee 36 marks.'
+    }
+  ]
+}
+
+interface ReappearRescueSectionProps {
+  initialTab?: 'pyqs' | 'notes' | 'questions' | 'syllabus'
+  initialSem?: number
+  isStandalonePage?: boolean
+}
+
+export default function ReappearRescueSection({
+  initialTab = 'pyqs',
+  initialSem = 4,
+  isStandalonePage = false
+}: ReappearRescueSectionProps) {
+  const searchParams = useSearchParams()
+
+  const [selectedSem, setSelectedSem] = useState<number>(initialSem)
+  const [activeSubTab, setActiveSubTab] = useState<'pyqs' | 'notes' | 'questions' | 'syllabus'>(initialTab)
   const [previewResource, setPreviewResource] = useState<any | null>(null)
+
+  // 1. Sync from URL Query Parameters
+  useEffect(() => {
+    if (!searchParams) return
+    const tabParam = searchParams.get('tab')
+    if (tabParam === 'pyqs') setActiveSubTab('pyqs')
+    else if (tabParam === 'notes' || tabParam === 'materials') setActiveSubTab('notes')
+    else if (tabParam === 'questions') setActiveSubTab('questions')
+    else if (tabParam === 'syllabus') setActiveSubTab('syllabus')
+
+    const semParam = searchParams.get('semester') || searchParams.get('sem')
+    if (semParam && !isNaN(parseInt(semParam))) {
+      setSelectedSem(parseInt(semParam))
+    }
+  }, [searchParams])
+
+  // 2. Sync active semester from SemesterSwitcherPill
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('prevu_active_semester')
+      if (stored && !isNaN(parseInt(stored))) {
+        setSelectedSem(parseInt(stored))
+      }
+    } catch {
+      // ignore
+    }
+
+    const handleSemChange = (e: Event) => {
+      const custom = e as CustomEvent<{ semester: number }>
+      if (custom.detail?.semester) {
+        setSelectedSem(custom.detail.semester)
+      }
+    }
+    window.addEventListener('prevu_semester_change', handleSemChange)
+    return () => window.removeEventListener('prevu_semester_change', handleSemChange)
+  }, [])
+
+  // 3. Listen to Reappear Tab Change Custom Event from HeaderNav
+  useEffect(() => {
+    const handleTabChange = (e: Event) => {
+      const custom = e as CustomEvent<{ tab: 'pyqs' | 'notes' | 'questions' | 'syllabus' }>
+      if (custom.detail?.tab) {
+        setActiveSubTab(custom.detail.tab)
+      }
+    }
+    window.addEventListener('prevu_reappear_tab_change', handleTabChange)
+    return () => window.removeEventListener('prevu_reappear_tab_change', handleTabChange)
+  }, [])
+
+  // 4. Smooth scroll on hash anchor #reappear-rescue
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#reappear-rescue') {
+      const el = document.getElementById('reappear-rescue')
+      if (el) {
+        setTimeout(() => el.scrollIntoView({ behavior: 'smooth' }), 150)
+      }
+    }
+  }, [])
 
   const semesterPyqs = ALL_SEMESTER_REAPPEAR_PYQS[selectedSem] || []
   const semesterMaterials = ALL_SEMESTER_REAPPEAR_MATERIALS[selectedSem] || []
+  const semesterQuestions = ALL_SEMESTER_REAPPEAR_QUESTIONS[selectedSem] || []
+  const semesterSyllabus = ALL_SEMESTER_REAPPEAR_SYLLABUS[selectedSem] || []
 
   return (
     <section id="reappear-rescue" className="scroll-mt-16 sm:scroll-mt-20 py-14 sm:py-20 border-b border-[#30363d]/60 bg-[#090d13] font-mono relative overflow-hidden">
@@ -848,41 +1414,78 @@ export default function ReappearRescueSection() {
           </h2>
 
           <p className="text-xs sm:text-sm text-[#7d8590] max-w-2xl leading-relaxed">
-            Specialized remedial question papers (PYQs), high-frequency repeated prompts, and concise one-night revision guides engineered to help you clear any semester backlog on the first attempt.
+            Specialized remedial question papers (PYQs), high-frequency repeated questions bank, passing blueprints, and concise one-night revision guides engineered to help you clear any semester backlog on the first attempt.
           </p>
 
-          {/* Sub-Tab Selector: Reappear PYQs vs 80/20 Study Material & Upload Action */}
-          <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
-            <div className="flex items-center justify-center gap-2 p-1.5 rounded-2xl bg-[#161b22] border border-[#30363d] shadow-xl">
+          {/* 4 Primary Sub-Tabs: PYQs, 80/20 Notes, Question Bank, Syllabus & Passing Plan */}
+          <div className="flex flex-wrap items-center justify-center gap-2.5 mt-6">
+            <div className="flex flex-wrap items-center justify-center gap-1.5 p-1.5 rounded-2xl bg-[#161b22] border border-[#30363d] shadow-xl">
+              
+              {/* Tab 1: Reappear PYQs */}
               <button
                 type="button"
                 onClick={() => setActiveSubTab('pyqs')}
-                className={`px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
                   activeSubTab === 'pyqs'
                     ? 'bg-amber-500 text-black shadow-md shadow-amber-500/30 font-extrabold'
                     : 'text-[#7d8590] hover:text-white hover:bg-[#21262d]'
                 }`}
               >
                 <FileText className="w-3.5 h-3.5" />
-                <span>Reappear PYQs &amp; Solved Papers</span>
+                <span>Reappear PYQs</span>
                 <span className={`px-1.5 py-0.5 rounded text-[10px] ${activeSubTab === 'pyqs' ? 'bg-black/20 text-black' : 'bg-[#21262d] text-[#7d8590]'}`}>
                   Sem {selectedSem}
                 </span>
               </button>
 
+              {/* Tab 2: 80/20 Crash Notes */}
               <button
                 type="button"
-                onClick={() => setActiveSubTab('materials')}
-                className={`px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-                  activeSubTab === 'materials'
+                onClick={() => setActiveSubTab('notes')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                  activeSubTab === 'notes'
                     ? 'bg-emerald-500 text-black shadow-md shadow-emerald-500/30 font-extrabold'
                     : 'text-[#7d8590] hover:text-white hover:bg-[#21262d]'
                 }`}
               >
                 <BookOpen className="w-3.5 h-3.5" />
-                <span>80/20 Reappear Crash Material</span>
-                <span className={`px-1.5 py-0.5 rounded text-[10px] ${activeSubTab === 'materials' ? 'bg-black/20 text-black' : 'bg-[#21262d] text-[#7d8590]'}`}>
+                <span>80/20 Crash Notes</span>
+                <span className={`px-1.5 py-0.5 rounded text-[10px] ${activeSubTab === 'notes' ? 'bg-black/20 text-black' : 'bg-[#21262d] text-[#7d8590]'}`}>
                   One-Night
+                </span>
+              </button>
+
+              {/* Tab 3: Reappear Questions Bank */}
+              <button
+                type="button"
+                onClick={() => setActiveSubTab('questions')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                  activeSubTab === 'questions'
+                    ? 'bg-purple-500 text-white shadow-md shadow-purple-500/30 font-extrabold'
+                    : 'text-[#7d8590] hover:text-white hover:bg-[#21262d]'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Questions Bank</span>
+                <span className={`px-1.5 py-0.5 rounded text-[10px] ${activeSubTab === 'questions' ? 'bg-white/20 text-white' : 'bg-[#21262d] text-[#7d8590]'}`}>
+                  High-Yield
+                </span>
+              </button>
+
+              {/* Tab 4: Reappear Syllabus & Passing Plan */}
+              <button
+                type="button"
+                onClick={() => setActiveSubTab('syllabus')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                  activeSubTab === 'syllabus'
+                    ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30 font-extrabold'
+                    : 'text-[#7d8590] hover:text-white hover:bg-[#21262d]'
+                }`}
+              >
+                <Target className="w-3.5 h-3.5" />
+                <span>Syllabus &amp; Passing Plan</span>
+                <span className={`px-1.5 py-0.5 rounded text-[10px] ${activeSubTab === 'syllabus' ? 'bg-white/20 text-white' : 'bg-[#21262d] text-[#7d8590]'}`}>
+                  Blueprint
                 </span>
               </button>
             </div>
@@ -890,7 +1493,7 @@ export default function ReappearRescueSection() {
             {/* Direct Upload Reappear Resource Action Button */}
             <Link
               href={`/upload?category=reappear&semester=${selectedSem}`}
-              className="px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black shadow-lg shadow-amber-500/25 border border-amber-300/40"
+              className="px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black shadow-lg shadow-amber-500/25 border border-amber-300/40 cursor-pointer"
               title="Upload Reappear Question Papers, Notes, or Syllabi"
             >
               <Upload className="w-4 h-4 text-black" />
@@ -917,7 +1520,7 @@ export default function ReappearRescueSection() {
           ))}
         </div>
 
-        {/* CONTENT VIEW 1: REAPPEAR PYQS FOR SELECTED SEMESTER */}
+        {/* VIEW 1: REAPPEAR PYQS */}
         {activeSubTab === 'pyqs' && (
           <AnimatePresence mode="wait">
             <motion.div
@@ -980,7 +1583,7 @@ export default function ReappearRescueSection() {
                       </div>
                     </div>
 
-                    {/* Student Contributor & Verification Ribbon */}
+                    {/* Verification Ribbon */}
                     <div className="mt-3 mb-2 p-2 rounded-xl bg-[#0d1117] border border-[#30363d]/60 flex items-center justify-between text-[11px] font-mono">
                       <div className="flex items-center gap-2 truncate">
                         <div className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center justify-center text-[10px] font-bold shrink-0">
@@ -1023,8 +1626,8 @@ export default function ReappearRescueSection() {
           </AnimatePresence>
         )}
 
-        {/* CONTENT VIEW 2: REAPPEAR STUDY MATERIAL FOR SELECTED SEMESTER */}
-        {activeSubTab === 'materials' && (
+        {/* VIEW 2: 80/20 REAPPEAR CRASH NOTES */}
+        {activeSubTab === 'notes' && (
           <AnimatePresence mode="wait">
             <motion.div
               key={`reappear-materials-${selectedSem}`}
@@ -1073,7 +1676,7 @@ export default function ReappearRescueSection() {
                       ))}
                     </div>
 
-                    {/* Student Contributor & Verification Ribbon */}
+                    {/* Contributor Ribbon */}
                     <div className="mt-3 mb-2 p-2 rounded-xl bg-[#0d1117] border border-[#30363d]/60 flex items-center justify-between text-[11px] font-mono">
                       <div className="flex items-center gap-2 truncate">
                         <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-[10px] font-bold shrink-0">
@@ -1115,6 +1718,192 @@ export default function ReappearRescueSection() {
           </AnimatePresence>
         )}
 
+        {/* VIEW 3: REAPPEAR QUESTIONS BANK */}
+        {activeSubTab === 'questions' && (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`reappear-questions-${selectedSem}`}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="grid grid-cols-1 md:grid-cols-2 gap-5"
+            >
+              {semesterQuestions.map(q => (
+                <div
+                  key={q.id}
+                  className="p-5 rounded-2xl bg-[#161b22] border border-[#30363d] hover:border-purple-500/50 hover:shadow-[0_0_25px_rgba(168,85,247,0.12)] transition-all flex flex-col justify-between group text-left relative"
+                >
+                  <div>
+                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#30363d]/60">
+                      <span className="text-[10px] font-bold text-purple-300 bg-purple-500/15 px-2.5 py-0.5 rounded-full border border-purple-500/30 flex items-center gap-1.5">
+                        <Flame className="w-3 h-3 text-purple-400" />
+                        {q.repeatScore}
+                      </span>
+                      <span className="text-[10px] text-amber-300 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/25">
+                        {q.marks}
+                      </span>
+                    </div>
+
+                    <div className="mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-purple-400 font-bold">{q.code}</span>
+                        <span className="text-[10px] font-mono text-[#7d8590]">• {q.topic}</span>
+                      </div>
+                      <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-purple-300 transition-colors mt-0.5 leading-snug">
+                        {q.name}
+                      </h3>
+                    </div>
+
+                    {/* Question Prompt */}
+                    <div className="p-3.5 rounded-xl bg-[#0d1117] border border-purple-500/20 text-[#e6edf3] text-xs leading-relaxed mb-4">
+                      <div className="text-[10px] font-mono uppercase tracking-wider text-purple-400 font-bold mb-1.5 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" />
+                        <span>Repeated Exam Problem</span>
+                      </div>
+                      <p className="text-xs text-[#c9d1d9] font-sans font-medium">
+                        &ldquo;{q.questionText}&rdquo;
+                      </p>
+                    </div>
+
+                    {/* Solution Key Outline */}
+                    <div className="p-3 rounded-xl bg-[#0d1117]/80 border border-[#30363d]/70 text-xs mb-4 space-y-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#7d8590] block mb-1">
+                        Passing Solution Outline:
+                      </span>
+                      <p className="text-[11px] text-[#8b949e] leading-relaxed">
+                        {q.solutionSummary}
+                      </p>
+                    </div>
+
+                    {/* Repetition History Tags */}
+                    <div className="space-y-1 mb-2">
+                      <span className="text-[10px] text-[#7d8590] font-semibold uppercase tracking-wider block">
+                        Verified Exam Appearances:
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {q.yearHistory.map(y => (
+                          <span key={y} className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#21262d] text-amber-300/90 border border-amber-500/20">
+                            {y}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-[#30363d]/60 flex items-center justify-between gap-2">
+                    <Link
+                      href={`/browse?search=${encodeURIComponent(q.code)}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-md shadow-purple-600/20"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>View Solved Papers</span>
+                    </Link>
+
+                    <Link
+                      href={`/study-material?search=${encodeURIComponent(q.code)}`}
+                      className="text-xs text-[#7d8590] hover:text-white transition-colors flex items-center gap-1"
+                    >
+                      <span>Study Notes</span>
+                      <ChevronRight className="w-3 h-3 text-purple-400" />
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          </AnimatePresence>
+        )}
+
+        {/* VIEW 4: REAPPEAR SYLLABUS & PASSING PLAN */}
+        {activeSubTab === 'syllabus' && (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`reappear-syllabus-${selectedSem}`}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="grid grid-cols-1 md:grid-cols-2 gap-5"
+            >
+              {semesterSyllabus.map(syl => (
+                <div
+                  key={syl.id}
+                  className="p-5 rounded-2xl bg-[#161b22] border border-[#30363d] hover:border-rose-500/50 hover:shadow-[0_0_25px_rgba(244,63,94,0.12)] transition-all flex flex-col justify-between group text-left relative"
+                >
+                  <div>
+                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#30363d]/60">
+                      <span className="text-[10px] font-bold text-rose-300 bg-rose-500/15 px-2.5 py-0.5 rounded-full border border-rose-500/30 flex items-center gap-1.5">
+                        <Target className="w-3 h-3 text-rose-400" />
+                        {syl.passingConfidence}
+                      </span>
+                      <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/25">
+                        EST Pass: {syl.estPassingMarks}
+                      </span>
+                    </div>
+
+                    <div className="mb-3">
+                      <span className="text-xs text-rose-400 font-bold">{syl.code}</span>
+                      <h3 className="text-base font-bold text-white group-hover:text-rose-300 transition-colors mt-0.5 leading-snug">
+                        {syl.name}
+                      </h3>
+                      <div className="text-[11px] text-[#7d8590] mt-1">
+                        Minimum Passing Threshold: <span className="text-white font-semibold">{syl.totalPassingMarks}</span>
+                      </div>
+                    </div>
+
+                    {/* Must-Pass Priority Units */}
+                    <div className="space-y-2 mb-4">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#7d8590] block">
+                        Priority 1 Passing Units (Guaranteed High-Yield):
+                      </span>
+                      {syl.mustPassUnits.map((u, idx) => (
+                        <div key={idx} className="p-3 rounded-xl bg-[#0d1117] border border-rose-500/20 text-xs space-y-1">
+                          <div className="flex items-center justify-between text-white font-bold">
+                            <span className="text-rose-300">{u.unit}: {u.name}</span>
+                            <span className="text-amber-400 font-mono text-[11px]">{u.weight}</span>
+                          </div>
+                          <p className="text-[11px] text-[#8b949e]">
+                            Expected Prompts: {u.expectedQuestions}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* High Yield Strategy */}
+                    <div className="p-3.5 rounded-xl bg-gradient-to-r from-rose-500/10 via-amber-500/5 to-transparent border border-rose-500/25 mb-4">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-rose-300 block mb-1 flex items-center gap-1">
+                        <Zap className="w-3 h-3 text-rose-400" />
+                        80/20 One-Night Passing Strategy:
+                      </span>
+                      <p className="text-xs text-[#c9d1d9] leading-relaxed">
+                        {syl.highYieldStrategy}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-[#30363d]/60 flex items-center justify-between gap-2">
+                    <Link
+                      href={`/study-material?search=${encodeURIComponent(syl.code)}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all shadow-md shadow-rose-600/20"
+                    >
+                      <BookOpen className="w-3.5 h-3.5" />
+                      <span>Open Passing Notes</span>
+                    </Link>
+
+                    <Link
+                      href={`/browse?search=${encodeURIComponent(syl.code)}`}
+                      className="text-xs text-[#7d8590] hover:text-white transition-colors flex items-center gap-1"
+                    >
+                      <span>Practice PYQs</span>
+                      <ChevronRight className="w-3 h-3 text-rose-400" />
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          </AnimatePresence>
+        )}
+
         {/* Global Footer Banner for Reappear */}
         <div className="mt-10 p-4 rounded-2xl bg-[#161b22] border border-[#30363d] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#7d8590]">
           <div className="flex items-center gap-3">
@@ -1122,13 +1911,13 @@ export default function ReappearRescueSection() {
               <AlertTriangle className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-white font-bold block">Need a paper not in the Sem {selectedSem} Reappear Vault?</span>
+              <span className="text-white font-bold block">Need a paper or passing key not in the Sem {selectedSem} Vault?</span>
               <span className="text-[11px] text-[#7d8590]">Request emergency peer solved papers with guaranteed senior verification within 24 hours.</span>
             </div>
           </div>
           <Link
             href="/requests"
-            className="px-4 py-2 rounded-xl bg-[#21262d] hover:bg-[#30363d] text-amber-400 hover:text-amber-300 font-bold border border-amber-500/40 transition-all shrink-0 flex items-center gap-1.5"
+            className="px-4 py-2 rounded-xl bg-[#21262d] hover:bg-[#30363d] text-amber-400 hover:text-amber-300 font-bold border border-amber-500/40 transition-all shrink-0 flex items-center gap-1.5 cursor-pointer"
           >
             <span>Post Backlog Bounty</span>
             <ArrowRight className="w-3.5 h-3.5" />

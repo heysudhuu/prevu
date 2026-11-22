@@ -175,25 +175,29 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
   // 2. REAPPEAR DESTINATIONS
   const reappearLinks = [
     {
-      href: '/#reappear-rescue',
+      tab: 'pyqs' as const,
+      href: '/reappear?tab=pyqs',
       label: 'Reappear PYQs & Solved Papers',
       desc: 'High-frequency remedial papers & derivations',
       icon: <FileText className="w-4 h-4 text-amber-400" />
     },
     {
-      href: '/#reappear-rescue',
+      tab: 'notes' as const,
+      href: '/reappear?tab=notes',
       label: '80/20 Reappear Crash Notes',
       desc: 'One-night essential revision & high-yield formulas',
       icon: <BookOpen className="w-4 h-4 text-emerald-400" />
     },
     {
-      href: '/browse?search=Reappear',
+      tab: 'questions' as const,
+      href: '/reappear?tab=questions',
       label: 'Reappear Questions Bank',
       desc: 'Past remedial exam questions & solution steps',
       icon: <Sparkles className="w-4 h-4 text-purple-400" />
     },
     {
-      href: '/#reappear-rescue',
+      tab: 'syllabus' as const,
+      href: '/reappear?tab=syllabus',
       label: 'Reappear Syllabus & Passing Plan',
       desc: 'Course blueprint & unit-wise passing threshold',
       icon: <Target className="w-4 h-4 text-rose-400" />
@@ -503,8 +507,17 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                   <Link
                     key={item.label}
                     href={item.href}
-                    onClick={() => setReappearMenuOpen(false)}
-                    className="p-2.5 rounded-xl flex items-start gap-3 hover:bg-prevu-surface/60 text-prevu-text-muted hover:text-white transition-colors"
+                    onClick={() => {
+                      setReappearMenuOpen(false)
+                      if (pathname === '/' || pathname === '/reappear') {
+                        const el = document.getElementById('reappear-rescue')
+                        if (el) {
+                          el.scrollIntoView({ behavior: 'smooth' })
+                        }
+                        window.dispatchEvent(new CustomEvent('prevu_reappear_tab_change', { detail: { tab: item.tab } }))
+                      }
+                    }}
+                    className="p-2.5 rounded-xl flex items-start gap-3 hover:bg-prevu-surface/60 text-prevu-text-muted hover:text-white transition-colors cursor-pointer"
                   >
                     <div className="w-8 h-8 rounded-xl bg-prevu-bg border border-prevu-surface-light flex items-center justify-center shrink-0 mt-0.5">
                       {item.icon}
@@ -519,11 +532,11 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                 {/* Upload Reappear Resource Action Button */}
                 <div className="pt-2 border-t border-prevu-surface-light/60">
                   <Link
-                    href="/upload?category=reappear"
+                    href={`/upload?category=reappear&semester=${activeSem}`}
                     onClick={() => setReappearMenuOpen(false)}
-                    className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20 transition-all"
+                    className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20 transition-all cursor-pointer"
                   >
-                    <Upload className="w-3.5 h-3.5" />
+                    <Upload className="w-3.5 h-3.5 text-black" />
                     <span>Upload Reappear Resource</span>
                   </Link>
                 </div>
@@ -847,17 +860,26 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                 <Link
                   key={link.label}
                   href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-2.5 rounded-xl text-xs font-semibold text-prevu-text-muted hover:text-white hover:bg-prevu-surface flex items-center gap-2.5 transition-colors"
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    if (pathname === '/' || pathname === '/reappear') {
+                      const el = document.getElementById('reappear-rescue')
+                      if (el) {
+                        el.scrollIntoView({ behavior: 'smooth' })
+                      }
+                      window.dispatchEvent(new CustomEvent('prevu_reappear_tab_change', { detail: { tab: link.tab } }))
+                    }
+                  }}
+                  className="p-2.5 rounded-xl text-xs font-semibold text-prevu-text-muted hover:text-white hover:bg-prevu-surface flex items-center gap-2.5 transition-colors cursor-pointer"
                 >
                   {link.icon}
                   <span>{link.label}</span>
                 </Link>
               ))}
               <Link
-                href="/upload?category=reappear"
+                href={`/upload?category=reappear&semester=${activeSem}`}
                 onClick={() => setMobileMenuOpen(false)}
-                className="mt-1 p-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 bg-amber-500/15 border border-amber-500/30 text-amber-300"
+                className="mt-1 p-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500/25 to-yellow-500/20 border border-amber-500/40 text-amber-300 shadow-md shadow-amber-500/10 cursor-pointer"
               >
                 <Upload className="w-3.5 h-3.5" />
                 <span>Upload Reappear Resource</span>

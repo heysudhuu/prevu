@@ -63,6 +63,21 @@ export interface CbtUserAnswer {
   selectedOptions: string[]
   isCorrect: boolean
   isMarkedForReview?: boolean
+  isReported?: boolean
+  reportReason?: string
+}
+
+export interface CbtQuestionReport {
+  id: string
+  questionId: string
+  questionText: string
+  subjectCode: string
+  subjectName?: string
+  reason: 'wrong_key' | 'typo' | 'mismatched_options' | 'passage_missing' | 'other'
+  details?: string
+  userId?: string
+  username?: string
+  reportedAt: string
 }
 
 export interface CbtAttemptResult {
@@ -75,6 +90,8 @@ export interface CbtAttemptResult {
   cuVerified: boolean
   score: number
   totalQuestions: number
+  effectiveTotalQuestions?: number
+  voidedQuestionsCount?: number
   percentage: number
   timeSpentSeconds: number
   allottedMinutes: number

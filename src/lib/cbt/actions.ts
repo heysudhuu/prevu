@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 import { authAdmin } from '@/lib/firebase/server'
 import { getSupabaseAdmin } from '@/utils/supabase/admin'
 import { revalidatePath } from 'next/cache'
-import { CbtLeaderboardEntry, CbtUserAnswer } from './types'
+import { CbtLeaderboardEntry, CbtUserAnswer, CbtQuestionReport } from './types'
 import { 
   saveStoredAttempt, 
   getStoredLeaderboard, 
@@ -17,7 +17,9 @@ import {
   updateStoredContributedQuestionStatus,
   updateStoredBatchContributedQuestionsStatus,
   updateStoredContributedSubjectStatus,
-  updateStoredContributedQuestionDetails
+  updateStoredContributedQuestionDetails,
+  saveStoredQuestionReport,
+  getStoredQuestionReports
 } from './cbtStore'
 import { isSuperAdminEmail } from '@/lib/auth/admin-check'
 
@@ -75,8 +77,11 @@ export async function recordCbtAttempt(payload: {
   const userName = user?.name || 'Student Candidate'
   const cuVerified = Boolean(user?.cuVerified)
 
-  const percentage = payload.totalQuestions > 0 
-    ? Math.round((payload.score / payload.totalQuestions) * 1000) / 10 
+  const voidedCount = (payload.answers || []).filter(a => a.isReported).length
+  const effectiveTotal = Math.max(1, payload.totalQuestions - voidedCount)
+
+  const percentage = effectiveTotal > 0 
+    ? Math.round((payload.score / effectiveTotal) * 1000) / 10 
     : 0
 
   // 1. Always save to persistent server store (fail-safe)
@@ -87,7 +92,7 @@ export async function recordCbtAttempt(payload: {
     cuVerified,
     subjectCode: payload.subjectCode,
     score: payload.score,
-    totalQuestions: payload.totalQuestions,
+    totalQuestions: effectiveTotal,
     percentage,
     timeSpentSeconds: payload.timeSpentSeconds
   })
@@ -733,4 +738,55 @@ export async function reviewCbtSubject(
     return { error: 'Failed to review subject.' }
   }
 }
+
+/**
+ * Report a flawed or mismatched question during a CBT mock exam
+ */
+export async function reportCbtQuestion(data: {
+  questionId: string
+  questionText: string
+  subjectCode: string
+  subjectName?: string
+  reason: 'wrong_key' | 'typo' | 'mismatched_options' | 'passage_missing' | 'other'
+  details?: string
+}) {
+  const user = await getCurrentUser()
+  const report: CbtQuestionReport = {
+    id: `rep-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    questionId: data.questionId,
+    questionText: data.questionText,
+    subjectCode: data.subjectCode,
+    subjectName: data.subjectName || data.subjectCode,
+    reason: data.reason,
+    details: data.details?.trim() || undefined,
+    userId: user?.uid || 'guest-student',
+    username: user?.username || 'anonymous_peer',
+    reportedAt: new Date().toISOString()
+  }
+
+  saveStoredQuestionReport(report)
+
+  // Also gracefully log to Supabase reports if table exists
+  try {
+    const supabase = getSupabaseAdmin()
+    await supabase.from('reports').insert({
+      reason: `CBT Question Flagged: ${data.reason.replace(/_/g, ' ').toUpperCase()}`,
+      details: `[CBT ${data.subjectCode} - Q: ${data.questionId}]\nQuestion: ${data.questionText.slice(0, 150)}...\nUser Note: ${data.details || 'None'}`,
+      status: 'open',
+      reporter_id: user?.uid || null
+    })
+  } catch {
+    // Non-blocking: cbtStore already saved it
+  }
+
+  return { success: true, reportId: report.id }
+}
+
+/**
+ * Get all reported CBT questions for moderation
+ */
+export async function getAllCbtQuestionReports(): Promise<CbtQuestionReport[]> {
+  return getStoredQuestionReports()
+}
+
 

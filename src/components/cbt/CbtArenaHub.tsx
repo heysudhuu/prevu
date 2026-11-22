@@ -24,12 +24,14 @@ import {
   GraduationCap,
   X,
   ChevronRight,
-  FileText
+  FileText,
+  Share2
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import CbtExamConfigModal from './CbtExamConfigModal'
 import CbtExamRunner from './CbtExamRunner'
 import CbtFrontLeaderboard from './CbtFrontLeaderboard'
+import CbtShareModal from './CbtShareModal'
 import Link from 'next/link'
 
 interface CbtArenaHubProps {
@@ -53,6 +55,7 @@ export default function CbtArenaHub({
   const [activeSubject, setActiveSubject] = useState<CbtSubject | null>(null)
   const [selectedTopicId, setSelectedTopicId] = useState<string>('all')
   const [isConfigOpen, setIsConfigOpen] = useState<boolean>(false)
+  const [sharingSubject, setSharingSubject] = useState<CbtSubject | null>(null)
   const [runningExam, setRunningExam] = useState<{
     subject: CbtSubject
     config: CbtExamConfig
@@ -124,6 +127,22 @@ export default function CbtArenaHub({
     setSelectedTopicId(topicId)
     setIsConfigOpen(true)
   }
+
+  // Deep-link direct subject handler (?subject=CODE)
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const codeParam = params.get('subject')
+    if (codeParam) {
+      const clean = codeParam.trim().toUpperCase()
+      const match = subjects.find(
+        s => s.code.toUpperCase() === clean || s.code.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() === clean.replace(/[^a-zA-Z0-9]/g, '')
+      )
+      if (match) {
+        handleOpenConfig(match, 'all')
+      }
+    }
+  }, [subjects])
 
   const handleStartExam = (config: {
     questionCount: number
@@ -438,25 +457,40 @@ export default function CbtArenaHub({
               <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
                 
                 <div className="space-y-3.5">
-                  {/* Category Pill & Live Indicator */}
+                  {/* Category Pill, Live Indicator & Share Button */}
                   <div className="flex items-center justify-between gap-2">
                     <span className={`px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wide border ${theme.bg} ${theme.text} ${theme.border}`}>
                       {subject.categoryLabel}
                     </span>
 
-                    {isLive ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                        <span className="relative flex h-1.5 w-1.5">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSharingSubject(subject)
+                        }}
+                        title="Share this subject to WhatsApp"
+                        className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+                      >
+                        <Share2 className="w-3 h-3" />
+                        <span>Share</span>
+                      </button>
+
+                      {isLive ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                          <span className="relative flex h-1.5 w-1.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
+                          </span>
+                          <span>Live CBT</span>
                         </span>
-                        <span>Live CBT</span>
-                      </span>
-                    ) : (
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono text-prevu-text-muted bg-prevu-bg border border-prevu-surface-light">
-                        Bank Open
-                      </span>
-                    )}
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono text-prevu-text-muted bg-prevu-bg border border-prevu-surface-light">
+                          Bank Open
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Title & Subject Code */}
@@ -534,6 +568,20 @@ export default function CbtArenaHub({
                             </option>
                           ))}
                         </select>
+                      </div>
+
+                      {/* Direct Topic Quick-Launch Pills */}
+                      <div className="flex flex-wrap gap-1.5 pt-0.5">
+                        {subject.topicsList?.filter(t => t.id !== 'all').slice(0, 3).map(t => (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => handleOpenConfig(subject, t.id)}
+                            className="text-[10px] font-mono px-2 py-0.5 rounded-lg bg-prevu-bg/90 border border-purple-500/25 hover:border-cyan-400 text-prevu-text-muted hover:text-cyan-300 transition-colors cursor-pointer"
+                          >
+                            {t.name}
+                          </button>
+                        ))}
                       </div>
                     </div>
                   ) : (
@@ -718,6 +766,15 @@ export default function CbtArenaHub({
 
           </div>
         </div>
+      )}
+
+      {/* WhatsApp Deep Link Share Modal */}
+      {sharingSubject && (
+        <CbtShareModal
+          isOpen={!!sharingSubject}
+          onClose={() => setSharingSubject(null)}
+          subject={sharingSubject}
+        />
       )}
 
     </div>

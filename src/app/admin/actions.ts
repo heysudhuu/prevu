@@ -681,8 +681,8 @@ export async function updateResourceDetails(input: UpdateResourceDetailsInput) {
     .update(updateData)
     .eq('id', input.id)
 
-  // Resilient fallback: if extended columns (e.g. channel_name, resource_format) are not yet present in Supabase table
-  if (error && error.message && error.message.includes("schema cache")) {
+  // Resilient fallback: if extended columns (e.g. channel_name, resource_format, unit) are not yet present in Supabase table
+  if (error && error.message && (error.message.includes("schema cache") || error.message.includes("column") || (error as any).code === 'PGRST204')) {
     console.warn("Retrying resource update with core schema columns:", error.message)
     const coreUpdateData = { ...updateData }
     delete coreUpdateData.channel_name
@@ -696,7 +696,16 @@ export async function updateResourceDetails(input: UpdateResourceDetailsInput) {
       .update(coreUpdateData)
       .eq('id', input.id)
 
-    error = retryRes.error
+    if (retryRes.error && retryRes.error.message && (retryRes.error.message.includes("schema cache") || retryRes.error.message.includes("column"))) {
+      delete coreUpdateData.unit
+      const ultraSafeRes = await supabaseAdmin
+        .from('resources')
+        .update(coreUpdateData)
+        .eq('id', input.id)
+      error = ultraSafeRes.error
+    } else {
+      error = retryRes.error
+    }
   }
 
   if (error) return { error: error.message }

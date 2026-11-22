@@ -21,11 +21,16 @@ import {
   ShieldAlert,
   Layers,
   HelpCircle,
-  BookOpen
+  BookOpen,
+  AlertTriangle,
+  Share2,
+  ShieldCheck
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { recordCbtAttempt, getCbtLeaderboard } from '@/lib/cbt/actions'
+import { recordCbtAttempt, getCbtLeaderboard, reportCbtQuestion } from '@/lib/cbt/actions'
 import { CollaboratorBadge } from '@/components/ui/CollaboratorBadge'
+import CbtReportModal from './CbtReportModal'
+import CbtShareModal from './CbtShareModal'
 import Link from 'next/link'
 
 interface CbtExamRunnerProps {
@@ -65,6 +70,33 @@ export default function CbtExamRunner({
   const [leaderboard, setLeaderboard] = useState<CbtLeaderboardEntry[]>([])
   const [earnedKarma, setEarnedKarma] = useState<number | null>(null)
   const [isSavingScore, setIsSavingScore] = useState<boolean>(false)
+
+  // Question Reporting & Sharing State
+  const [reportedQuestions, setReportedQuestions] = useState<Record<string, { reason: string; details?: string }>>({})
+  const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false)
+  const [reportingQuestion, setReportingQuestion] = useState<CbtQuestion | null>(null)
+  const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false)
+
+  const handleReportSubmit = (data: {
+    questionId: string
+    reason: 'wrong_key' | 'typo' | 'mismatched_options' | 'passage_missing' | 'other'
+    details?: string
+  }) => {
+    setReportedQuestions(prev => ({
+      ...prev,
+      [data.questionId]: { reason: data.reason, details: data.details }
+    }))
+
+    const targetQ = questions.find(q => q.id === data.questionId)
+    reportCbtQuestion({
+      questionId: data.questionId,
+      questionText: targetQ?.question || '',
+      subjectCode: subject.code,
+      subjectName: subject.name,
+      reason: data.reason,
+      details: data.details
+    }).catch(console.warn)
+  }
 
   const currentQ = questions[currentIndex]
 
@@ -158,38 +190,48 @@ export default function CbtExamRunner({
     }
   }
 
-  // Calculate score and answers
+  // Calculate score and answers with Fair-Play Mark Exemption
   const evaluatedResults = useMemo(() => {
     let correctCount = 0
+    let voidedCount = 0
 
     const userAnswers: CbtUserAnswer[] = questions.map(q => {
+      const isReported = Boolean(reportedQuestions[q.id])
+      if (isReported) voidedCount++
+
       const chosen = (selectedAnswers[q.id] || []).sort()
       const correct = [...q.correctAnswers].sort()
 
       const isCorrect = chosen.length === correct.length && 
         chosen.every((val, idx) => val === correct[idx])
 
-      if (isCorrect) correctCount++
+      if (isCorrect && !isReported) correctCount++
 
       return {
         questionId: q.id,
         selectedOptions: chosen,
         isCorrect,
-        isMarkedForReview: Boolean(markedForReview[q.id])
+        isMarkedForReview: Boolean(markedForReview[q.id]),
+        isReported,
+        reportReason: reportedQuestions[q.id]?.reason
       }
     })
 
-    const percentage = totalCount > 0 ? Math.round((correctCount / totalCount) * 1000) / 10 : 0
+    // Exclude voided questions from scoring denominator:
+    const effectiveTotal = Math.max(1, totalCount - voidedCount)
+    const percentage = Math.round((correctCount / effectiveTotal) * 1000) / 10
     const timeSpent = initialSeconds - secondsLeft
 
     return {
       score: correctCount,
       totalCount,
+      effectiveTotal,
+      voidedCount,
       percentage,
       timeSpentSeconds: timeSpent,
       userAnswers
     }
-  }, [questions, selectedAnswers, markedForReview, totalCount, initialSeconds, secondsLeft])
+  }, [questions, selectedAnswers, markedForReview, reportedQuestions, totalCount, initialSeconds, secondsLeft])
 
   // Final Submission Handler
   const handleSubmitExam = useCallback(async () => {
@@ -201,7 +243,7 @@ export default function CbtExamRunner({
       const res = await recordCbtAttempt({
         subjectCode: subject.code,
         score: evaluatedResults.score,
-        totalQuestions: totalCount,
+        totalQuestions: evaluatedResults.effectiveTotal || totalCount,
         timeSpentSeconds: evaluatedResults.timeSpentSeconds,
         allottedMinutes: config.timeLimitMinutes,
         answers: evaluatedResults.userAnswers
@@ -331,11 +373,32 @@ export default function CbtExamRunner({
             {/* Score Ring / Pill */}
             <div className="pt-2 flex flex-col items-center justify-center">
               <div className="text-5xl sm:text-6xl font-black font-mono tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-200 to-prevu-accent">
-                {evaluatedResults.score} <span className="text-2xl text-prevu-text-muted font-normal">/ {totalCount}</span>
+                {evaluatedResults.score} <span className="text-2xl text-prevu-text-muted font-normal">/ {evaluatedResults.effectiveTotal || totalCount}</span>
               </div>
               <div className="text-sm font-bold text-cyan-400 mt-1">
                 {evaluatedResults.percentage}% Accuracy
               </div>
+            </div>
+
+            {/* Fair-Play Exemption Banner */}
+            {evaluatedResults.voidedCount > 0 && (
+              <div className="p-3 rounded-2xl bg-amber-950/20 border border-amber-500/30 text-xs text-amber-300 max-w-lg mx-auto flex items-center justify-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>
+                  <strong>Fair-Play Adjustment:</strong> {evaluatedResults.voidedCount} question{evaluatedResults.voidedCount > 1 ? 's were' : ' was'} flagged & voided from grading denominator.
+                </span>
+              </div>
+            )}
+
+            {/* Social Share Call to Action */}
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+              <Button
+                onClick={() => setIsShareModalOpen(true)}
+                className="bg-[#25D366] hover:bg-[#20ba59] text-black font-extrabold text-xs h-10 px-5 rounded-2xl shadow-lg shadow-[#25D366]/20 flex items-center gap-2 cursor-pointer"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>Share Score on WhatsApp</span>
+              </Button>
             </div>
 
             {/* Metric Strip */}
@@ -423,8 +486,12 @@ export default function CbtExamRunner({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {isCorrect ? (
+                      <div className="flex items-center gap-2 shrink-0">
+                        {ans?.isReported ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                            <ShieldCheck className="w-3 h-3 text-amber-400" /> Flagged & Voided (Protected)
+                          </span>
+                        ) : isCorrect ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                             <CheckCircle2 className="w-3 h-3" /> Correct (+1)
                           </span>
@@ -432,6 +499,20 @@ export default function CbtExamRunner({
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
                             <XCircle className="w-3 h-3" /> Incorrect (0)
                           </span>
+                        )}
+
+                        {!ans?.isReported && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setReportingQuestion(q)
+                              setIsReportModalOpen(true)
+                            }}
+                            className="p-1 text-zinc-400 hover:text-amber-400 text-xs transition-colors cursor-pointer"
+                            title="Report flawed question"
+                          >
+                            <Flag className="w-3.5 h-3.5" />
+                          </button>
                         )}
                       </div>
                     </div>
@@ -730,6 +811,26 @@ export default function CbtExamRunner({
                 <span>{markedForReview[currentQ?.id || ''] ? 'Marked for Review' : 'Mark for Review'}</span>
               </Button>
 
+              {/* Report Issue Button with Fair-Play Protection */}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setReportingQuestion(currentQ)
+                  setIsReportModalOpen(true)
+                }}
+                className={`text-xs h-9 px-3 border transition-all ${
+                  reportedQuestions[currentQ?.id || '']
+                    ? 'bg-amber-950/40 border-amber-500 text-amber-300 font-bold'
+                    : 'border-prevu-surface-light text-zinc-400 hover:text-amber-300 hover:border-amber-500/40'
+                }`}
+                title="Report flawed question (Marks will be protected)"
+              >
+                <AlertTriangle className="w-3.5 h-3.5 mr-1 text-amber-400" />
+                <span>{reportedQuestions[currentQ?.id || ''] ? 'Flagged & Protected' : 'Report Issue'}</span>
+              </Button>
+
               {(selectedAnswers[currentQ?.id || ''] || []).length > 0 && (
                 <Button
                   type="button"
@@ -799,8 +900,8 @@ export default function CbtExamRunner({
                 <span>Review ({reviewCount})</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-md bg-prevu-bg border border-prevu-surface-light" />
-                <span>Unvisited ({totalCount - Object.keys(visitedQuestions).length})</span>
+                <span className="w-3 h-3 rounded-md bg-amber-500" />
+                <span>Reported ({Object.keys(reportedQuestions).length})</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-md border border-prevu-accent bg-prevu-accent/20" />
@@ -815,11 +916,14 @@ export default function CbtExamRunner({
                 const isAnswered = (selectedAnswers[q.id] || []).length > 0
                 const isMarked = markedForReview[q.id]
                 const isVisited = visitedQuestions[q.id]
+                const isReported = Boolean(reportedQuestions[q.id])
 
                 let badgeStyle = 'bg-prevu-bg border-prevu-surface-light text-prevu-text-muted hover:border-prevu-accent/50'
 
                 if (isCurrent) {
                   badgeStyle = 'bg-prevu-accent text-white border-prevu-accent ring-2 ring-prevu-accent/40 font-bold scale-105'
+                } else if (isReported) {
+                  badgeStyle = 'bg-amber-600 text-black border-amber-400 font-bold'
                 } else if (isMarked && isAnswered) {
                   badgeStyle = 'bg-gradient-to-r from-emerald-600 to-purple-600 text-white border-purple-400 font-bold'
                 } else if (isMarked) {
@@ -912,6 +1016,38 @@ export default function CbtExamRunner({
           </div>
         </div>
       )}
+
+      {/* Question Issue Reporting Modal */}
+      <CbtReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => {
+          setIsReportModalOpen(false)
+          setReportingQuestion(null)
+        }}
+        question={reportingQuestion}
+        questionNumber={
+          reportingQuestion
+            ? questions.findIndex(q => q.id === reportingQuestion.id) + 1
+            : currentIndex + 1
+        }
+        onSubmitReport={handleReportSubmit}
+      />
+
+      {/* WhatsApp & Social Share Modal */}
+      <CbtShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        subject={subject}
+        scoreResult={
+          evaluatedResults
+            ? {
+                score: evaluatedResults.score,
+                totalQuestions: evaluatedResults.effectiveTotal,
+                percentage: evaluatedResults.percentage
+              }
+            : null
+        }
+      />
 
     </div>
   )

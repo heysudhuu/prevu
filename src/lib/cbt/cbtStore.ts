@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
-import { CbtLeaderboardEntry } from './types'
+import { CbtLeaderboardEntry, CbtQuestionReport } from './types'
 
 // Bundled read-only seed data directory (packaged with Next.js build)
 const BUNDLED_DATA_DIR = path.join(process.cwd(), 'src', 'lib', 'cbt', 'data')
@@ -14,6 +14,8 @@ declare global {
   var __prevu_cbt_subjects: any[] | undefined
   // eslint-disable-next-line no-var
   var __prevu_cbt_leaderboard: Record<string, CbtLeaderboardEntry[]> | undefined
+  // eslint-disable-next-line no-var
+  var __prevu_cbt_reports: CbtQuestionReport[] | undefined
 }
 
 const initialSeed: Record<string, CbtLeaderboardEntry[]> = {
@@ -551,3 +553,32 @@ export function updateStoredContributedQuestionDetails(
     return false
   }
 }
+
+/**
+ * Retrieve all reported CBT questions
+ */
+export function getStoredQuestionReports(): CbtQuestionReport[] {
+  if (globalThis.__prevu_cbt_reports && Array.isArray(globalThis.__prevu_cbt_reports)) {
+    return globalThis.__prevu_cbt_reports
+  }
+  const reports = readDataFile('cbt_question_reports.json', []) as CbtQuestionReport[]
+  globalThis.__prevu_cbt_reports = reports
+  return reports
+}
+
+/**
+ * Save a new CBT question report
+ */
+export function saveStoredQuestionReport(report: CbtQuestionReport): boolean {
+  try {
+    const list = [...getStoredQuestionReports()]
+    list.unshift(report)
+    globalThis.__prevu_cbt_reports = list
+    writeDataFile('cbt_question_reports.json', list)
+    return true
+  } catch (err) {
+    console.warn('Error saving CBT question report:', err)
+    return false
+  }
+}
+

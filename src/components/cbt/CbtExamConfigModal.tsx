@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react'
 import { CbtSubject } from '@/lib/cbt/types'
-import { Sparkles, Clock, HelpCircle, AlertCircle, ArrowRight, X, ShieldAlert, Zap } from 'lucide-react'
+import { Sparkles, Clock, HelpCircle, AlertCircle, ArrowRight, X, ShieldAlert, Zap, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
 interface CbtExamConfigModalProps {
@@ -385,6 +385,14 @@ export default function CbtExamConfigModal({
               />
               <div className="w-9 h-5 bg-prevu-surface-light peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-prevu-accent"></div>
             </label>
+          </div>
+
+          {/* Fair-Play Shield Guarantee */}
+          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-xs text-amber-200/90">
+            <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+            <div className="text-[11px] leading-relaxed">
+              <strong className="text-amber-300">Fair-Play Active:</strong> Found an error, typo, or wrong key? Report it during the test — reported questions are automatically exempted from your scoring denominator.
+            </div>
           </div>
 
           {/* Actions */}

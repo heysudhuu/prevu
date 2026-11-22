@@ -25,8 +25,13 @@ import {
   ChevronRight,
   Filter,
   Target,
-  Upload
+  Upload,
+  ClipboardList,
+  FolderDown,
+  HelpCircle,
+  FileCheck
 } from 'lucide-react'
+import { getLiveReappearResources, type LiveReappearResource } from '@/app/actions/reappear'
 
 const PDFViewerModal = dynamic(() => import('@/components/preview/PDFViewerModal'), {
   ssr: false
@@ -1057,6 +1062,183 @@ export const ALL_SEMESTER_REAPPEAR_QUESTIONS: Record<number, ReappearQuestionIte
   ]
 }
 
+// Complete Reappear Assignments & Tutorials for All 8 Semesters
+export interface ReappearAssignmentItem {
+  id: string
+  code: string
+  name: string
+  sem: number
+  assignmentNo: string
+  sheetType: string
+  repeatScore: string
+  topics: string[]
+  description: string
+  downloadCount: string
+}
+
+export const ALL_SEMESTER_REAPPEAR_ASSIGNMENTS: Record<number, ReappearAssignmentItem[]> = {
+  1: [
+    {
+      id: 'ra-1-1',
+      code: '22MAT-101',
+      name: 'Engineering Mathematics - I',
+      sem: 1,
+      assignmentNo: 'Tutorial Sheets 1 to 4 Complete Solved',
+      sheetType: 'Department Tutorial Solutions',
+      repeatScore: '92% Repeated in Remedial',
+      topics: ['Eigenvalues & Vectors', 'Cayley Hamilton Inverses', 'Beta Gamma Evaluation', 'Double Integrals'],
+      description: 'Handwritten step-by-step solutions for all 4 tutorial sheets given by CU department faculty. 8 of these exact problems appeared in 2024 remedial exams.',
+      downloadCount: '1.4k Downloads'
+    },
+    {
+      id: 'ra-1-2',
+      code: '22PHY-101',
+      name: 'Engineering Physics',
+      sem: 1,
+      assignmentNo: 'Remedial Assignment & Numerical Packet',
+      sheetType: 'Official Faculty Assignment',
+      repeatScore: '88% Repeated in Remedial',
+      topics: ['Laser Einstein Coefficients', 'Fiber Numerical Aperture', 'Schrodinger Particle in Box'],
+      description: 'Solved derivations and standard numerical questions assigned for remedial and internal credit recovery.',
+      downloadCount: '980 Downloads'
+    }
+  ],
+  2: [
+    {
+      id: 'ra-2-1',
+      code: '22MAT-102',
+      name: 'Engineering Mathematics - II',
+      sem: 2,
+      assignmentNo: 'Laplace & Fourier Tutorial Solved Workbook',
+      sheetType: 'Tutorial Problem Sheets',
+      repeatScore: '94% Repeated in Remedial',
+      topics: ['Laplace Shifting Theorems', 'Dirac Delta Integrations', 'Half-Range Fourier Series'],
+      description: 'Full solutions to the 24 standard assignment problems submitted to course coordinators with step marks.',
+      downloadCount: '1.2k Downloads'
+    },
+    {
+      id: 'ra-2-2',
+      code: '22CSH-102',
+      name: 'OOP with C++',
+      sem: 2,
+      assignmentNo: 'Lab & Theory Assignment Solutions',
+      sheetType: 'Code & Theory Worksheet',
+      repeatScore: '90% Repeated in Remedial',
+      topics: ['Virtual Destructors', 'Operator Overloading + and <<', 'Templates & Exception Hierarchy'],
+      description: 'Complete verified C++ source implementations and dry-run execution trace tables for all laboratory assignments.',
+      downloadCount: '1.1k Downloads'
+    }
+  ],
+  3: [
+    {
+      id: 'ra-3-1',
+      code: '22CS201',
+      name: 'Data Structures & Algorithms',
+      sem: 3,
+      assignmentNo: 'Tree & Graph Assignment Solved Packet',
+      sheetType: 'Tutorial Problem Sheets',
+      repeatScore: '93% Repeated in Remedial',
+      topics: ['AVL Tree Rotations', 'Dijkstra Matrix Traces', 'Binary Search Tree Deletions'],
+      description: 'Step-by-step tree rotation diagrams and graph matrix update worksheets matching official faculty scoring rubrics.',
+      downloadCount: '1.5k Downloads'
+    },
+    {
+      id: 'ra-3-2',
+      code: '22MAT-201',
+      name: 'Discrete Mathematics',
+      sem: 3,
+      assignmentNo: 'Recurrence & Graphs Assignment Solutions',
+      sheetType: 'Problem Set Solutions',
+      repeatScore: '89% Repeated in Remedial',
+      topics: ['Homogeneous Recurrence Relations', 'Euler Paths & Circuits', 'Combinatorics'],
+      description: 'Characteristic root solutions and graph coloring proofs written for remedial submission and exam prep.',
+      downloadCount: '890 Downloads'
+    }
+  ],
+  4: [
+    {
+      id: 'ra-4-1',
+      code: '23CSH-242',
+      name: 'Operating Systems',
+      sem: 4,
+      assignmentNo: 'Gantt Charts & Banker Algorithm Problem Sheet',
+      sheetType: 'Tutorial Numerical Sheet',
+      repeatScore: '95% Repeated in Remedial',
+      topics: ['Round Robin Scheduling', 'Banker Safety Matrices', 'Page Replacement FIFO/LRU'],
+      description: '15 solved numerical problems showing full process tables, waiting times, and safety sequence verification.',
+      downloadCount: '1.6k Downloads'
+    },
+    {
+      id: 'ra-4-2',
+      code: '23CSH-243',
+      name: 'Database Management Systems',
+      sem: 4,
+      assignmentNo: 'Normalization & SQL Assignment Solutions',
+      sheetType: 'Tutorial Problem Sheets',
+      repeatScore: '91% Repeated in Remedial',
+      topics: ['3NF & BCNF Decomposition', 'Lossless Join Proofs', 'Precedence Graph Serializability'],
+      description: 'Complete attribute closure calculations and dependency preservation proofs for all semester assignments.',
+      downloadCount: '1.3k Downloads'
+    }
+  ],
+  5: [
+    {
+      id: 'ra-5-1',
+      code: '21CSH-311',
+      name: 'Design & Analysis of Algorithms',
+      sem: 5,
+      assignmentNo: 'Dynamic Programming & Greedy Assignment Solutions',
+      sheetType: 'Problem Set Solutions',
+      repeatScore: '92% Repeated in Remedial',
+      topics: ['0/1 Knapsack DP Table', 'Matrix Chain Multiplication', 'Bellman-Ford Tracing'],
+      description: 'Fully worked out dynamic programming matrices and backtracking solution sets for remedial clearance.',
+      downloadCount: '1.4k Downloads'
+    }
+  ],
+  6: [
+    {
+      id: 'ra-6-1',
+      code: '22CST-390',
+      name: 'Theory of Computation',
+      sem: 6,
+      assignmentNo: 'Automata Conversion & TM Assignment Packet',
+      sheetType: 'Tutorial Problem Sheets',
+      repeatScore: '94% Repeated in Remedial',
+      topics: ['NFA to DFA Subset Construction', 'Pumping Lemma Proofs', 'Turing Machine State Diagrams'],
+      description: 'Diagrammed transition tables and Turing machine tape movements for all course assignments.',
+      downloadCount: '1.2k Downloads'
+    }
+  ],
+  7: [
+    {
+      id: 'ra-7-1',
+      code: '22CST-355',
+      name: 'Information Security & Cryptography',
+      sem: 7,
+      assignmentNo: 'RSA & Diffie-Hellman Calculation Sheet',
+      sheetType: 'Tutorial Problem Sheets',
+      repeatScore: '91% Repeated in Remedial',
+      topics: ['RSA Key Generation Numerical', 'Diffie Hellman Modulo Math', 'SHA-256 vs MD5'],
+      description: 'Step-by-step modular arithmetic and encryption calculations required for remedial submissions.',
+      downloadCount: '1.1k Downloads'
+    }
+  ],
+  8: [
+    {
+      id: 'ra-8-1',
+      code: '23CST-407',
+      name: 'Blockchain Technologies',
+      sem: 8,
+      assignmentNo: 'Solidity Smart Contract Security Lab Assignment',
+      sheetType: 'Code & Audit Assignment',
+      repeatScore: '89% Repeated in Remedial',
+      topics: ['Reentrancy Attack Prevention', 'Gas Optimization Techniques', 'Merkle Tree Proofs'],
+      description: 'Complete Solidity smart contract codes and unit tests for internal credit recovery and remedial clearance.',
+      downloadCount: '950 Downloads'
+    }
+  ]
+}
+
 // Complete Reappear Syllabus & Passing Blueprint for All 8 Semesters
 export interface ReappearSyllabusItem {
   id: string
@@ -1314,30 +1496,81 @@ export const ALL_SEMESTER_REAPPEAR_SYLLABUS: Record<number, ReappearSyllabusItem
 }
 
 interface ReappearRescueSectionProps {
-  initialTab?: 'pyqs' | 'notes' | 'questions' | 'syllabus'
+  initialTab?: 'pyqs' | 'materials' | 'notes' | 'questions' | 'syllabus'
+  initialFilter?: 'all' | 'questions' | 'assignments' | 'notes' | 'syllabus'
   initialSem?: number
   isStandalonePage?: boolean
 }
 
 export default function ReappearRescueSection({
   initialTab = 'pyqs',
-  initialSem = 4,
+  initialFilter = 'all',
+  initialSem = 1,
   isStandalonePage = false
 }: ReappearRescueSectionProps) {
   const searchParams = useSearchParams()
 
   const [selectedSem, setSelectedSem] = useState<number>(initialSem)
-  const [activeSubTab, setActiveSubTab] = useState<'pyqs' | 'notes' | 'questions' | 'syllabus'>(initialTab)
+  const [activeTab, setActiveTab] = useState<'pyqs' | 'materials'>(
+    initialTab === 'materials' || initialTab === 'notes' || initialTab === 'questions' || initialTab === 'syllabus'
+      ? 'materials'
+      : 'pyqs'
+  )
+  const [materialFilter, setMaterialFilter] = useState<'all' | 'questions' | 'assignments' | 'notes' | 'syllabus'>(
+    initialTab === 'questions' ? 'questions' :
+    initialTab === 'syllabus' ? 'syllabus' :
+    initialTab === 'notes' ? 'notes' : initialFilter
+  )
+
+  const [liveResources, setLiveResources] = useState<LiveReappearResource[]>([])
+  const [isLoadingLive, setIsLoadingLive] = useState<boolean>(true)
   const [previewResource, setPreviewResource] = useState<any | null>(null)
 
-  // 1. Sync from URL Query Parameters
+  // 1. Fetch live uploaded Reappear resources directly from Supabase
+  useEffect(() => {
+    let isMounted = true
+    setIsLoadingLive(true)
+    getLiveReappearResources(selectedSem)
+      .then((data) => {
+        if (isMounted) {
+          setLiveResources(data)
+          setIsLoadingLive(false)
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to fetch live reappear resources:', err)
+        if (isMounted) setIsLoadingLive(false)
+      })
+    return () => { isMounted = false }
+  }, [selectedSem])
+
+  // 2. Sync from URL Query Parameters
   useEffect(() => {
     if (!searchParams) return
     const tabParam = searchParams.get('tab')
-    if (tabParam === 'pyqs') setActiveSubTab('pyqs')
-    else if (tabParam === 'notes' || tabParam === 'materials') setActiveSubTab('notes')
-    else if (tabParam === 'questions') setActiveSubTab('questions')
-    else if (tabParam === 'syllabus') setActiveSubTab('syllabus')
+    if (tabParam === 'pyqs' || tabParam === 'pyq') {
+      setActiveTab('pyqs')
+    } else if (tabParam === 'materials' || tabParam === 'material' || tabParam === 'study_material') {
+      setActiveTab('materials')
+    } else if (tabParam === 'questions') {
+      setActiveTab('materials')
+      setMaterialFilter('questions')
+    } else if (tabParam === 'notes') {
+      setActiveTab('materials')
+      setMaterialFilter('notes')
+    } else if (tabParam === 'assignments' || tabParam === 'assignment') {
+      setActiveTab('materials')
+      setMaterialFilter('assignments')
+    } else if (tabParam === 'syllabus') {
+      setActiveTab('materials')
+      setMaterialFilter('syllabus')
+    }
+
+    const filterParam = searchParams.get('filter')
+    if (filterParam === 'questions') setMaterialFilter('questions')
+    else if (filterParam === 'assignments') setMaterialFilter('assignments')
+    else if (filterParam === 'notes') setMaterialFilter('notes')
+    else if (filterParam === 'syllabus') setMaterialFilter('syllabus')
 
     const semParam = searchParams.get('semester') || searchParams.get('sem')
     if (semParam && !isNaN(parseInt(semParam))) {
@@ -1345,7 +1578,7 @@ export default function ReappearRescueSection({
     }
   }, [searchParams])
 
-  // 2. Sync active semester from SemesterSwitcherPill
+  // 3. Sync active semester from SemesterSwitcherPill
   useEffect(() => {
     try {
       const stored = localStorage.getItem('prevu_active_semester')
@@ -1366,19 +1599,37 @@ export default function ReappearRescueSection({
     return () => window.removeEventListener('prevu_semester_change', handleSemChange)
   }, [])
 
-  // 3. Listen to Reappear Tab Change Custom Event from HeaderNav
+  // 4. Listen to Reappear Tab Change Custom Event from HeaderNav
   useEffect(() => {
     const handleTabChange = (e: Event) => {
-      const custom = e as CustomEvent<{ tab: 'pyqs' | 'notes' | 'questions' | 'syllabus' }>
+      const custom = e as CustomEvent<{ tab: string }>
       if (custom.detail?.tab) {
-        setActiveSubTab(custom.detail.tab)
+        const t = custom.detail.tab
+        if (t === 'pyqs' || t === 'pyq') {
+          setActiveTab('pyqs')
+        } else if (t === 'questions') {
+          setActiveTab('materials')
+          setMaterialFilter('questions')
+        } else if (t === 'notes') {
+          setActiveTab('materials')
+          setMaterialFilter('notes')
+        } else if (t === 'assignments') {
+          setActiveTab('materials')
+          setMaterialFilter('assignments')
+        } else if (t === 'syllabus') {
+          setActiveTab('materials')
+          setMaterialFilter('syllabus')
+        } else {
+          setActiveTab('materials')
+          setMaterialFilter('all')
+        }
       }
     }
     window.addEventListener('prevu_reappear_tab_change', handleTabChange)
     return () => window.removeEventListener('prevu_reappear_tab_change', handleTabChange)
   }, [])
 
-  // 4. Smooth scroll on hash anchor #reappear-rescue
+  // 5. Smooth scroll on hash anchor #reappear-rescue
   useEffect(() => {
     if (typeof window !== 'undefined' && window.location.hash === '#reappear-rescue') {
       const el = document.getElementById('reappear-rescue')
@@ -1388,9 +1639,29 @@ export default function ReappearRescueSection({
     }
   }, [])
 
+  // Split live uploaded resources into PYQ papers vs Study Material
+  const livePyqs = liveResources.filter(r => {
+    const t = (r.exam_types?.name || '').toLowerCase()
+    return t.includes('pyq') || t.includes('question paper') || t.includes('paper')
+  })
+
+  const liveMaterials = liveResources.filter(r => !livePyqs.includes(r))
+
+  // Live materials filtered by selected filter chip
+  const filteredLiveMaterials = liveMaterials.filter(r => {
+    if (materialFilter === 'all') return true
+    const t = (r.exam_types?.name || '').toLowerCase()
+    if (materialFilter === 'questions') return t.includes('question')
+    if (materialFilter === 'assignments') return t.includes('assignment')
+    if (materialFilter === 'notes') return t.includes('notes') || t.includes('material')
+    if (materialFilter === 'syllabus') return t.includes('syllabus')
+    return true
+  })
+
   const semesterPyqs = ALL_SEMESTER_REAPPEAR_PYQS[selectedSem] || []
   const semesterMaterials = ALL_SEMESTER_REAPPEAR_MATERIALS[selectedSem] || []
   const semesterQuestions = ALL_SEMESTER_REAPPEAR_QUESTIONS[selectedSem] || []
+  const semesterAssignments = ALL_SEMESTER_REAPPEAR_ASSIGNMENTS[selectedSem] || []
   const semesterSyllabus = ALL_SEMESTER_REAPPEAR_SYLLABUS[selectedSem] || []
 
   return (
@@ -1398,7 +1669,7 @@ export default function ReappearRescueSection({
       
       {/* Background Ambience */}
       <div className="absolute right-0 top-1/4 w-[500px] h-[350px] bg-amber-500/5 blur-[140px] pointer-events-none" />
-      <div className="absolute left-0 bottom-1/4 w-[500px] h-[350px] bg-rose-500/5 blur-[140px] pointer-events-none" />
+      <div className="absolute left-0 bottom-1/4 w-[500px] h-[350px] bg-emerald-500/5 blur-[140px] pointer-events-none" />
 
       <div className="container mx-auto px-4 max-w-6xl 2xl:max-w-[1720px] relative z-10">
 
@@ -1410,94 +1681,60 @@ export default function ReappearRescueSection({
           </div>
 
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight mb-3">
-            Reappear PYQs &amp; <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-rose-300 to-emerald-400">80/20 Crash Material</span>
+            Reappear PYQs &amp; <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-emerald-300 to-teal-400">Study Material</span>
           </h2>
 
           <p className="text-xs sm:text-sm text-[#7d8590] max-w-2xl leading-relaxed">
-            Specialized remedial question papers (PYQs), high-frequency repeated questions bank, passing blueprints, and concise one-night revision guides engineered to help you clear any semester backlog on the first attempt.
+            Everything you need to clear backlogs on the first attempt: past remedial question papers, repeated 10-mark questions bank, solved assignments, and 80/20 crash notes.
           </p>
 
-          {/* 4 Primary Sub-Tabs: PYQs, 80/20 Notes, Question Bank, Syllabus & Passing Plan */}
-          <div className="flex flex-wrap items-center justify-center gap-2.5 mt-6">
-            <div className="flex flex-wrap items-center justify-center gap-1.5 p-1.5 rounded-2xl bg-[#161b22] border border-[#30363d] shadow-xl">
+          {/* 2 CORE PILLARS: Reappear PYQ vs Reappear Study Material */}
+          <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
+            <div className="flex items-center justify-center gap-2 p-1.5 rounded-2xl bg-[#161b22] border border-[#30363d] shadow-xl">
               
-              {/* Tab 1: Reappear PYQs */}
+              {/* Pillar 1: Reappear PYQ */}
               <button
                 type="button"
-                onClick={() => setActiveSubTab('pyqs')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-                  activeSubTab === 'pyqs'
+                onClick={() => setActiveTab('pyqs')}
+                className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                  activeTab === 'pyqs'
                     ? 'bg-amber-500 text-black shadow-md shadow-amber-500/30 font-extrabold'
                     : 'text-[#7d8590] hover:text-white hover:bg-[#21262d]'
                 }`}
               >
-                <FileText className="w-3.5 h-3.5" />
+                <FileText className="w-4 h-4" />
                 <span>Reappear PYQs</span>
-                <span className={`px-1.5 py-0.5 rounded text-[10px] ${activeSubTab === 'pyqs' ? 'bg-black/20 text-black' : 'bg-[#21262d] text-[#7d8590]'}`}>
-                  Sem {selectedSem}
+                <span className={`px-2 py-0.5 rounded text-[10px] ${activeTab === 'pyqs' ? 'bg-black/20 text-black font-extrabold' : 'bg-[#21262d] text-[#7d8590]'}`}>
+                  Sem {selectedSem} ({livePyqs.length + semesterPyqs.length})
                 </span>
               </button>
 
-              {/* Tab 2: 80/20 Crash Notes */}
+              {/* Pillar 2: Reappear Study Material */}
               <button
                 type="button"
-                onClick={() => setActiveSubTab('notes')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-                  activeSubTab === 'notes'
-                    ? 'bg-emerald-500 text-black shadow-md shadow-emerald-500/30 font-extrabold'
+                onClick={() => setActiveTab('materials')}
+                className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                  activeTab === 'materials'
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-black shadow-md shadow-emerald-500/30 font-extrabold'
                     : 'text-[#7d8590] hover:text-white hover:bg-[#21262d]'
                 }`}
               >
-                <BookOpen className="w-3.5 h-3.5" />
-                <span>80/20 Crash Notes</span>
-                <span className={`px-1.5 py-0.5 rounded text-[10px] ${activeSubTab === 'notes' ? 'bg-black/20 text-black' : 'bg-[#21262d] text-[#7d8590]'}`}>
-                  One-Night
-                </span>
-              </button>
-
-              {/* Tab 3: Reappear Questions Bank */}
-              <button
-                type="button"
-                onClick={() => setActiveSubTab('questions')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-                  activeSubTab === 'questions'
-                    ? 'bg-purple-500 text-white shadow-md shadow-purple-500/30 font-extrabold'
-                    : 'text-[#7d8590] hover:text-white hover:bg-[#21262d]'
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Questions Bank</span>
-                <span className={`px-1.5 py-0.5 rounded text-[10px] ${activeSubTab === 'questions' ? 'bg-white/20 text-white' : 'bg-[#21262d] text-[#7d8590]'}`}>
-                  High-Yield
-                </span>
-              </button>
-
-              {/* Tab 4: Reappear Syllabus & Passing Plan */}
-              <button
-                type="button"
-                onClick={() => setActiveSubTab('syllabus')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-                  activeSubTab === 'syllabus'
-                    ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30 font-extrabold'
-                    : 'text-[#7d8590] hover:text-white hover:bg-[#21262d]'
-                }`}
-              >
-                <Target className="w-3.5 h-3.5" />
-                <span>Syllabus &amp; Passing Plan</span>
-                <span className={`px-1.5 py-0.5 rounded text-[10px] ${activeSubTab === 'syllabus' ? 'bg-white/20 text-white' : 'bg-[#21262d] text-[#7d8590]'}`}>
-                  Blueprint
+                <BookOpen className="w-4 h-4" />
+                <span>Reappear Study Material</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] ${activeTab === 'materials' ? 'bg-black/20 text-black font-extrabold' : 'bg-[#21262d] text-[#7d8590]'}`}>
+                  Imp Ques &amp; Assignments
                 </span>
               </button>
             </div>
 
-            {/* Direct Upload Reappear Resource Action Button */}
+            {/* Direct Upload Reappear Resource Action Button (Contextual) */}
             <Link
-              href={`/upload?category=reappear&semester=${selectedSem}`}
+              href={`/upload?category=reappear&semester=${selectedSem}&sub=${activeTab === 'pyqs' ? 'pyq' : 'study_material'}`}
               className="px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black shadow-lg shadow-amber-500/25 border border-amber-300/40 cursor-pointer"
-              title="Upload Reappear Question Papers, Notes, or Syllabi"
+              title={activeTab === 'pyqs' ? 'Upload Remedial PYQ Paper' : 'Upload Important Questions, Notes, or Assignments'}
             >
               <Upload className="w-4 h-4 text-black" />
-              <span>Upload Reappear Resource</span>
+              <span>{activeTab === 'pyqs' ? 'Upload Reappear PYQ' : 'Upload Study Material'}</span>
             </Link>
           </div>
         </div>
@@ -1520,388 +1757,692 @@ export default function ReappearRescueSection({
           ))}
         </div>
 
-        {/* VIEW 1: REAPPEAR PYQS */}
-        {activeSubTab === 'pyqs' && (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`reappear-pyqs-${selectedSem}`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
-            >
-              {semesterPyqs.map(paper => (
-                <div
-                  key={paper.id}
-                  className="p-5 rounded-2xl bg-[#161b22] border border-[#30363d] hover:border-amber-500/50 hover:shadow-[0_0_25px_rgba(245,158,11,0.12)] transition-all flex flex-col justify-between group text-left relative"
-                >
-                  <div>
-                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#30363d]/60">
-                      <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/25 flex items-center gap-1">
-                        <Flame className="w-3 h-3 text-amber-400" />
-                        {paper.repeatScore}
-                      </span>
-                      <span className="text-[10px] text-[#7d8590] bg-[#0d1117] px-2 py-0.5 rounded border border-[#30363d]">
-                        Sem {paper.sem} Remedial
-                      </span>
-                    </div>
+        {/* ============================================================ */}
+        {/* PILLAR 1: REAPPEAR PYQs (QUESTION PAPERS & SOLVED PAPERS) */}
+        {/* ============================================================ */}
+        {activeTab === 'pyqs' && (
+          <div className="space-y-6">
 
-                    <div className="mb-3">
-                      <span className="text-xs text-amber-300 font-bold">{paper.code}</span>
-                      <h3 className="text-base font-bold text-white group-hover:text-amber-300 transition-colors mt-0.5 line-clamp-1">
-                        {paper.name}
-                      </h3>
-                      <div className="text-[11px] text-emerald-400 flex items-center gap-1.5 mt-1">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                        <span className="line-clamp-1">{paper.reappearType}</span>
-                      </div>
-                    </div>
-
-                    {/* Repeated Exam Prompt */}
-                    <div className="p-3 rounded-xl bg-[#0d1117] border border-[#30363d]/80 text-[#e6edf3] text-xs leading-relaxed mb-4">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-[#7d8590] mb-1 flex items-center justify-between">
-                        <span>Frequent Exam Prompt</span>
-                        <span className="text-amber-400">10 Marks</span>
-                      </div>
-                      <p className="text-[11px] text-[#c9d1d9] italic line-clamp-2">
-                        &ldquo;{paper.sampleQuestion}&rdquo;
-                      </p>
-                    </div>
-
-                    {/* Key Topics */}
-                    <div className="space-y-1 mb-4">
-                      <span className="text-[10px] text-[#7d8590] font-semibold uppercase tracking-wider block">
-                        Guaranteed Modules:
-                      </span>
-                      <div className="flex flex-wrap gap-1">
-                        {paper.topics.map(t => (
-                          <span key={t} className="text-[10px] px-2 py-0.5 rounded bg-[#21262d] text-[#c9d1d9] border border-[#30363d]">
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Verification Ribbon */}
-                    <div className="mt-3 mb-2 p-2 rounded-xl bg-[#0d1117] border border-[#30363d]/60 flex items-center justify-between text-[11px] font-mono">
-                      <div className="flex items-center gap-2 truncate">
-                        <div className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center justify-center text-[10px] font-bold shrink-0">
-                          {paper.code[0]?.toUpperCase() || 'R'}
-                        </div>
-                        <div className="truncate">
-                          <span className="text-white font-semibold truncate">
-                            @{paper.demoResource?.users?.username || 'cu_remedial_topper'}
-                          </span>
-                          <span className="ml-1 text-[9px] text-amber-400 font-bold" title="CU Verified Scholar">✓</span>
-                        </div>
-                      </div>
-                      <span className="text-[10px] text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30">
-                        Remedial Key
-                      </span>
-                    </div>
+            {/* LIVE DATABASE UPLOADS SECTION (REAL UPLOADS GROUNDING) */}
+            {livePyqs.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pb-1 border-b border-amber-500/30">
+                  <div className="flex items-center gap-2 text-xs font-bold text-amber-300 uppercase tracking-wider">
+                    <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+                    <span>Live Student &amp; Admin Uploads ({livePyqs.length})</span>
                   </div>
-
-                  <div className="pt-3 border-t border-[#30363d]/60 flex items-center justify-between gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setPreviewResource(paper.demoResource)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold transition-all cursor-pointer shadow-md shadow-amber-500/20"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>Preview Solved</span>
-                    </button>
-
-                    <Link
-                      href={`/browse?search=${encodeURIComponent(paper.code)}`}
-                      className="text-xs text-[#7d8590] hover:text-white transition-colors flex items-center gap-1"
-                    >
-                      <span>All Papers</span>
-                      <ChevronRight className="w-3 h-3 text-amber-400" />
-                    </Link>
-                  </div>
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+                    Live Supabase Vault
+                  </span>
                 </div>
-              ))}
-            </motion.div>
-          </AnimatePresence>
-        )}
 
-        {/* VIEW 2: 80/20 REAPPEAR CRASH NOTES */}
-        {activeSubTab === 'notes' && (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`reappear-materials-${selectedSem}`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-5"
-            >
-              {semesterMaterials.map(mat => (
-                <div
-                  key={mat.id}
-                  className="p-5 rounded-2xl bg-[#161b22] border border-[#30363d] hover:border-emerald-500/50 hover:shadow-[0_0_25px_rgba(16,185,129,0.12)] transition-all flex flex-col justify-between group text-left relative"
-                >
-                  <div>
-                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#30363d]/60">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${mat.tagColor}`}>
-                        {mat.tag}
-                      </span>
-                      <div className="flex items-center gap-1.5 text-[10px] text-[#7d8590]">
-                        <span>{mat.pages}</span>
-                        <span>•</span>
-                        <span>{mat.size}</span>
-                      </div>
-                    </div>
-
-                    <div className="mb-3">
-                      <span className="text-xs text-emerald-400 font-bold">{mat.code}</span>
-                      <h3 className="text-base font-bold text-white group-hover:text-emerald-300 transition-colors mt-0.5 leading-snug">
-                        {mat.title}
-                      </h3>
-                      <p className="text-xs text-[#7d8590] mt-2 leading-relaxed">
-                        {mat.description}
-                      </p>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-[#0d1117] border border-[#30363d]/80 mb-4 space-y-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#7d8590] block mb-1">
-                        Must-Learn Units in this Crash Guide:
-                      </span>
-                      {mat.highlights.map(h => (
-                        <div key={h} className="flex items-center gap-1.5 text-[11px] text-[#c9d1d9]">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
-                          <span className="truncate">{h}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Contributor Ribbon */}
-                    <div className="mt-3 mb-2 p-2 rounded-xl bg-[#0d1117] border border-[#30363d]/60 flex items-center justify-between text-[11px] font-mono">
-                      <div className="flex items-center gap-2 truncate">
-                        <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-[10px] font-bold shrink-0">
-                          {mat.code[0]?.toUpperCase() || 'M'}
-                        </div>
-                        <div className="truncate">
-                          <span className="text-white font-semibold truncate">
-                            @cu_topper_notes
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {livePyqs.map(paper => (
+                    <div
+                      key={paper.id}
+                      className="p-5 rounded-2xl bg-gradient-to-b from-[#1c2128] to-[#161b22] border-2 border-amber-500/60 shadow-[0_0_25px_rgba(245,158,11,0.18)] transition-all flex flex-col justify-between group text-left relative"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between pb-3 mb-3 border-b border-amber-500/30">
+                          <span className="text-[10px] font-bold text-black bg-amber-400 px-2.5 py-0.5 rounded-full flex items-center gap-1 font-mono uppercase">
+                            <Sparkles className="w-3 h-3 text-black" />
+                            Verified Upload
                           </span>
-                          <span className="ml-1 text-[9px] text-emerald-400 font-bold" title="CU Verified Scholar">✓</span>
-                        </div>
-                      </div>
-                      <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
-                        80/20 Guide
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="pt-3 border-t border-[#30363d]/60 flex items-center justify-between gap-2">
-                    <Link
-                      href={`/study-material?search=${encodeURIComponent(mat.code)}`}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-600/20"
-                    >
-                      <BookOpen className="w-3.5 h-3.5" />
-                      <span>Open Crash Guide</span>
-                    </Link>
-
-                    <Link
-                      href={`/browse?search=${encodeURIComponent(mat.code)}`}
-                      className="text-xs text-[#7d8590] hover:text-white transition-colors flex items-center gap-1"
-                    >
-                      <span>Pair with PYQ</span>
-                      <ChevronRight className="w-3 h-3 text-emerald-400" />
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </motion.div>
-          </AnimatePresence>
-        )}
-
-        {/* VIEW 3: REAPPEAR QUESTIONS BANK */}
-        {activeSubTab === 'questions' && (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`reappear-questions-${selectedSem}`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-5"
-            >
-              {semesterQuestions.map(q => (
-                <div
-                  key={q.id}
-                  className="p-5 rounded-2xl bg-[#161b22] border border-[#30363d] hover:border-purple-500/50 hover:shadow-[0_0_25px_rgba(168,85,247,0.12)] transition-all flex flex-col justify-between group text-left relative"
-                >
-                  <div>
-                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#30363d]/60">
-                      <span className="text-[10px] font-bold text-purple-300 bg-purple-500/15 px-2.5 py-0.5 rounded-full border border-purple-500/30 flex items-center gap-1.5">
-                        <Flame className="w-3 h-3 text-purple-400" />
-                        {q.repeatScore}
-                      </span>
-                      <span className="text-[10px] text-amber-300 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/25">
-                        {q.marks}
-                      </span>
-                    </div>
-
-                    <div className="mb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-purple-400 font-bold">{q.code}</span>
-                        <span className="text-[10px] font-mono text-[#7d8590]">• {q.topic}</span>
-                      </div>
-                      <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-purple-300 transition-colors mt-0.5 leading-snug">
-                        {q.name}
-                      </h3>
-                    </div>
-
-                    {/* Question Prompt */}
-                    <div className="p-3.5 rounded-xl bg-[#0d1117] border border-purple-500/20 text-[#e6edf3] text-xs leading-relaxed mb-4">
-                      <div className="text-[10px] font-mono uppercase tracking-wider text-purple-400 font-bold mb-1.5 flex items-center gap-1">
-                        <Sparkles className="w-3 h-3" />
-                        <span>Repeated Exam Problem</span>
-                      </div>
-                      <p className="text-xs text-[#c9d1d9] font-sans font-medium">
-                        &ldquo;{q.questionText}&rdquo;
-                      </p>
-                    </div>
-
-                    {/* Solution Key Outline */}
-                    <div className="p-3 rounded-xl bg-[#0d1117]/80 border border-[#30363d]/70 text-xs mb-4 space-y-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#7d8590] block mb-1">
-                        Passing Solution Outline:
-                      </span>
-                      <p className="text-[11px] text-[#8b949e] leading-relaxed">
-                        {q.solutionSummary}
-                      </p>
-                    </div>
-
-                    {/* Repetition History Tags */}
-                    <div className="space-y-1 mb-2">
-                      <span className="text-[10px] text-[#7d8590] font-semibold uppercase tracking-wider block">
-                        Verified Exam Appearances:
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {q.yearHistory.map(y => (
-                          <span key={y} className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#21262d] text-amber-300/90 border border-amber-500/20">
-                            {y}
+                          <span className="text-[10px] text-amber-300 font-mono bg-amber-500/15 px-2 py-0.5 rounded border border-amber-500/30">
+                            Sem {paper.subjects?.semester || selectedSem} Remedial
                           </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+                        </div>
 
-                  <div className="pt-3 border-t border-[#30363d]/60 flex items-center justify-between gap-2">
-                    <Link
-                      href={`/browse?search=${encodeURIComponent(q.code)}`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-md shadow-purple-600/20"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>View Solved Papers</span>
-                    </Link>
-
-                    <Link
-                      href={`/study-material?search=${encodeURIComponent(q.code)}`}
-                      className="text-xs text-[#7d8590] hover:text-white transition-colors flex items-center gap-1"
-                    >
-                      <span>Study Notes</span>
-                      <ChevronRight className="w-3 h-3 text-purple-400" />
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </motion.div>
-          </AnimatePresence>
-        )}
-
-        {/* VIEW 4: REAPPEAR SYLLABUS & PASSING PLAN */}
-        {activeSubTab === 'syllabus' && (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`reappear-syllabus-${selectedSem}`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-5"
-            >
-              {semesterSyllabus.map(syl => (
-                <div
-                  key={syl.id}
-                  className="p-5 rounded-2xl bg-[#161b22] border border-[#30363d] hover:border-rose-500/50 hover:shadow-[0_0_25px_rgba(244,63,94,0.12)] transition-all flex flex-col justify-between group text-left relative"
-                >
-                  <div>
-                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#30363d]/60">
-                      <span className="text-[10px] font-bold text-rose-300 bg-rose-500/15 px-2.5 py-0.5 rounded-full border border-rose-500/30 flex items-center gap-1.5">
-                        <Target className="w-3 h-3 text-rose-400" />
-                        {syl.passingConfidence}
-                      </span>
-                      <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/25">
-                        EST Pass: {syl.estPassingMarks}
-                      </span>
-                    </div>
-
-                    <div className="mb-3">
-                      <span className="text-xs text-rose-400 font-bold">{syl.code}</span>
-                      <h3 className="text-base font-bold text-white group-hover:text-rose-300 transition-colors mt-0.5 leading-snug">
-                        {syl.name}
-                      </h3>
-                      <div className="text-[11px] text-[#7d8590] mt-1">
-                        Minimum Passing Threshold: <span className="text-white font-semibold">{syl.totalPassingMarks}</span>
-                      </div>
-                    </div>
-
-                    {/* Must-Pass Priority Units */}
-                    <div className="space-y-2 mb-4">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#7d8590] block">
-                        Priority 1 Passing Units (Guaranteed High-Yield):
-                      </span>
-                      {syl.mustPassUnits.map((u, idx) => (
-                        <div key={idx} className="p-3 rounded-xl bg-[#0d1117] border border-rose-500/20 text-xs space-y-1">
-                          <div className="flex items-center justify-between text-white font-bold">
-                            <span className="text-rose-300">{u.unit}: {u.name}</span>
-                            <span className="text-amber-400 font-mono text-[11px]">{u.weight}</span>
+                        <div className="mb-3">
+                          <span className="text-xs text-amber-300 font-bold font-mono">
+                            {paper.subjects?.code || 'CSE'} • {paper.exam_types?.name || 'Reappear Paper'}
+                          </span>
+                          <h3 className="text-base font-extrabold text-white group-hover:text-amber-300 transition-colors mt-0.5 line-clamp-1">
+                            {paper.subjects?.name || paper.original_filename}
+                          </h3>
+                          <div className="text-[11px] text-[#8b949e] font-mono mt-1 truncate">
+                            File: {paper.original_filename}
                           </div>
-                          <p className="text-[11px] text-[#8b949e]">
-                            Expected Prompts: {u.expectedQuestions}
+                        </div>
+
+                        {/* Uploader & Session badge */}
+                        <div className="mt-4 mb-2 p-2.5 rounded-xl bg-[#0d1117] border border-amber-500/30 flex items-center justify-between text-[11px] font-mono">
+                          <div className="flex items-center gap-2 truncate">
+                            <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center justify-center text-[10px] font-bold shrink-0">
+                              {paper.users?.username?.[0]?.toUpperCase() || 'U'}
+                            </div>
+                            <div className="truncate">
+                              <span className="text-white font-semibold truncate">
+                                @{paper.users?.username || 'cu_scholar'}
+                              </span>
+                              <span className="ml-1 text-[9px] text-amber-400 font-bold">✓</span>
+                            </div>
+                          </div>
+                          <span className="text-[10px] text-amber-300 font-bold">
+                            {paper.exam_year} Session
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-[#30363d]/60 flex items-center justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewResource({
+                            id: paper.id,
+                            exam_year: paper.exam_year,
+                            original_filename: paper.original_filename,
+                            file_path: paper.file_path,
+                            file_type: paper.file_type || 'application/pdf',
+                            subjects: paper.subjects,
+                            exam_types: paper.exam_types,
+                            users: paper.users
+                          })}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold transition-all cursor-pointer shadow-md shadow-amber-500/25"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Preview Paper</span>
+                        </button>
+
+                        <a
+                          href={`/api/download/${paper.id}`}
+                          download
+                          className="inline-flex items-center gap-1 text-xs text-[#7d8590] hover:text-white transition-colors"
+                        >
+                          <Download className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Download</span>
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* CURATED REAPPEAR PYQS WITH REPEAT RATE */}
+            <div className="space-y-3">
+              {livePyqs.length > 0 && (
+                <div className="text-xs font-bold text-[#7d8590] uppercase tracking-wider pt-2">
+                  High-Frequency Remedial Archive
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {semesterPyqs.map(paper => (
+                  <div
+                    key={paper.id}
+                    className="p-5 rounded-2xl bg-[#161b22] border border-[#30363d] hover:border-amber-500/50 hover:shadow-[0_0_25px_rgba(245,158,11,0.12)] transition-all flex flex-col justify-between group text-left relative"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#30363d]/60">
+                        <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/25 flex items-center gap-1">
+                          <Flame className="w-3 h-3 text-amber-400" />
+                          {paper.repeatScore}
+                        </span>
+                        <span className="text-[10px] text-[#7d8590] bg-[#0d1117] px-2 py-0.5 rounded border border-[#30363d]">
+                          Sem {paper.sem} Remedial
+                        </span>
+                      </div>
+
+                      <div className="mb-3">
+                        <span className="text-xs text-amber-300 font-bold">{paper.code}</span>
+                        <h3 className="text-base font-bold text-white group-hover:text-amber-300 transition-colors mt-0.5 line-clamp-1">
+                          {paper.name}
+                        </h3>
+                        <div className="text-[11px] text-emerald-400 flex items-center gap-1.5 mt-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          <span className="line-clamp-1">{paper.reappearType}</span>
+                        </div>
+                      </div>
+
+                      {/* Repeated Exam Prompt */}
+                      <div className="p-3 rounded-xl bg-[#0d1117] border border-[#30363d]/80 text-[#e6edf3] text-xs leading-relaxed mb-4">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-[#7d8590] mb-1 flex items-center justify-between">
+                          <span>Frequent Exam Prompt</span>
+                          <span className="text-amber-400">10 Marks</span>
+                        </div>
+                        <p className="text-[11px] text-[#c9d1d9] italic line-clamp-2">
+                          &ldquo;{paper.sampleQuestion}&rdquo;
+                        </p>
+                      </div>
+
+                      {/* Key Topics */}
+                      <div className="space-y-1 mb-4">
+                        <span className="text-[10px] text-[#7d8590] font-semibold uppercase tracking-wider block">
+                          Guaranteed Modules:
+                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {paper.topics.map(t => (
+                            <span key={t} className="text-[10px] px-2 py-0.5 rounded bg-[#21262d] text-[#c9d1d9] border border-[#30363d]">
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-[#30363d]/60 flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewResource(paper.demoResource)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold transition-all cursor-pointer shadow-md shadow-amber-500/20"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Preview Solved</span>
+                      </button>
+
+                      <Link
+                        href={`/browse?search=${encodeURIComponent(paper.code)}`}
+                        className="text-xs text-[#7d8590] hover:text-white transition-colors flex items-center gap-1"
+                      >
+                        <span>All Papers</span>
+                        <ChevronRight className="w-3 h-3 text-amber-400" />
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* PILLAR 2: REAPPEAR STUDY MATERIAL (IMP QUES, ASSIGNMENT, NOTES, SYLLABUS) */}
+        {/* ============================================================ */}
+        {activeTab === 'materials' && (
+          <div className="space-y-6">
+
+            {/* Filter Chips inside Study Material */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              <button
+                type="button"
+                onClick={() => setMaterialFilter('all')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                  materialFilter === 'all'
+                    ? 'bg-emerald-500 text-black border-emerald-400 font-extrabold shadow-md shadow-emerald-500/20'
+                    : 'bg-[#161b22] border-[#30363d] text-[#7d8590] hover:text-white'
+                }`}
+              >
+                <span>⭐ All Study Material</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMaterialFilter('questions')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                  materialFilter === 'questions'
+                    ? 'bg-purple-500 text-white border-purple-400 font-extrabold shadow-md shadow-purple-500/20'
+                    : 'bg-[#161b22] border-[#30363d] text-[#7d8590] hover:text-white'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                <span>Important Questions</span>
+                <span className="text-[10px] font-mono px-1 rounded bg-black/30">10-Mark</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMaterialFilter('assignments')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                  materialFilter === 'assignments'
+                    ? 'bg-cyan-500 text-black border-cyan-400 font-extrabold shadow-md shadow-cyan-500/20'
+                    : 'bg-[#161b22] border-[#30363d] text-[#7d8590] hover:text-white'
+                }`}
+              >
+                <ClipboardList className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Assignments &amp; Tutorials</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMaterialFilter('notes')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                  materialFilter === 'notes'
+                    ? 'bg-emerald-500 text-black border-emerald-400 font-extrabold shadow-md shadow-emerald-500/20'
+                    : 'bg-[#161b22] border-[#30363d] text-[#7d8590] hover:text-white'
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
+                <span>80/20 Crash Notes</span>
+                <span className="text-[10px] font-mono px-1 rounded bg-black/30">One-Night</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMaterialFilter('syllabus')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                  materialFilter === 'syllabus'
+                    ? 'bg-rose-500 text-white border-rose-400 font-extrabold shadow-md shadow-rose-500/20'
+                    : 'bg-[#161b22] border-[#30363d] text-[#7d8590] hover:text-white'
+                }`}
+              >
+                <Target className="w-3.5 h-3.5 text-rose-400" />
+                <span>Syllabus &amp; Passing Plan</span>
+                <span className="text-[10px] font-mono px-1 rounded bg-black/30">24/60</span>
+              </button>
+            </div>
+
+            {/* LIVE UPLOADED STUDY MATERIALS FROM DATABASE */}
+            {filteredLiveMaterials.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pb-1 border-b border-emerald-500/30">
+                  <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 uppercase tracking-wider">
+                    <Sparkles className="w-4 h-4 text-emerald-400 animate-pulse" />
+                    <span>Live Contributed Study Materials ({filteredLiveMaterials.length})</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+                    Sem {selectedSem} Uploads
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {filteredLiveMaterials.map(mat => (
+                    <div
+                      key={mat.id}
+                      className="p-5 rounded-2xl bg-gradient-to-b from-[#1c2128] to-[#161b22] border-2 border-emerald-500/60 shadow-[0_0_25px_rgba(16,185,129,0.18)] transition-all flex flex-col justify-between group text-left relative"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between pb-3 mb-3 border-b border-emerald-500/30">
+                          <span className="text-[10px] font-bold text-black bg-emerald-400 px-2.5 py-0.5 rounded-full flex items-center gap-1 font-mono uppercase">
+                            <Sparkles className="w-3 h-3 text-black" />
+                            {mat.exam_types?.name || 'Study Material'}
+                          </span>
+                          <span className="text-[10px] text-emerald-300 font-mono bg-emerald-500/15 px-2 py-0.5 rounded border border-emerald-500/30">
+                            Sem {mat.subjects?.semester || selectedSem}
+                          </span>
+                        </div>
+
+                        <div className="mb-3">
+                          <span className="text-xs text-emerald-400 font-bold font-mono">
+                            {mat.subjects?.code || 'CSE'} • {mat.subjects?.name}
+                          </span>
+                          <h3 className="text-base font-extrabold text-white group-hover:text-emerald-300 transition-colors mt-0.5 line-clamp-1">
+                            {mat.original_filename}
+                          </h3>
+                        </div>
+
+                        <div className="mt-3 mb-2 p-2.5 rounded-xl bg-[#0d1117] border border-emerald-500/30 flex items-center justify-between text-[11px] font-mono">
+                          <span className="text-white font-semibold truncate">
+                            @{mat.users?.username || 'cu_scholar'}
+                          </span>
+                          <span className="text-[10px] text-emerald-300 font-bold">
+                            {mat.exam_year} Session
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-[#30363d]/60 flex items-center justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewResource({
+                            id: mat.id,
+                            exam_year: mat.exam_year,
+                            original_filename: mat.original_filename,
+                            file_path: mat.file_path,
+                            file_type: mat.file_type || 'application/pdf',
+                            subjects: mat.subjects,
+                            exam_types: mat.exam_types,
+                            users: mat.users
+                          })}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer shadow-md shadow-emerald-600/20"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Preview Document</span>
+                        </button>
+
+                        <a
+                          href={`/api/download/${mat.id}`}
+                          download
+                          className="inline-flex items-center gap-1 text-xs text-[#7d8590] hover:text-white transition-colors"
+                        >
+                          <Download className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Download</span>
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SECTION 1: IMPORTANT QUESTIONS BANK */}
+            {(materialFilter === 'all' || materialFilter === 'questions') && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pb-1 border-b border-purple-500/30">
+                  <div className="flex items-center gap-2 text-xs font-bold text-purple-300 uppercase tracking-wider">
+                    <Sparkles className="w-4 h-4 text-purple-400" />
+                    <span>Important Questions &amp; Repeating Prompts</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/30">
+                    High-Probability 10M
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {semesterQuestions.map(q => (
+                    <div
+                      key={q.id}
+                      className="p-5 rounded-2xl bg-[#161b22] border border-[#30363d] hover:border-purple-500/50 hover:shadow-[0_0_25px_rgba(168,85,247,0.12)] transition-all flex flex-col justify-between group text-left relative"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#30363d]/60">
+                          <span className="text-[10px] font-bold text-purple-300 bg-purple-500/15 px-2.5 py-0.5 rounded-full border border-purple-500/30 flex items-center gap-1.5">
+                            <Flame className="w-3 h-3 text-purple-400" />
+                            {q.repeatScore}
+                          </span>
+                          <span className="text-[10px] text-amber-300 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/25">
+                            {q.marks}
+                          </span>
+                        </div>
+
+                        <div className="mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-purple-400 font-bold">{q.code}</span>
+                            <span className="text-[10px] font-mono text-[#7d8590]">• {q.topic}</span>
+                          </div>
+                          <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-purple-300 transition-colors mt-0.5 leading-snug">
+                            {q.name}
+                          </h3>
+                        </div>
+
+                        {/* Question Prompt */}
+                        <div className="p-3.5 rounded-xl bg-[#0d1117] border border-purple-500/20 text-[#e6edf3] text-xs leading-relaxed mb-4">
+                          <p className="text-xs text-[#c9d1d9] font-sans font-medium">
+                            &ldquo;{q.questionText}&rdquo;
                           </p>
                         </div>
-                      ))}
+
+                        {/* Solution Key Outline */}
+                        <div className="p-3 rounded-xl bg-[#0d1117]/80 border border-[#30363d]/70 text-xs mb-4 space-y-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#7d8590] block mb-1">
+                            Passing Solution Key:
+                          </span>
+                          <p className="text-[11px] text-[#8b949e] leading-relaxed">
+                            {q.solutionSummary}
+                          </p>
+                        </div>
+
+                        {/* Repetition History Tags */}
+                        <div className="space-y-1 mb-2">
+                          <div className="flex flex-wrap gap-1.5">
+                            {q.yearHistory.map(y => (
+                              <span key={y} className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#21262d] text-amber-300/90 border border-amber-500/20">
+                                {y}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-[#30363d]/60 flex items-center justify-between gap-2">
+                        <Link
+                          href={`/browse?search=${encodeURIComponent(q.code)}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-md shadow-purple-600/20"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>View Solved Papers</span>
+                        </Link>
+
+                        <Link
+                          href={`/study-material?search=${encodeURIComponent(q.code)}`}
+                          className="text-xs text-[#7d8590] hover:text-white transition-colors flex items-center gap-1"
+                        >
+                          <span>Study Notes</span>
+                          <ChevronRight className="w-3 h-3 text-purple-400" />
+                        </Link>
+                      </div>
                     </div>
-
-                    {/* High Yield Strategy */}
-                    <div className="p-3.5 rounded-xl bg-gradient-to-r from-rose-500/10 via-amber-500/5 to-transparent border border-rose-500/25 mb-4">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-rose-300 block mb-1 flex items-center gap-1">
-                        <Zap className="w-3 h-3 text-rose-400" />
-                        80/20 One-Night Passing Strategy:
-                      </span>
-                      <p className="text-xs text-[#c9d1d9] leading-relaxed">
-                        {syl.highYieldStrategy}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="pt-3 border-t border-[#30363d]/60 flex items-center justify-between gap-2">
-                    <Link
-                      href={`/study-material?search=${encodeURIComponent(syl.code)}`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all shadow-md shadow-rose-600/20"
-                    >
-                      <BookOpen className="w-3.5 h-3.5" />
-                      <span>Open Passing Notes</span>
-                    </Link>
-
-                    <Link
-                      href={`/browse?search=${encodeURIComponent(syl.code)}`}
-                      className="text-xs text-[#7d8590] hover:text-white transition-colors flex items-center gap-1"
-                    >
-                      <span>Practice PYQs</span>
-                      <ChevronRight className="w-3 h-3 text-rose-400" />
-                    </Link>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </motion.div>
-          </AnimatePresence>
+              </div>
+            )}
+
+            {/* SECTION 2: ASSIGNMENTS & TUTORIALS */}
+            {(materialFilter === 'all' || materialFilter === 'assignments') && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pb-1 border-b border-cyan-500/30">
+                  <div className="flex items-center gap-2 text-xs font-bold text-cyan-300 uppercase tracking-wider">
+                    <ClipboardList className="w-4 h-4 text-cyan-400" />
+                    <span>Assignments &amp; Remedial Tutorial Solutions</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/30">
+                    Faculty Sheets
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {semesterAssignments.map(assign => (
+                    <div
+                      key={assign.id}
+                      className="p-5 rounded-2xl bg-[#161b22] border border-[#30363d] hover:border-cyan-500/50 hover:shadow-[0_0_25px_rgba(6,182,212,0.12)] transition-all flex flex-col justify-between group text-left relative"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#30363d]/60">
+                          <span className="text-[10px] font-bold text-cyan-300 bg-cyan-500/15 px-2.5 py-0.5 rounded-full border border-cyan-500/30 flex items-center gap-1.5">
+                            <Flame className="w-3 h-3 text-cyan-400" />
+                            {assign.repeatScore}
+                          </span>
+                          <span className="text-[10px] text-cyan-300 font-mono bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/25">
+                            {assign.sheetType}
+                          </span>
+                        </div>
+
+                        <div className="mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-cyan-400 font-bold">{assign.code}</span>
+                            <span className="text-[10px] font-mono text-[#7d8590]">• Sem {assign.sem}</span>
+                          </div>
+                          <h3 className="text-base font-bold text-white group-hover:text-cyan-300 transition-colors mt-0.5 leading-snug">
+                            {assign.name}
+                          </h3>
+                          <div className="text-xs font-bold text-cyan-200/90 mt-1">
+                            {assign.assignmentNo}
+                          </div>
+                          <p className="text-xs text-[#7d8590] mt-2 leading-relaxed">
+                            {assign.description}
+                          </p>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-[#0d1117] border border-cyan-500/20 mb-4 space-y-1.5">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#7d8590] block mb-1">
+                            Key Solved Problems:
+                          </span>
+                          <div className="flex flex-wrap gap-1">
+                            {assign.topics.map(t => (
+                              <span key={t} className="text-[10px] px-2 py-0.5 rounded bg-[#21262d] text-cyan-200 border border-cyan-500/20">
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-[#30363d]/60 flex items-center justify-between gap-2">
+                        <Link
+                          href={`/study-material?search=${encodeURIComponent(assign.code)}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-black text-xs font-bold transition-all shadow-md shadow-cyan-600/20 cursor-pointer"
+                        >
+                          <BookOpen className="w-3.5 h-3.5 text-black" />
+                          <span>Open Assignment</span>
+                        </Link>
+
+                        <span className="text-[11px] font-mono text-[#7d8590]">
+                          {assign.downloadCount}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SECTION 3: 80/20 CRASH NOTES */}
+            {(materialFilter === 'all' || materialFilter === 'notes') && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pb-1 border-b border-emerald-500/30">
+                  <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 uppercase tracking-wider">
+                    <BookOpen className="w-4 h-4 text-emerald-400" />
+                    <span>80/20 Reappear Crash Notes (One-Night Lifesavers)</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+                    High Yield
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {semesterMaterials.map(mat => (
+                    <div
+                      key={mat.id}
+                      className="p-5 rounded-2xl bg-[#161b22] border border-[#30363d] hover:border-emerald-500/50 hover:shadow-[0_0_25px_rgba(16,185,129,0.12)] transition-all flex flex-col justify-between group text-left relative"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#30363d]/60">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${mat.tagColor}`}>
+                            {mat.tag}
+                          </span>
+                          <div className="flex items-center gap-1.5 text-[10px] text-[#7d8590]">
+                            <span>{mat.pages}</span>
+                            <span>•</span>
+                            <span>{mat.size}</span>
+                          </div>
+                        </div>
+
+                        <div className="mb-3">
+                          <span className="text-xs text-emerald-400 font-bold">{mat.code}</span>
+                          <h3 className="text-base font-bold text-white group-hover:text-emerald-300 transition-colors mt-0.5 leading-snug">
+                            {mat.title}
+                          </h3>
+                          <p className="text-xs text-[#7d8590] mt-2 leading-relaxed">
+                            {mat.description}
+                          </p>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-[#0d1117] border border-[#30363d]/80 mb-4 space-y-1.5">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#7d8590] block mb-1">
+                            Must-Learn Units in this Crash Guide:
+                          </span>
+                          {mat.highlights.map(h => (
+                            <div key={h} className="flex items-center gap-1.5 text-[11px] text-[#c9d1d9]">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                              <span className="truncate">{h}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-[#30363d]/60 flex items-center justify-between gap-2">
+                        <Link
+                          href={`/study-material?search=${encodeURIComponent(mat.code)}`}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-600/20"
+                        >
+                          <BookOpen className="w-3.5 h-3.5" />
+                          <span>Open Crash Guide</span>
+                        </Link>
+
+                        <Link
+                          href={`/browse?search=${encodeURIComponent(mat.code)}`}
+                          className="text-xs text-[#7d8590] hover:text-white transition-colors flex items-center gap-1"
+                        >
+                          <span>Pair with PYQ</span>
+                          <ChevronRight className="w-3 h-3 text-emerald-400" />
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SECTION 3: SYLLABUS & PASSING PLAN */}
+            {(materialFilter === 'all' || materialFilter === 'syllabus') && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pb-1 border-b border-rose-500/30">
+                  <div className="flex items-center gap-2 text-xs font-bold text-rose-300 uppercase tracking-wider">
+                    <Target className="w-4 h-4 text-rose-400" />
+                    <span>Reappear Syllabus &amp; Passing Blueprint</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/30">
+                    24/60 Rule
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {semesterSyllabus.map(syl => (
+                    <div
+                      key={syl.id}
+                      className="p-5 rounded-2xl bg-[#161b22] border border-[#30363d] hover:border-rose-500/50 hover:shadow-[0_0_25px_rgba(244,63,94,0.12)] transition-all flex flex-col justify-between group text-left relative"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#30363d]/60">
+                          <span className="text-[10px] font-bold text-rose-300 bg-rose-500/15 px-2.5 py-0.5 rounded-full border border-rose-500/30 flex items-center gap-1.5">
+                            <Target className="w-3 h-3 text-rose-400" />
+                            {syl.passingConfidence}
+                          </span>
+                          <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/25">
+                            EST Pass: {syl.estPassingMarks}
+                          </span>
+                        </div>
+
+                        <div className="mb-3">
+                          <span className="text-xs text-rose-400 font-bold">{syl.code}</span>
+                          <h3 className="text-base font-bold text-white group-hover:text-rose-300 transition-colors mt-0.5 leading-snug">
+                            {syl.name}
+                          </h3>
+                        </div>
+
+                        {/* Priority Units */}
+                        <div className="space-y-2 mb-4">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#7d8590] block">
+                            Priority 1 Passing Units:
+                          </span>
+                          {syl.mustPassUnits.map((u, idx) => (
+                            <div key={idx} className="p-3 rounded-xl bg-[#0d1117] border border-rose-500/20 text-xs space-y-1">
+                              <div className="flex items-center justify-between text-white font-bold">
+                                <span className="text-rose-300">{u.unit}: {u.name}</span>
+                                <span className="text-amber-400 font-mono text-[11px]">{u.weight}</span>
+                              </div>
+                              <p className="text-[11px] text-[#8b949e]">
+                                Expected Prompts: {u.expectedQuestions}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="p-3.5 rounded-xl bg-gradient-to-r from-rose-500/10 via-amber-500/5 to-transparent border border-rose-500/25 mb-4">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-rose-300 block mb-1 flex items-center gap-1">
+                            <Zap className="w-3 h-3 text-rose-400" />
+                            80/20 Passing Plan:
+                          </span>
+                          <p className="text-xs text-[#c9d1d9] leading-relaxed">
+                            {syl.highYieldStrategy}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-[#30363d]/60 flex items-center justify-between gap-2">
+                        <Link
+                          href={`/study-material?search=${encodeURIComponent(syl.code)}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all shadow-md shadow-rose-600/20"
+                        >
+                          <BookOpen className="w-3.5 h-3.5" />
+                          <span>Open Passing Notes</span>
+                        </Link>
+
+                        <Link
+                          href={`/browse?search=${encodeURIComponent(syl.code)}`}
+                          className="text-xs text-[#7d8590] hover:text-white transition-colors flex items-center gap-1"
+                        >
+                          <span>Practice PYQs</span>
+                          <ChevronRight className="w-3 h-3 text-rose-400" />
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          </div>
         )}
 
         {/* Global Footer Banner for Reappear */}

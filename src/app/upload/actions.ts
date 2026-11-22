@@ -289,6 +289,7 @@ export async function uploadResource(formData: FormData) {
       }
     }
 
+    revalidatePath('/reappear')
     revalidatePath('/study-material')
     revalidatePath('/browse')
     revalidatePath('/admin')
@@ -664,6 +665,7 @@ export async function completeDirectUpload(
       }
     }
 
+    revalidatePath('/reappear')
     revalidatePath('/study-material')
     revalidatePath('/browse')
     revalidatePath('/admin')

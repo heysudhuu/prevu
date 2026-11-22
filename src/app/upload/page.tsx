@@ -64,11 +64,21 @@ const STUDY_MATERIAL_OPTIONS: FigmaDropdownOption[] = [
   { value: 'Study Material', label: 'General Slides & PPTs', subtitle: 'Department lecture presentation slides', icon: '💡' },
 ]
 
+const REAPPEAR_PYQ_OPTIONS: FigmaDropdownOption[] = [
+  { value: 'Reappear Question Paper', label: 'Reappear Question Paper (Official Archive)', subtitle: 'Full remedial test paper with marking schemes', icon: '📄', badge: 'Official' },
+  { value: 'Reappear PYQ', label: 'Reappear PYQ (Solved Paper)', subtitle: 'High-frequency repeated remedial examination papers', icon: '⚡', badge: 'High Repeat' },
+]
+
+const REAPPEAR_STUDY_MATERIAL_OPTIONS: FigmaDropdownOption[] = [
+  { value: 'Reappear Important Questions', label: 'Important Questions Bank (Imp Ques)', subtitle: 'High-yield repeating 10-mark problems & solution steps', icon: '❓', badge: 'High Yield' },
+  { value: 'Reappear Assignment', label: 'Assignments & Tutorial Solutions', subtitle: 'Class assignments & semester tutorial problem sheets', icon: '📋', badge: 'Assignment' },
+  { value: 'Reappear Study Material', label: '80/20 Crash Notes & Formulas', subtitle: 'One-night essential revision notes & derivations', icon: '📝', badge: 'One-Night' },
+  { value: 'Reappear Syllabus', label: 'Syllabus & Passing Plan (24/60 Threshold)', subtitle: 'Official remedial marking roadmap & unit weightage blueprint', icon: '📑', badge: 'Blueprint' },
+]
+
 const REAPPEAR_TYPE_OPTIONS: FigmaDropdownOption[] = [
-  { value: 'Reappear Syllabus', label: 'Reappear Syllabus', subtitle: 'Official remedial marking roadmap & passing blueprint', icon: '📑', badge: 'Blueprint' },
-  { value: 'Reappear PYQ', label: 'Reappear PYQ', subtitle: 'High-frequency repeated remedial examination papers', icon: '⚡', badge: 'High Repeat' },
-  { value: 'Reappear Study Material', label: 'Reappear Study Material', subtitle: 'One-night essential revision notes & 80/20 derivations', icon: '📝', badge: 'One-Night' },
-  { value: 'Reappear Question Paper', label: 'Reappear Question Paper', subtitle: 'Full remedial test paper with marking schemes', icon: '📄', badge: 'Official' },
+  ...REAPPEAR_PYQ_OPTIONS,
+  ...REAPPEAR_STUDY_MATERIAL_OPTIONS,
 ]
 
 const EXAM_YEAR_OPTIONS: FigmaDropdownOption[] = [
@@ -196,7 +206,8 @@ function UploadFormContent() {
     : 'exam_paper'
 
   const [uploadCategory, setUploadCategory] = useState<'exam_paper' | 'study_material'>(initialRegularCategory)
-  const [reappearType, setReappearType] = useState<string>('Reappear PYQ')
+  const [reappearSubCategory, setReappearSubCategory] = useState<'pyq' | 'study_material'>('pyq')
+  const [reappearType, setReappearType] = useState<string>('Reappear Question Paper')
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [selectedYear, setSelectedYear] = useState<number>(1)
   const [selectedSemester, setSelectedSemester] = useState<number>(1)
@@ -244,8 +255,17 @@ function UploadFormContent() {
   // Sync category and semester if query param changes
   useEffect(() => {
     const cat = searchParams.get('category') || searchParams.get('type')
+    const sub = searchParams.get('sub') || searchParams.get('kind') || searchParams.get('filter')
     if (cat === 'reappear' || cat === 'remedial' || cat === 'backlog') {
       setResourceClassification('reappear')
+      if (sub === 'notes' || sub === 'material' || sub === 'study_material' || sub === 'questions' || sub === 'assignments') {
+        setReappearSubCategory('study_material')
+        if (sub === 'questions') setReappearType('Reappear Important Questions')
+        else if (sub === 'assignments') setReappearType('Reappear Assignment')
+      } else {
+        setReappearSubCategory('pyq')
+        setReappearType('Reappear Question Paper')
+      }
     } else if (cat === 'study-material' || cat === 'notes') {
       setResourceClassification('regular')
       setUploadCategory('study_material')
@@ -520,7 +540,9 @@ function UploadFormContent() {
         year: selectedYear,
         semester: selectedSemester,
         resource_category: isReappear ? 'reappear' : uploadCategory,
-        material_type: (!isReappear && uploadCategory === 'study_material') ? materialType : undefined,
+        material_type: isReappear
+          ? (reappearSubCategory === 'study_material' ? reappearType : undefined)
+          : (uploadCategory === 'study_material' ? materialType : undefined),
         exam_type: isReappear ? reappearType : (uploadCategory === 'exam_paper' ? examType : undefined),
         exam_year: examYear,
         unit: (!isReappear && uploadCategory === 'study_material') ? unitNumber : null,
@@ -772,12 +794,57 @@ function UploadFormContent() {
               </div>
             )}
 
+            {/* Sub-Category Selector for Reappear Resources */}
+            {isReappear && (
+              <div className="space-y-2 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-mono font-medium text-amber-400 uppercase tracking-wider">
+                    2. Reappear Resource Kind
+                  </label>
+                  <span className="text-[10px] font-mono text-amber-400/80">Select PYQ or Study Material</span>
+                </div>
+                <div className="p-1 bg-prevu-bg/90 rounded-2xl border border-amber-500/30 flex items-center gap-1 shadow-inner">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReappearSubCategory('pyq')
+                      setReappearType('Reappear Question Paper')
+                    }}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
+                      reappearSubCategory === 'pyq'
+                        ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/30 font-extrabold'
+                        : 'text-prevu-text-muted hover:text-white hover:bg-prevu-surface-light/40'
+                    }`}
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>Reappear PYQ (Question Paper)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReappearSubCategory('study_material')
+                      setReappearType('Reappear Important Questions')
+                    }}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
+                      reappearSubCategory === 'study_material'
+                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-black shadow-lg shadow-emerald-500/30 font-extrabold'
+                        : 'text-prevu-text-muted hover:text-white hover:bg-prevu-surface-light/40'
+                    }`}
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    <span>Study Material (Imp Ques, Notes, Assignment)</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Reappear Info Alert */}
             {isReappear && (
               <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5 animate-in fade-in duration-200">
                 <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                 <div className="text-xs text-amber-200/90 leading-relaxed">
-                  <span className="font-semibold text-amber-300">Reappear Resource Mode:</span> Your upload will be indexed in the Reappear section and verified under remedial curriculum standards. Select the exact Reappear resource type below.
+                  <span className="font-semibold text-amber-300">Reappear Rescue Desk:</span> Your upload will appear live in the Reappear section under {reappearSubCategory === 'pyq' ? 'Reappear PYQs' : 'Reappear Study Material'} for Semester {selectedSemester}.
                 </div>
               </div>
             )}
@@ -904,12 +971,12 @@ function UploadFormContent() {
                   /* Figma-style Reappear Resource Type Selector */
                   <div className="space-y-1.5 sm:col-span-1">
                     <FigmaDropdown
-                      label="Reappear Resource Type"
+                      label={reappearSubCategory === 'pyq' ? 'Reappear PYQ Type' : 'Study Material Category'}
                       value={reappearType}
                       onChange={(val) => setReappearType(val)}
-                      options={REAPPEAR_TYPE_OPTIONS}
-                      variant="amber"
-                      icon={<ShieldAlert className="w-4 h-4 text-amber-400" />}
+                      options={reappearSubCategory === 'pyq' ? REAPPEAR_PYQ_OPTIONS : REAPPEAR_STUDY_MATERIAL_OPTIONS}
+                      variant={reappearSubCategory === 'pyq' ? 'amber' : 'emerald'}
+                      icon={reappearSubCategory === 'pyq' ? <FileText className="w-4 h-4 text-amber-400" /> : <BookOpen className="w-4 h-4 text-emerald-400" />}
                       required
                     />
                   </div>

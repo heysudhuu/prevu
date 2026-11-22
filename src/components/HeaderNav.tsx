@@ -29,7 +29,8 @@ import {
   Search,
   Check,
   ArrowRight,
-  Plus
+  Plus,
+  ClipboardList
 } from 'lucide-react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import dynamic from 'next/dynamic'
@@ -172,36 +173,56 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
     }
   ]
 
-  // 2. REAPPEAR DESTINATIONS
-  const reappearLinks = [
+  // 2. REAPPEAR DESTINATIONS: PYQ & STUDY MATERIAL (IMP QUES, ASSIGNMENT, NOTES, SYLLABUS)
+  const reappearPyqItems = [
     {
       tab: 'pyqs' as const,
       href: '/reappear?tab=pyqs',
       label: 'Reappear PYQs & Solved Papers',
-      desc: 'High-frequency remedial papers & derivations',
-      icon: <FileText className="w-4 h-4 text-amber-400" />
+      desc: 'High-frequency remedial papers & verified derivations',
+      icon: <FileText className="w-4 h-4 text-amber-400" />,
+      badge: 'PYQ Archive'
+    }
+  ]
+
+  const reappearMaterialItems = [
+    {
+      tab: 'questions' as const,
+      href: '/reappear?tab=materials&filter=questions',
+      label: 'Important Questions Bank (Imp Ques)',
+      desc: 'High-probability 10-mark repeated prompts & solutions',
+      icon: <Sparkles className="w-4 h-4 text-purple-400" />,
+      badge: '10 Marks'
+    },
+    {
+      tab: 'assignments' as const,
+      href: '/reappear?tab=materials&filter=assignments',
+      label: 'Assignments & Tutorials',
+      desc: 'Step-by-step tutorial problem solutions & assignments',
+      icon: <ClipboardList className="w-4 h-4 text-cyan-400" />,
+      badge: 'Sheets'
     },
     {
       tab: 'notes' as const,
-      href: '/reappear?tab=notes',
+      href: '/reappear?tab=materials&filter=notes',
       label: '80/20 Reappear Crash Notes',
       desc: 'One-night essential revision & high-yield formulas',
-      icon: <BookOpen className="w-4 h-4 text-emerald-400" />
-    },
-    {
-      tab: 'questions' as const,
-      href: '/reappear?tab=questions',
-      label: 'Reappear Questions Bank',
-      desc: 'Past remedial exam questions & solution steps',
-      icon: <Sparkles className="w-4 h-4 text-purple-400" />
+      icon: <BookOpen className="w-4 h-4 text-emerald-400" />,
+      badge: 'One-Night'
     },
     {
       tab: 'syllabus' as const,
-      href: '/reappear?tab=syllabus',
+      href: '/reappear?tab=materials&filter=syllabus',
       label: 'Reappear Syllabus & Passing Plan',
-      desc: 'Course blueprint & unit-wise passing threshold',
-      icon: <Target className="w-4 h-4 text-rose-400" />
+      desc: 'Course blueprint & unit-wise 24/60 passing threshold',
+      icon: <Target className="w-4 h-4 text-rose-400" />,
+      badge: '24/60 Plan'
     }
+  ]
+
+  const reappearLinks = [
+    ...reappearPyqItems,
+    ...reappearMaterialItems
   ]
 
   // 3. MORE DESTINATIONS
@@ -493,7 +514,7 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.96 }}
                 transition={{ duration: 0.15 }}
-                className="absolute top-full left-0 mt-2 w-80 p-2.5 rounded-2xl bg-[#0d1117]/98 backdrop-blur-2xl border border-amber-500/30 shadow-2xl shadow-black/90 z-50 space-y-1"
+                className="absolute top-full left-0 mt-2 w-88 p-2.5 rounded-2xl bg-[#0d1117]/98 backdrop-blur-2xl border border-amber-500/30 shadow-2xl shadow-black/90 z-50 space-y-2"
               >
                 <div className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-amber-400 font-bold flex items-center justify-between border-b border-prevu-surface-light/50 pb-2">
                   <div className="flex items-center gap-1.5">
@@ -503,31 +524,77 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                   <span>100% Verified</span>
                 </div>
 
-                {reappearLinks.map((item) => (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    onClick={() => {
-                      setReappearMenuOpen(false)
-                      if (pathname === '/' || pathname === '/reappear') {
-                        const el = document.getElementById('reappear-rescue')
-                        if (el) {
-                          el.scrollIntoView({ behavior: 'smooth' })
+                {/* Pillar 1: Reappear PYQs */}
+                <div className="space-y-1">
+                  <div className="px-3 pt-1 text-[9px] font-mono uppercase tracking-wider text-amber-400/80 font-bold flex items-center gap-1">
+                    <FileText className="w-3 h-3 text-amber-400" />
+                    <span>Reappear PYQs</span>
+                  </div>
+                  {reappearPyqItems.map((item) => (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      onClick={() => {
+                        setReappearMenuOpen(false)
+                        if (pathname === '/' || pathname === '/reappear') {
+                          const el = document.getElementById('reappear-rescue')
+                          if (el) el.scrollIntoView({ behavior: 'smooth' })
+                          window.dispatchEvent(new CustomEvent('prevu_reappear_tab_change', { detail: { tab: item.tab } }))
                         }
-                        window.dispatchEvent(new CustomEvent('prevu_reappear_tab_change', { detail: { tab: item.tab } }))
-                      }
-                    }}
-                    className="p-2.5 rounded-xl flex items-start gap-3 hover:bg-prevu-surface/60 text-prevu-text-muted hover:text-white transition-colors cursor-pointer"
-                  >
-                    <div className="w-8 h-8 rounded-xl bg-prevu-bg border border-prevu-surface-light flex items-center justify-center shrink-0 mt-0.5">
-                      {item.icon}
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-white">{item.label}</div>
-                      <div className="text-[11px] text-prevu-text-muted leading-tight mt-0.5">{item.desc}</div>
-                    </div>
-                  </Link>
-                ))}
+                      }}
+                      className="p-2 rounded-xl flex items-center justify-between hover:bg-prevu-surface/60 text-prevu-text-muted hover:text-white transition-colors cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0">
+                          {item.icon}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors truncate">{item.label}</div>
+                          <div className="text-[10px] text-prevu-text-muted leading-tight truncate">{item.desc}</div>
+                        </div>
+                      </div>
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 font-bold border border-amber-500/30 shrink-0 ml-2">
+                        {item.badge}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+
+                {/* Pillar 2: Reappear Study Material (Imp Ques, Assignments, Notes, Syllabus) */}
+                <div className="space-y-1 pt-1.5 border-t border-prevu-surface-light/50">
+                  <div className="px-3 pt-1 text-[9px] font-mono uppercase tracking-wider text-emerald-400/80 font-bold flex items-center gap-1">
+                    <BookOpen className="w-3 h-3 text-emerald-400" />
+                    <span>Reappear Study Material</span>
+                  </div>
+                  {reappearMaterialItems.map((item) => (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      onClick={() => {
+                        setReappearMenuOpen(false)
+                        if (pathname === '/' || pathname === '/reappear') {
+                          const el = document.getElementById('reappear-rescue')
+                          if (el) el.scrollIntoView({ behavior: 'smooth' })
+                          window.dispatchEvent(new CustomEvent('prevu_reappear_tab_change', { detail: { tab: item.tab } }))
+                        }
+                      }}
+                      className="p-2 rounded-xl flex items-center justify-between hover:bg-prevu-surface/60 text-prevu-text-muted hover:text-white transition-colors cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-7 h-7 rounded-lg bg-prevu-bg border border-prevu-surface-light flex items-center justify-center shrink-0">
+                          {item.icon}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors truncate">{item.label}</div>
+                          <div className="text-[10px] text-prevu-text-muted leading-tight truncate">{item.desc}</div>
+                        </div>
+                      </div>
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-prevu-bg text-prevu-text-muted border border-prevu-surface-light shrink-0 ml-2">
+                        {item.badge}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
 
                 {/* Upload Reappear Resource Action Button */}
                 <div className="pt-2 border-t border-prevu-surface-light/60">

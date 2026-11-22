@@ -1,11 +1,70 @@
 import { CbtSubject, CbtQuestion } from './types'
 import { FSO307_QUESTIONS } from './questions/fso307'
 import { APT301_QUESTIONS } from './questions/apt301'
+import { ACP101_QUESTIONS } from './questions/acp101'
 
 /**
  * Registry of available CBT Mock Test subjects in Prevu
  */
 export const CBT_SUBJECTS: CbtSubject[] = [
+  {
+    code: 'ACP-101',
+    name: 'Academic Career and Pathway Planning',
+    semester: 1,
+    year: 1,
+    category: 'core',
+    categoryLabel: 'Career & Life Skills (CBT)',
+    totalQuestions: ACP101_QUESTIONS.length,
+    description: '160 official syllabus-based CBT practice questions across 2 complete sets. Features direct MCQs and passage case studies on self-discovery, academic ethics, career pathways, personal branding, and growth resilience.',
+    topics: [
+      'Self-Discovery & Academic Readiness',
+      'Academic Integrity & Ethics',
+      'Career Awareness & Planning',
+      'Professional Brand & Communication',
+      'Growth Mindset, Resilience & Wellness'
+    ],
+    topicsList: [
+      {
+        id: 'all',
+        name: 'All Topics & Case Studies (Mix Practice)',
+        count: ACP101_QUESTIONS.length,
+        description: 'Complete 160-question CBT exam bank covering all direct MCQs and case-study passages across Set 1 & Set 2'
+      },
+      {
+        id: 'self-discovery',
+        name: 'Self-Discovery & Academic Readiness',
+        count: ACP101_QUESTIONS.filter(q => q.topic === 'self-discovery').length,
+        description: 'Strengths, values, learning styles, active recall, spaced repetition, study habits and academic readiness'
+      },
+      {
+        id: 'academic-integrity',
+        name: 'Academic Integrity & Ethics',
+        count: ACP101_QUESTIONS.filter(q => q.topic === 'academic-integrity').length,
+        description: 'Plagiarism prevention, ethical source attribution, data integrity, and responsible collaborative teamwork'
+      },
+      {
+        id: 'career-planning',
+        name: 'Career Awareness & Planning',
+        count: ACP101_QUESTIONS.filter(q => q.topic === 'career-planning').length,
+        description: 'Career pathway exploration, informational interviews, transferable skills, internships, and 4-year roadmaps'
+      },
+      {
+        id: 'communication-branding',
+        name: 'Professional Brand & Communication',
+        count: ACP101_QUESTIONS.filter(q => q.topic === 'communication-branding').length,
+        description: 'Personal branding, LinkedIn networking, resume presentation, interview skills, and active listening'
+      },
+      {
+        id: 'growth-resilience',
+        name: 'Growth Mindset, Resilience & Wellness',
+        count: ACP101_QUESTIONS.filter(q => q.topic === 'growth-resilience').length,
+        description: 'SMART goals, constructive response to failure, academic wellness, stress management, and mentorship'
+      }
+    ],
+    credits: 2,
+    isReady: true,
+    badgeColor: 'from-emerald-600 to-teal-600'
+  },
   {
     code: 'FSO-307',
     name: 'Mobile Application & Device Security',
@@ -309,7 +368,9 @@ export function getQuestionsForSubject(
 ): CbtQuestion[] {
   const code = subjectCode.trim().toUpperCase()
   let pool: CbtQuestion[] = []
-  if (code === 'FSO-307' || code === 'FSO307') {
+  if (code === 'ACP-101' || code === 'ACP101' || code.includes('ACP')) {
+    pool = [...ACP101_QUESTIONS]
+  } else if (code === 'FSO-307' || code === 'FSO307') {
     pool = [...FSO307_QUESTIONS]
   } else if (code === 'APT-301' || code === 'APT301') {
     pool = [...APT301_QUESTIONS]

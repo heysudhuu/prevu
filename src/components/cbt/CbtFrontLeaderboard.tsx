@@ -57,11 +57,12 @@ export default function CbtFrontLeaderboard({
   onSelectSubjectExam
 }: CbtFrontLeaderboardProps) {
   const [leaderboards, setLeaderboards] = useState<Record<string, CbtLeaderboardEntry[]>>(initialLeaderboards)
-  const [selectedSubjectCode, setSelectedSubjectCode] = useState<string>('FSO-307')
-  const [isRefreshing, startTransition] = useTransition()
-
+  
   // Only include subjects that are ready with questions
   const readySubjects = CBT_SUBJECTS.filter(s => s.isReady)
+
+  const [selectedSubjectCode, setSelectedSubjectCode] = useState<string>(() => readySubjects[0]?.code || 'ACP-101')
+  const [isRefreshing, startTransition] = useTransition()
 
   // Find all subjects that have leaderboard entries or ready status
   const subjectsWithEntries = readySubjects.map(subj => {

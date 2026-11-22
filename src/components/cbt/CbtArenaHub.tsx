@@ -82,6 +82,12 @@ export default function CbtArenaHub({
   const categories = useMemo(() => [
     { id: 'all', label: 'All Suites', count: subjects.length, icon: Layers },
     { 
+      id: 'core', 
+      label: 'Core & Career Readiness', 
+      count: `${subjects.filter(s => s.category === 'core' && s.isReady).reduce((sum, s) => sum + s.totalQuestions, 0)} MCQs`, 
+      icon: GraduationCap 
+    },
+    { 
       id: 'aptitude', 
       label: 'Aptitude & Placements', 
       count: `${subjects.find(s => s.category === 'aptitude')?.totalQuestions || 290} MCQs`,
@@ -93,8 +99,7 @@ export default function CbtArenaHub({
       count: `${subjects.find(s => s.category === 'open-elective')?.totalQuestions || 51} MCQs`,
       icon: Compass 
     },
-    { id: 'uhv', label: 'UHV (Ethics)', count: 'Mandatory', icon: ShieldCheck },
-    { id: 'core', label: 'Core Technical MSTs', count: 'Coming Soon', icon: GraduationCap }
+    { id: 'uhv', label: 'UHV (Ethics)', count: 'Mandatory', icon: ShieldCheck }
   ], [subjects])
 
   const filteredSubjects = useMemo(() => {

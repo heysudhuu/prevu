@@ -17,6 +17,47 @@ declare global {
 }
 
 const initialSeed: Record<string, CbtLeaderboardEntry[]> = {
+  'ACP-101': [
+    {
+      userId: 'seed-user-acp-1',
+      username: 'ankul_cu',
+      userName: 'Ankul Kumar',
+      cuVerified: true,
+      subjectCode: 'ACP-101',
+      score: 38,
+      totalQuestions: 40,
+      percentage: 95.0,
+      timeSpentSeconds: 780,
+      attemptsCount: 3,
+      updatedAt: new Date(Date.now() - 3600000 * 1).toISOString()
+    },
+    {
+      userId: 'seed-user-acp-2',
+      username: 'riya_sharma',
+      userName: 'Riya Sharma',
+      cuVerified: true,
+      subjectCode: 'ACP-101',
+      score: 35,
+      totalQuestions: 40,
+      percentage: 87.5,
+      timeSpentSeconds: 840,
+      attemptsCount: 2,
+      updatedAt: new Date(Date.now() - 3600000 * 4).toISOString()
+    },
+    {
+      userId: 'seed-user-acp-3',
+      username: 'aman_gupta',
+      userName: 'Aman Gupta',
+      cuVerified: false,
+      subjectCode: 'ACP-101',
+      score: 32,
+      totalQuestions: 40,
+      percentage: 80.0,
+      timeSpentSeconds: 910,
+      attemptsCount: 1,
+      updatedAt: new Date(Date.now() - 3600000 * 7).toISOString()
+    }
+  ],
   'FSO-307': [
     {
       userId: 'seed-user-1',

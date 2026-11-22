@@ -33,6 +33,7 @@ import {
   Activity
 } from 'lucide-react'
 import InteractiveTerminalConsole from '@/components/terminal/InteractiveTerminalConsole'
+import AcademicCommitSnake from '@/components/landing/AcademicCommitSnake'
 import { RealLiveLog, RealPlatformStats, RealPeerReview } from '@/app/actions/homepage'
 import { LeaderboardUser } from '@/app/leaderboard/actions'
 
@@ -250,7 +251,6 @@ export default function LandingPageContent({
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [cbtOption, setCbtOption] = useState<string | null>('B')
   const [simulatedScore, setSimulatedScore] = useState<number | null>(null)
-  const [hoveredCell, setHoveredCell] = useState<{ col: number; row: number; level: number } | null>(null)
   
   // Interactive Terminal State
   const [activeTab, setActiveTab] = useState(0)
@@ -340,23 +340,6 @@ export default function LandingPageContent({
     setMascotBubble(chosen)
     setTimeout(() => setMascotBubble(null), 3500)
   }
-
-  // 48 columns x 7 days Deterministic GitHub Contribution Grid (Zero Hydration Mismatch)
-  const contributionGrid = useMemo(() => {
-    const grid: number[][] = []
-    for (let c = 0; c < 48; c++) {
-      const col: number[] = []
-      for (let r = 0; r < 7; r++) {
-        // Deterministic pseudo-random seed based on fixed (c, r) coordinates
-        const hash = Math.sin(c * 7 + r + 42) * 10000
-        const rand = hash - Math.floor(hash)
-        const level = rand > 0.82 ? 4 : rand > 0.62 ? 3 : rand > 0.38 ? 2 : rand > 0.18 ? 1 : 0
-        col.push(level)
-      }
-      grid.push(col)
-    }
-    return grid
-  }, [])
 
   return (
     <main className="flex-1 bg-[#010409] text-[#e6edf3] font-mono selection:bg-emerald-500/30 selection:text-white">
@@ -924,78 +907,8 @@ export default function LandingPageContent({
       <section className="py-12 sm:py-16 border-b border-[#30363d]/60 bg-[#010409]">
         <div className="container mx-auto px-4 max-w-6xl 2xl:max-w-[1720px]">
           
-          <div className="p-5 sm:p-6 rounded-2xl bg-[#161b22] border border-[#30363d] shadow-2xl mb-8">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-              <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <GitCommit className="w-4 h-4 text-emerald-400" />
-                  Academic Commit Activity
-                </h3>
-                <p className="text-xs text-[#7d8590] font-mono mt-0.5">
-                  1,450+ verified contributions in the 2025–2026 academic cycle
-                </p>
-              </div>
-              <div className="flex items-center gap-1.5 text-[11px] font-mono text-[#7d8590]">
-                <span>Less</span>
-                <span className="w-2.5 h-2.5 rounded-sm bg-[#161b22] border border-[#30363d]" />
-                <span className="w-2.5 h-2.5 rounded-sm bg-[#0e4429]" />
-                <span className="w-2.5 h-2.5 rounded-sm bg-[#006d32]" />
-                <span className="w-2.5 h-2.5 rounded-sm bg-[#26a641]" />
-                <span className="w-2.5 h-2.5 rounded-sm bg-[#39d353]" />
-                <span>More</span>
-              </div>
-            </div>
-
-            {/* Visual 48-column Heatmap */}
-            <div className="overflow-x-auto pb-2 scrollbar-hide">
-              <div className="flex gap-1 min-w-[700px] justify-between">
-                {contributionGrid.map((col, cIdx) => (
-                  <div key={cIdx} className="flex flex-col gap-1">
-                    {col.map((level, rIdx) => {
-                      const colorClass = 
-                        level === 4 ? 'bg-[#39d353]' :
-                        level === 3 ? 'bg-[#26a641]' :
-                        level === 2 ? 'bg-[#006d32]' :
-                        level === 1 ? 'bg-[#0e4429]' : 'bg-[#0d1117] border border-[#30363d]/40'
-                      return (
-                        <div 
-                          key={rIdx} 
-                          onMouseEnter={() => setHoveredCell({ col: cIdx, row: rIdx, level })}
-                          onMouseLeave={() => setHoveredCell(null)}
-                          className={`w-3 h-3 rounded-sm ${colorClass} transition-transform hover:scale-125 cursor-pointer`}
-                          title={`Day commit intensity level: ${level}`}
-                        />
-                      )
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Interactive Heatmap Footer: Academic Streak & Cell Inspection */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mt-4 pt-3 border-t border-[#30363d]/50 text-xs font-mono text-[#7d8590]">
-              <div className="flex items-center gap-2">
-                <span className="text-emerald-400 font-bold flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  42-Day Academic Prep Streak
-                </span>
-                <span className="text-[#30363d]">•</span>
-                <span>Avg 31 contributions / week</span>
-              </div>
-              <div className="text-xs">
-                {hoveredCell ? (
-                  <span className="text-white font-medium">
-                    Week {hoveredCell.col + 1}, {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][hoveredCell.row]}:{' '}
-                    <strong className="text-emerald-400">
-                      {hoveredCell.level === 0 ? 'No uploads recorded' : `${hoveredCell.level * 3 + 2} verified paper & notes contributions`}
-                    </strong>
-                  </span>
-                ) : (
-                  <span className="text-[#7d8590] hidden sm:inline">Hover over any day square for upload details</span>
-                )}
-              </div>
-            </div>
-          </div>
+          {/* Interactive GitHub Contribution Snake Game & Heatmap */}
+          <AcademicCommitSnake />
 
           {/* 3 Real Metric Sparkline Cards with Animated Meters */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -34,7 +34,7 @@ export default async function Home() {
       {/* 3. Curated Academic Notes & Topper Blueprints for All Semesters 1 - 8 */}
       <CurriculumStudyMaterialSection />
 
-      {/* 4. Reappear & Remedial Hub — Reappear PYQs & 80/20 Crash Material for All Semesters 1 - 8 */}
+      {/* 4. Reappear & Remedial Hub — Reappear PYQs & Study Material for All Semesters 1 - 8 */}
       <Suspense fallback={null}>
         <ReappearRescueSection />
       </Suspense>

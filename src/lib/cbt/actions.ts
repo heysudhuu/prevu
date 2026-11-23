@@ -143,12 +143,87 @@ export async function recordCbtAttempt(payload: {
   revalidatePath(`/cbt/${payload.subjectCode}`)
   revalidatePath('/cbt')
 
+  // Fetch updated real-time leaderboard (Supabase primary, local fallback)
+  const latestLeaderboard = await getCbtLeaderboard(payload.subjectCode)
+
   return {
     success: true,
     savedToDb,
     percentage,
-    leaderboard: updatedLeaderboard,
+    leaderboard: latestLeaderboard.length > 0 ? latestLeaderboard : updatedLeaderboard,
     earnedKarma: percentage >= 80 ? 15 : 5
+  }
+}
+
+/**
+ * Helper to fetch attempts and map user profiles without relying on a PostgREST schema cache FK
+ */
+async function fetchAttemptsWithProfiles(subjectCode?: string): Promise<CbtLeaderboardEntry[]> {
+  try {
+    const supabase = getSupabaseAdmin()
+    let query = supabase
+      .from('cbt_attempts')
+      .select('score, total_questions, percentage, time_spent_seconds, attempts_count, updated_at, subject_code, user_id')
+      .order('percentage', { ascending: false })
+      .order('time_spent_seconds', { ascending: true })
+
+    if (subjectCode) {
+      const clean = subjectCode.trim()
+      query = query.or(`subject_code.eq.${clean},subject_code.ilike.${clean}`).limit(50)
+    }
+
+    const { data: attempts, error } = await query
+
+    if (error) {
+      console.warn('[CBT] Supabase query attempts error:', error.message)
+      return []
+    }
+
+    if (!attempts || attempts.length === 0) {
+      return []
+    }
+
+    // Collect unique user_ids
+    const userIds = Array.from(new Set(attempts.map((a: any) => a.user_id).filter(Boolean)))
+    const userMap = new Map<string, any>()
+
+    if (userIds.length > 0) {
+      try {
+        const { data: profiles, error: profileErr } = await supabase
+          .from('users')
+          .select('id, name, username, cu_verified')
+          .in('id', userIds)
+
+        if (!profileErr && profiles) {
+          for (const p of profiles) {
+            userMap.set(p.id, p)
+          }
+        }
+      } catch (profErr) {
+        console.warn('[CBT] Failed fetching user profiles for attempts:', profErr)
+      }
+    }
+
+    return attempts.map((row: any, index: number) => {
+      const user = userMap.get(row.user_id)
+      return {
+        rank: index + 1,
+        userId: row.user_id || '',
+        username: user?.username || 'scholar',
+        userName: user?.name || 'Student Candidate',
+        cuVerified: Boolean(user?.cu_verified),
+        subjectCode: row.subject_code,
+        score: row.score,
+        totalQuestions: row.total_questions,
+        percentage: Number(row.percentage),
+        timeSpentSeconds: row.time_spent_seconds,
+        attemptsCount: row.attempts_count,
+        updatedAt: row.updated_at
+      }
+    })
+  } catch (err) {
+    console.warn('[CBT] fetchAttemptsWithProfiles exception:', err)
+    return []
   }
 }
 
@@ -157,50 +232,9 @@ export async function recordCbtAttempt(payload: {
  */
 export async function getCbtLeaderboard(subjectCode: string): Promise<CbtLeaderboardEntry[]> {
   // 1. Try Supabase first (source of truth across all serverless instances)
-  try {
-    const supabase = getSupabaseAdmin()
-    const { data, error } = await supabase
-      .from('cbt_attempts')
-      .select(`
-        score,
-        total_questions,
-        percentage,
-        time_spent_seconds,
-        attempts_count,
-        updated_at,
-        subject_code,
-        user_id,
-        users (
-          id,
-          name,
-          username,
-          cu_verified
-        )
-      `)
-      .eq('subject_code', subjectCode)
-      .order('percentage', { ascending: false })
-      .order('time_spent_seconds', { ascending: true })
-      .limit(50)
-
-    if (!error && data && data.length > 0) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return data.map((row: any, index: number) => ({
-        rank: index + 1,
-        userId: row.users?.id || row.user_id || '',
-        username: row.users?.username || 'student',
-        userName: row.users?.name || 'CU Student',
-        cuVerified: Boolean(row.users?.cu_verified),
-        subjectCode: row.subject_code,
-        score: row.score,
-        totalQuestions: row.total_questions,
-        percentage: Number(row.percentage),
-        timeSpentSeconds: row.time_spent_seconds,
-        attemptsCount: row.attempts_count,
-        updatedAt: row.updated_at
-      }))
-    }
-  } catch (err) {
-    console.warn('[CBT] Supabase getCbtLeaderboard error:', err)
+  const dbEntries = await fetchAttemptsWithProfiles(subjectCode)
+  if (dbEntries && dbEntries.length > 0) {
+    return dbEntries
   }
 
   // 2. Fallback to local store if Supabase returned empty or had an issue
@@ -213,70 +247,33 @@ export async function getCbtLeaderboard(subjectCode: string): Promise<CbtLeaderb
  */
 export async function getAllCbtLeaderboards(): Promise<Record<string, CbtLeaderboardEntry[]>> {
   // 1. Try Supabase first (source of truth across all serverless instances)
-  try {
-    const supabase = getSupabaseAdmin()
-    const { data, error } = await supabase
-      .from('cbt_attempts')
-      .select(`
-        score,
-        total_questions,
-        percentage,
-        time_spent_seconds,
-        attempts_count,
-        updated_at,
-        subject_code,
-        user_id,
-        users (
-          id,
-          name,
-          username,
-          cu_verified
-        )
-      `)
-      .order('percentage', { ascending: false })
-      .order('time_spent_seconds', { ascending: true })
+  const allEntries = await fetchAttemptsWithProfiles()
+  const grouped: Record<string, CbtLeaderboardEntry[]> = {}
 
-    if (!error && data && data.length > 0) {
-      const grouped: Record<string, CbtLeaderboardEntry[]> = {}
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      for (const row of data as any[]) {
-        const code = row.subject_code
-        if (!grouped[code]) {
-          grouped[code] = []
-        }
-        grouped[code].push({
-          rank: grouped[code].length + 1,
-          userId: row.users?.id || row.user_id || '',
-          username: row.users?.username || 'student',
-          userName: row.users?.name || 'CU Student',
-          cuVerified: Boolean(row.users?.cu_verified),
-          subjectCode: row.subject_code,
-          score: row.score,
-          totalQuestions: row.total_questions,
-          percentage: Number(row.percentage),
-          timeSpentSeconds: row.time_spent_seconds,
-          attemptsCount: row.attempts_count,
-          updatedAt: row.updated_at
-        })
+  if (allEntries && allEntries.length > 0) {
+    for (const item of allEntries) {
+      const code = (item.subjectCode || '').trim().toUpperCase()
+      if (!code) continue
+      if (!grouped[code]) {
+        grouped[code] = []
       }
-
-      // Merge with stored seed data for subjects that don't yet have DB attempts
-      const stored = getAllStoredLeaderboards() || {}
-      for (const [code, list] of Object.entries(stored)) {
-        if (!grouped[code] || grouped[code].length === 0) {
-          grouped[code] = list
-        }
-      }
-
-      return grouped
+      grouped[code].push({
+        ...item,
+        rank: grouped[code].length + 1
+      })
     }
-  } catch (err) {
-    console.warn('[CBT] Supabase getAllCbtLeaderboards error:', err)
   }
 
-  // Fallback to stored leaderboards
-  const stored = getAllStoredLeaderboards()
-  return stored || {}
+  // 2. Merge with stored seed data for subjects that don't yet have DB attempts
+  const stored = getAllStoredLeaderboards() || {}
+  for (const [code, list] of Object.entries(stored)) {
+    const normCode = code.trim().toUpperCase()
+    if (!grouped[normCode] || grouped[normCode].length === 0) {
+      grouped[normCode] = list
+    }
+  }
+
+  return grouped
 }
 
 /**

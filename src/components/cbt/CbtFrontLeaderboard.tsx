@@ -66,7 +66,7 @@ export default function CbtFrontLeaderboard({
 
   // Find all subjects that have leaderboard entries or ready status
   const subjectsWithEntries = readySubjects.map(subj => {
-    const entries = leaderboards[subj.code] || []
+    const entries = leaderboards[subj.code] || leaderboards[subj.code.toUpperCase()] || []
     return {
       subject: subj,
       entries,
@@ -79,7 +79,7 @@ export default function CbtFrontLeaderboard({
 
   // Current active subject data
   const currentSubjectObj = readySubjects.find(s => s.code === selectedSubjectCode) || readySubjects[0]
-  const currentLeaderboard = leaderboards[selectedSubjectCode] || []
+  const currentLeaderboard = leaderboards[selectedSubjectCode] || leaderboards[selectedSubjectCode?.toUpperCase()] || []
 
   // Top 3 Podium
   const topThree = currentLeaderboard.slice(0, 3)
@@ -268,7 +268,7 @@ export default function CbtFrontLeaderboard({
           {/* Subject Pills */}
           <div className="flex items-center gap-2 overflow-x-auto max-w-full pb-1 scrollbar-none">
             {readySubjects.map(subj => {
-              const count = (leaderboards[subj.code] || []).length
+              const count = (leaderboards[subj.code] || leaderboards[subj.code.toUpperCase()] || []).length
               const isActive = selectedSubjectCode === subj.code
 
               return (

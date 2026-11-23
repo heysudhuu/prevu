@@ -1,4 +1,110 @@
 {
+  "ACP-101": [
+    {
+      "userId": "m2w7P9n0tzLLUxHQt9pbn0cObMl1",
+      "username": "26bcs12763",
+      "userName": "Sahaj",
+      "cuVerified": true,
+      "subjectCode": "ACP-101",
+      "score": 32,
+      "totalQuestions": 32,
+      "percentage": 100,
+      "timeSpentSeconds": 224,
+      "attemptsCount": 4,
+      "updatedAt": "2026-11-22T13:03:20.744Z"
+    },
+    {
+      "userId": "8kTkRYraDTcUddI5xIDSpsROVme2",
+      "username": "radhe1234",
+      "userName": "Radhe",
+      "cuVerified": false,
+      "subjectCode": "ACP-101",
+      "score": 80,
+      "totalQuestions": 80,
+      "percentage": 100,
+      "timeSpentSeconds": 537,
+      "attemptsCount": 2,
+      "updatedAt": "2026-11-22T12:56:29.948Z"
+    },
+    {
+      "userId": "7tapXx6hi8RRdGBXtvjuVpD6R0j1",
+      "username": "mukherjeerudro02",
+      "userName": "Rudro Nil Mukherjee",
+      "cuVerified": false,
+      "subjectCode": "ACP-101",
+      "score": 38,
+      "totalQuestions": 38,
+      "percentage": 100,
+      "timeSpentSeconds": 614,
+      "attemptsCount": 5,
+      "updatedAt": "2026-11-22T20:35:32.971Z"
+    },
+    {
+      "userId": "VTXrOEl8pAbD6b0VCx9t5XxIyOM2",
+      "username": "ashmanjitsidhu3",
+      "userName": "Ashmanjit Sidhu",
+      "cuVerified": false,
+      "subjectCode": "ACP-101",
+      "score": 24,
+      "totalQuestions": 25,
+      "percentage": 96,
+      "timeSpentSeconds": 241,
+      "attemptsCount": 1,
+      "updatedAt": "2026-11-22T13:31:24.986Z"
+    },
+    {
+      "userId": "JR9DOnGvhcaiF4MeN07WvMjFono2",
+      "username": "nkuma222",
+      "userName": "Sakshi Prajapati",
+      "cuVerified": false,
+      "subjectCode": "ACP-101",
+      "score": 13,
+      "totalQuestions": 16,
+      "percentage": 81.3,
+      "timeSpentSeconds": 447,
+      "attemptsCount": 1,
+      "updatedAt": "2026-11-22T13:29:21.410Z"
+    },
+    {
+      "userId": "xUrFrDdUBvdo7tFjyyDsm0Tp2Nr2",
+      "username": "py7716496",
+      "userName": "Admin",
+      "cuVerified": false,
+      "subjectCode": "ACP-101",
+      "score": 10,
+      "totalQuestions": 15,
+      "percentage": 66.7,
+      "timeSpentSeconds": 74,
+      "attemptsCount": 1,
+      "updatedAt": "2026-11-23T02:02:38.033Z"
+    },
+    {
+      "userId": "S7sgqv015IaN2qhouAooasVugq23",
+      "username": "akshaykumar7765566",
+      "userName": "Akshay Kumar",
+      "cuVerified": false,
+      "subjectCode": "ACP-101",
+      "score": 97,
+      "totalQuestions": 160,
+      "percentage": 60.6,
+      "timeSpentSeconds": 956,
+      "attemptsCount": 1,
+      "updatedAt": "2026-11-22T13:32:20.687Z"
+    },
+    {
+      "userId": "KMeTbMAEPrgmZvLLva2NnIcUqOG2",
+      "username": "wtfsudhu",
+      "userName": "Sudhanshu Yaduvanshi",
+      "cuVerified": false,
+      "subjectCode": "ACP-101",
+      "score": 7,
+      "totalQuestions": 160,
+      "percentage": 4.4,
+      "timeSpentSeconds": 79,
+      "attemptsCount": 1,
+      "updatedAt": "2026-11-22T10:45:52.460Z"
+    }
+  ],
   "FSO-307": [
     {
       "userId": "user-latest-attempt",

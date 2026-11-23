@@ -427,7 +427,7 @@ export default function CbtArenaHub({
       <section id="cbt-subjects" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 scroll-mt-28">
         {filteredSubjects.map(subject => {
           const isLive = subject.isReady
-          const subjectEntries = initialLeaderboards[subject.code] || []
+          const subjectEntries = initialLeaderboards[subject.code] || initialLeaderboards[subject.code.toUpperCase()] || []
           const subjectLeader = isLive && subjectEntries.length > 0 ? subjectEntries[0] : null
           const hasTopicList = Boolean(subject.topicsList && subject.topicsList.length > 0)
 

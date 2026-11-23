@@ -21,43 +21,95 @@ declare global {
 const initialSeed: Record<string, CbtLeaderboardEntry[]> = {
   'ACP-101': [
     {
-      userId: 'seed-user-acp-1',
-      username: 'ankul_cu',
-      userName: 'Ankul Kumar',
+      userId: 'm2w7P9n0tzLLUxHQt9pbn0cObMl1',
+      username: '26bcs12763',
+      userName: 'Sahaj',
       cuVerified: true,
-      subjectCode: 'ACP-101',
-      score: 38,
-      totalQuestions: 40,
-      percentage: 95.0,
-      timeSpentSeconds: 780,
-      attemptsCount: 3,
-      updatedAt: new Date(Date.now() - 3600000 * 1).toISOString()
-    },
-    {
-      userId: 'seed-user-acp-2',
-      username: 'riya_sharma',
-      userName: 'Riya Sharma',
-      cuVerified: true,
-      subjectCode: 'ACP-101',
-      score: 35,
-      totalQuestions: 40,
-      percentage: 87.5,
-      timeSpentSeconds: 840,
-      attemptsCount: 2,
-      updatedAt: new Date(Date.now() - 3600000 * 4).toISOString()
-    },
-    {
-      userId: 'seed-user-acp-3',
-      username: 'aman_gupta',
-      userName: 'Aman Gupta',
-      cuVerified: false,
       subjectCode: 'ACP-101',
       score: 32,
-      totalQuestions: 40,
-      percentage: 80.0,
-      timeSpentSeconds: 910,
+      totalQuestions: 32,
+      percentage: 100,
+      timeSpentSeconds: 224,
+      attemptsCount: 4,
+      updatedAt: '2026-11-22T13:03:20.744Z'
+    },
+    {
+      userId: '8kTkRYraDTcUddI5xIDSpsROVme2',
+      username: 'radhe1234',
+      userName: 'Radhe',
+      cuVerified: false,
+      subjectCode: 'ACP-101',
+      score: 80,
+      totalQuestions: 80,
+      percentage: 100,
+      timeSpentSeconds: 537,
+      attemptsCount: 2,
+      updatedAt: '2026-11-22T12:56:29.948Z'
+    },
+    {
+      userId: '7tapXx6hi8RRdGBXtvjuVpD6R0j1',
+      username: 'mukherjeerudro02',
+      userName: 'Rudro Nil Mukherjee',
+      cuVerified: false,
+      subjectCode: 'ACP-101',
+      score: 38,
+      totalQuestions: 38,
+      percentage: 100,
+      timeSpentSeconds: 614,
+      attemptsCount: 5,
+      updatedAt: '2026-11-22T20:35:32.971Z'
+    },
+    {
+      userId: 'VTXrOEl8pAbD6b0VCx9t5XxIyOM2',
+      username: 'ashmanjitsidhu3',
+      userName: 'Ashmanjit Sidhu',
+      cuVerified: false,
+      subjectCode: 'ACP-101',
+      score: 24,
+      totalQuestions: 25,
+      percentage: 96,
+      timeSpentSeconds: 241,
       attemptsCount: 1,
-      updatedAt: new Date(Date.now() - 3600000 * 7).toISOString()
+      updatedAt: '2026-11-22T13:31:24.986Z'
+    },
+    {
+      userId: 'JR9DOnGvhcaiF4MeN07WvMjFono2',
+      username: 'nkuma222',
+      userName: 'Sakshi Prajapati',
+      cuVerified: false,
+      subjectCode: 'ACP-101',
+      score: 13,
+      totalQuestions: 16,
+      percentage: 81.3,
+      timeSpentSeconds: 447,
+      attemptsCount: 1,
+      updatedAt: '2026-11-22T13:29:21.410Z'
+    },
+    {
+      userId: 'S7sgqv015IaN2qhouAooasVugq23',
+      username: 'akshaykumar7765566',
+      userName: 'Akshay Kumar',
+      cuVerified: false,
+      subjectCode: 'ACP-101',
+      score: 97,
+      totalQuestions: 160,
+      percentage: 60.6,
+      timeSpentSeconds: 956,
+      attemptsCount: 1,
+      updatedAt: '2026-11-22T13:32:20.687Z'
+    },
+    {
+      userId: 'KMeTbMAEPrgmZvLLva2NnIcUqOG2',
+      username: 'wtfsudhu',
+      userName: 'Sudhanshu Yaduvanshi',
+      cuVerified: false,
+      subjectCode: 'ACP-101',
+      score: 7,
+      totalQuestions: 160,
+      percentage: 4.4,
+      timeSpentSeconds: 79,
+      attemptsCount: 1,
+      updatedAt: '2026-11-22T10:45:52.460Z'
     }
   ],
   'FSO-307': [
@@ -226,7 +278,8 @@ export function getStoredLeaderboard(subjectCode: string): CbtLeaderboardEntry[]
       data = readDataFile('attempts.json', initialSeed)
       globalThis.__prevu_cbt_leaderboard = data
     }
-    const list = (data && data[subjectCode]) || []
+    const codeKey = (subjectCode || '').trim().toUpperCase()
+    const list = (data && (data[codeKey] || data[subjectCode])) || []
 
     const sorted = [...list].sort((a, b) => {
       if (b.percentage !== a.percentage) {
@@ -297,7 +350,8 @@ export function saveStoredAttempt(entry: {
       data = readDataFile('attempts.json', initialSeed)
     }
     data = { ...data }
-    const list = [...(data[entry.subjectCode] || [])]
+    const codeKey = (entry.subjectCode || '').trim().toUpperCase()
+    const list = [...(data[codeKey] || data[entry.subjectCode] || [])]
 
     const existingIdx = list.findIndex(i => i.userId === entry.userId || i.username.toLowerCase() === entry.username.toLowerCase())
     let attemptsCount = 1
@@ -306,22 +360,24 @@ export function saveStoredAttempt(entry: {
       attemptsCount = (list[existingIdx].attemptsCount || 1) + 1
       list[existingIdx] = {
         ...entry,
+        subjectCode: codeKey,
         attemptsCount,
         updatedAt: new Date().toISOString()
       }
     } else {
       list.push({
         ...entry,
+        subjectCode: codeKey,
         attemptsCount: 1,
         updatedAt: new Date().toISOString()
       })
     }
 
-    data[entry.subjectCode] = list
+    data[codeKey] = list
     globalThis.__prevu_cbt_leaderboard = data
     writeDataFile('attempts.json', data)
 
-    return getStoredLeaderboard(entry.subjectCode)
+    return getStoredLeaderboard(codeKey)
   } catch (err) {
     console.warn('Error saving attempt to store:', err)
     return []

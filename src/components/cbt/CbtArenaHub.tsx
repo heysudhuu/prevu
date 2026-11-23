@@ -3,13 +3,13 @@
 import React, { useState, useMemo } from 'react'
 import { CBT_SUBJECTS, generateTestQuestions } from '@/lib/cbt/cbtRegistry'
 import { CbtSubject, CbtExamConfig, CbtLeaderboardEntry } from '@/lib/cbt/types'
-import { 
-  Sparkles, 
-  Play, 
-  PlusCircle, 
-  Clock, 
-  Layers, 
-  Search, 
+import {
+  Sparkles,
+  Play,
+  PlusCircle,
+  Clock,
+  Layers,
+  Search,
   Flame,
   ArrowRight,
   ShieldCheck,
@@ -40,14 +40,14 @@ interface CbtArenaHubProps {
   approvedQuestions?: any[]
 }
 
-export default function CbtArenaHub({ 
+export default function CbtArenaHub({
   isAuthenticated = false,
   initialLeaderboards = {},
   approvedQuestions = []
 }: CbtArenaHubProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState<string>('')
-  
+
   // Auth Gate modal state
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false)
 
@@ -84,23 +84,23 @@ export default function CbtArenaHub({
 
   const categories = useMemo(() => [
     { id: 'all', label: 'All Suites', count: subjects.length, icon: Layers },
-    { 
-      id: 'core', 
-      label: 'Core & Career Readiness', 
-      count: `${subjects.filter(s => s.category === 'core' && s.isReady).reduce((sum, s) => sum + s.totalQuestions, 0)} MCQs`, 
-      icon: GraduationCap 
+    {
+      id: 'core',
+      label: 'Core & Career Readiness',
+      count: `${subjects.filter(s => s.category === 'core' && s.isReady).reduce((sum, s) => sum + s.totalQuestions, 0)} MCQs`,
+      icon: GraduationCap
     },
-    { 
-      id: 'aptitude', 
-      label: 'Aptitude & Placements', 
+    {
+      id: 'aptitude',
+      label: 'Aptitude & Placements',
       count: `${subjects.find(s => s.category === 'aptitude')?.totalQuestions || 290} MCQs`,
-      icon: Zap 
+      icon: Zap
     },
-    { 
-      id: 'open-elective', 
-      label: 'Open Electives (7th Sem)', 
+    {
+      id: 'open-elective',
+      label: 'Open Electives (7th Sem)',
       count: `${subjects.find(s => s.category === 'open-elective')?.totalQuestions || 51} MCQs`,
-      icon: Compass 
+      icon: Compass
     },
     { id: 'uhv', label: 'UHV (Ethics)', count: 'Mandatory', icon: ShieldCheck }
   ], [subjects])
@@ -108,7 +108,7 @@ export default function CbtArenaHub({
   const filteredSubjects = useMemo(() => {
     return subjects.filter(s => {
       const matchesCat = selectedCategory === 'all' || s.category === selectedCategory
-      const matchesQuery = !searchQuery.trim() || 
+      const matchesQuery = !searchQuery.trim() ||
         s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.topics.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -198,27 +198,27 @@ export default function CbtArenaHub({
 
   return (
     <div className="space-y-12 pb-20">
-      
+
       {/* ========================================================================= */}
       {/* 1. PROFESSIONAL COMMAND HERO SECTION */}
       {/* ========================================================================= */}
       <section className="relative overflow-hidden rounded-3xl bg-[#0f0f1a]/90 border border-purple-500/20 p-6 sm:p-10 lg:p-12 shadow-2xl backdrop-blur-2xl">
         {/* Glow ambient meshes */}
-        <div 
-          className="absolute -top-24 right-1/4 w-[500px] h-[500px] pointer-events-none rounded-full blur-[130px] opacity-40" 
+        <div
+          className="absolute -top-24 right-1/4 w-[500px] h-[500px] pointer-events-none rounded-full blur-[130px] opacity-40"
           style={{ background: 'radial-gradient(circle, rgba(139, 92, 246, 0.45), transparent 70%)' }}
         />
-        <div 
-          className="absolute -bottom-24 left-10 w-[450px] h-[450px] pointer-events-none rounded-full blur-[110px] opacity-25" 
+        <div
+          className="absolute -bottom-24 left-10 w-[450px] h-[450px] pointer-events-none rounded-full blur-[110px] opacity-25"
           style={{ background: 'radial-gradient(circle, rgba(6, 182, 212, 0.4), transparent 70%)' }}
         />
-        <div 
-          className="absolute top-1/2 right-4 w-72 h-72 pointer-events-none rounded-full blur-[90px] opacity-20" 
+        <div
+          className="absolute top-1/2 right-4 w-72 h-72 pointer-events-none rounded-full blur-[90px] opacity-20"
           style={{ background: 'radial-gradient(circle, rgba(245, 158, 11, 0.35), transparent 70%)' }}
         />
 
         <div className="relative max-w-4xl space-y-7">
-          
+
           {/* Badge */}
           <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-300 border border-purple-500/25 shadow-sm backdrop-blur-md">
             <span className="relative flex h-2 w-2">
@@ -282,7 +282,7 @@ export default function CbtArenaHub({
 
           {/* Professional Metric Ribbon */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 pt-3">
-            
+
             <div className="p-4 rounded-2xl bg-prevu-surface/60 border border-prevu-surface-light/80 shadow-md backdrop-blur-md">
               <div className="flex items-center gap-1.5 text-prevu-text-muted text-[11px] font-mono uppercase tracking-wider mb-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
@@ -322,8 +322,8 @@ export default function CbtArenaHub({
               </div>
             </div>
 
-            <a 
-              href="#cbt-leaderboard-section" 
+            <a
+              href="#cbt-leaderboard-section"
               className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 via-prevu-surface/60 to-prevu-surface/80 border border-amber-500/30 hover:border-amber-500/60 transition-all shadow-md group cursor-pointer block backdrop-blur-md"
             >
               <div className="flex items-center gap-1.5 text-amber-300 text-[11px] font-mono uppercase tracking-wider mb-1.5">
@@ -349,7 +349,7 @@ export default function CbtArenaHub({
       {/* ========================================================================= */}
       <section className="space-y-4">
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
-          
+
           {/* Category Tabs */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
             {categories.map(cat => {
@@ -360,17 +360,16 @@ export default function CbtArenaHub({
                   key={cat.id}
                   type="button"
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-4 py-2.5 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer border flex items-center gap-2 shrink-0 ${
-                    isSelected
+
+                  className={`px-4 py-2.5 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer border flex items-center gap-2 shrink-0 ${isSelected
                       ? 'bg-prevu-accent text-white border-prevu-accent shadow-lg shadow-prevu-accent/25'
                       : 'bg-prevu-surface/80 border-prevu-surface-light text-prevu-text-muted hover:text-white hover:border-purple-500/40 hover:bg-prevu-surface'
-                  }`}
+                    }`}
                 >
                   <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-prevu-text-muted'}`} />
                   <span>{cat.label}</span>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-                    isSelected ? 'bg-white/20 text-white' : 'bg-prevu-bg border border-prevu-surface-light text-prevu-text-muted'
-                  }`}>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${isSelected ? 'bg-white/20 text-white' : 'bg-prevu-bg border border-prevu-surface-light text-prevu-text-muted'
+                    }`}>
                     {cat.count}
                   </span>
                 </button>
@@ -443,19 +442,17 @@ export default function CbtArenaHub({
           return (
             <div
               key={subject.code}
-              className={`rounded-3xl border transition-all duration-300 flex flex-col justify-between relative overflow-hidden group card-hover-lift shadow-xl ${
-                isLive
+              className={`rounded-3xl border transition-all duration-300 flex flex-col justify-between relative overflow-hidden group card-hover-lift shadow-xl ${isLive
                   ? 'bg-prevu-surface/75 backdrop-blur-xl border-prevu-surface-light hover:border-prevu-accent/50 hover:shadow-2xl hover:shadow-prevu-accent/10'
                   : 'bg-prevu-surface/40 border-prevu-surface-light/40 opacity-85'
-              }`}
+                }`}
             >
               {/* Top Accent Gradient Border Glow */}
-              <div className={`h-1 w-full bg-gradient-to-r transition-all ${
-                isLive ? 'from-purple-500 via-cyan-400 to-emerald-400 group-hover:h-1.5' : 'from-slate-700 to-slate-800'
-              }`} />
+              <div className={`h-1 w-full bg-gradient-to-r transition-all ${isLive ? 'from-purple-500 via-cyan-400 to-emerald-400 group-hover:h-1.5' : 'from-slate-700 to-slate-800'
+                }`} />
 
               <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
-                
+
                 <div className="space-y-3.5">
                   {/* Category Pill, Live Indicator & Share Button */}
                   <div className="flex items-center justify-between gap-2">
@@ -588,8 +585,8 @@ export default function CbtArenaHub({
                     /* Default topics pill preview for subjects without sub-modules */
                     <div className="flex flex-wrap gap-1.5">
                       {subject.topics.slice(0, 3).map(topic => (
-                        <span 
-                          key={topic} 
+                        <span
+                          key={topic}
                           className="text-[10px] bg-prevu-bg/90 border border-prevu-surface-light text-prevu-text-muted px-2.5 py-1 rounded-lg"
                         >
                           {topic}
@@ -663,7 +660,7 @@ export default function CbtArenaHub({
       {/* ========================================================================= */}
       {/* 4. LIVE CAMPUS LEADERBOARD SECTION */}
       {/* ========================================================================= */}
-      <CbtFrontLeaderboard 
+      <CbtFrontLeaderboard
         initialLeaderboards={initialLeaderboards}
         onSelectSubjectExam={handleOpenConfig}
       />
@@ -672,8 +669,8 @@ export default function CbtArenaHub({
       {/* 5. COMMUNITY CONTRIBUTION BANNER */}
       {/* ========================================================================= */}
       <section className="relative overflow-hidden p-8 sm:p-10 rounded-3xl bg-gradient-to-r from-purple-950/60 via-prevu-surface to-[#120e24] border border-purple-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-2xl backdrop-blur-xl">
-        <div 
-          className="absolute -top-16 -right-16 w-80 h-80 pointer-events-none rounded-full blur-[100px] opacity-25" 
+        <div
+          className="absolute -top-16 -right-16 w-80 h-80 pointer-events-none rounded-full blur-[100px] opacity-25"
           style={{ background: 'radial-gradient(circle, rgba(139, 92, 246, 0.5), transparent)' }}
         />
 
@@ -720,7 +717,7 @@ export default function CbtArenaHub({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
           <div className="relative w-full max-w-md p-6 sm:p-8 rounded-3xl bg-prevu-surface border border-prevu-surface-light shadow-2xl text-center space-y-5 overflow-hidden">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-20 bg-prevu-accent/20 blur-2xl pointer-events-none rounded-full" />
-            
+
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600 to-prevu-accent flex items-center justify-center text-white mx-auto shadow-lg shadow-purple-600/30">
               <Sparkles className="w-7 h-7" />
             </div>

@@ -29,6 +29,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { recordCbtAttempt, getCbtLeaderboard, reportCbtQuestion } from '@/lib/cbt/actions'
 import { CollaboratorBadge } from '@/components/ui/CollaboratorBadge'
+import { trackStudentCbtActivity } from '@/lib/activity/activityTracker'
 import CbtReportModal from './CbtReportModal'
 import CbtShareModal from './CbtShareModal'
 import Link from 'next/link'
@@ -247,6 +248,15 @@ export default function CbtExamRunner({
         timeSpentSeconds: evaluatedResults.timeSpentSeconds,
         allottedMinutes: config.timeLimitMinutes,
         answers: evaluatedResults.userAnswers
+      })
+
+      // Track in universal student activity stream
+      trackStudentCbtActivity({
+        subjectCode: subject.code,
+        subjectName: subject.name,
+        score: evaluatedResults.score,
+        totalQuestions: evaluatedResults.effectiveTotal || totalCount,
+        percentage: evaluatedResults.percentage
       })
 
       if (res?.earnedKarma) {

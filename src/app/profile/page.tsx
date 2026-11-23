@@ -4,6 +4,9 @@ import { authAdmin } from '@/lib/firebase/server'
 import { getSupabaseAdmin } from '@/utils/supabase/admin'
 import Header from '@/components/Header'
 import ProfileForm from '@/components/profile/ProfileForm'
+import ProfileCbtTranscript from '@/components/profile/ProfileCbtTranscript'
+import RecentlyViewedBar from '@/components/dashboard/RecentlyViewedBar'
+import { getUserCbtAttempts } from '@/lib/cbt/actions'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
@@ -30,8 +33,8 @@ export default async function ProfilePage() {
 
   const supabase = getSupabaseAdmin()
 
-  // Fetch full user profile & user engagement stats in parallel
-  const [userProfileRes, uploadsCountRes, bookmarksCountRes] = await Promise.all([
+  // Fetch full user profile, engagement stats & CBT test attempts in parallel
+  const [userProfileRes, uploadsCountRes, bookmarksCountRes, cbtAttempts] = await Promise.all([
     supabase
       .from('users')
       .select('*')
@@ -44,7 +47,8 @@ export default async function ProfilePage() {
     supabase
       .from('bookmarks')
       .select('id', { count: 'exact', head: true })
-      .eq('user_id', decoded.uid)
+      .eq('user_id', decoded.uid),
+    getUserCbtAttempts(decoded.uid)
   ])
 
   const userProfile = userProfileRes.data
@@ -57,10 +61,10 @@ export default async function ProfilePage() {
     <div className="min-h-screen bg-prevu-bg text-prevu-text flex flex-col pb-16">
       <Header />
 
-      <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
+      <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl space-y-10">
         
         {/* Back Link */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center justify-between">
           <Button variant="ghost" size="sm" asChild className="text-xs text-prevu-text-muted hover:text-prevu-text">
             <Link href="/dashboard" className="flex items-center gap-1.5">
               <ArrowLeft className="w-4 h-4" /> Back to Dashboard
@@ -77,6 +81,16 @@ export default async function ProfilePage() {
 
         {/* Profile Editor */}
         <ProfileForm user={userProfile} stats={stats} />
+
+        {/* Official CBT Examination Transcript & Performance Record */}
+        <div className="pt-4 border-t border-prevu-surface-light/60">
+          <ProfileCbtTranscript attempts={cbtAttempts} />
+        </div>
+
+        {/* Continuous Student Study Footprint */}
+        <div className="pt-2">
+          <RecentlyViewedBar />
+        </div>
 
       </main>
     </div>

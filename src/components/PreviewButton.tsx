@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Eye } from 'lucide-react'
 import PDFViewerModal from '@/components/preview/PDFViewerModal'
+import { trackStudentResourceView } from '@/lib/activity/activityTracker'
 
 interface PreviewButtonProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -24,28 +25,7 @@ export default function PreviewButton({
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   const handleOpen = () => {
-    try {
-      const stored = localStorage.getItem('prevu_recent_papers')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let recents: any[] = stored ? JSON.parse(stored) : []
-      
-      const newEntry = {
-        id: resource.id,
-        subjectName: resource.subjects?.name || 'Question Paper',
-        subjectCode: resource.subjects?.code,
-        examType: resource.exam_types?.name || 'MST',
-        examYear: resource.exam_year,
-        viewedAt: Date.now()
-      }
-
-      // Filter out duplicate if existing, add to front, limit to 8
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      recents = [newEntry, ...recents.filter((r: any) => r.id !== resource.id)].slice(0, 8)
-      localStorage.setItem('prevu_recent_papers', JSON.stringify(recents))
-    } catch {
-      // Ignore storage errors
-    }
-
+    trackStudentResourceView(resource)
     setIsModalOpen(true)
   }
 

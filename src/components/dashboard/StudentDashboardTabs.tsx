@@ -16,7 +16,8 @@ import {
   ArrowRight,
   Target,
   GraduationCap,
-  Sparkles
+  Sparkles,
+  Zap
 } from 'lucide-react'
 import Link from 'next/link'
 import { ResourceCard } from '@/components/ResourceCard'
@@ -26,6 +27,8 @@ import ExamBlueprintModal from './ExamBlueprintModal'
 import RecentlyViewedBar from './RecentlyViewedBar'
 import SavedPapersList from './SavedPapersList'
 import PaperRequestsBoard from './PaperRequestsBoard'
+import StudentCbtHistoryTab from './StudentCbtHistoryTab'
+import { UserCbtHistoryItem } from '@/lib/cbt/actions'
 
 interface StudentDashboardTabsProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -36,25 +39,27 @@ interface StudentDashboardTabsProps {
   savedResources: any[]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   paperRequests: any[]
+  cbtAttempts?: UserCbtHistoryItem[]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   liveResources?: any[]
   initialTab?: string
   initialAction?: string
 }
 
-type TabType = 'browse' | 'saved' | 'requests' | 'my-uploads'
+type TabType = 'browse' | 'saved' | 'cbt-history' | 'requests' | 'my-uploads'
 
 export default function StudentDashboardTabs({
   userProfile,
   myResources,
   savedResources,
   paperRequests,
+  cbtAttempts = [],
   liveResources = [],
   initialTab = 'browse',
   initialAction
 }: StudentDashboardTabsProps) {
   const searchParams = useSearchParams()
-  const validTabs: TabType[] = ['browse', 'saved', 'requests', 'my-uploads']
+  const validTabs: TabType[] = ['browse', 'saved', 'cbt-history', 'requests', 'my-uploads']
   const paramTab = searchParams.get('tab') as TabType
   const [userSelectedTab, setUserSelectedTab] = useState<TabType | null>(null)
 
@@ -138,6 +143,23 @@ export default function StudentDashboardTabs({
         </button>
 
         <button
+          onClick={() => handleTabChange('cbt-history')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === 'cbt-history'
+              ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-500/25'
+              : 'text-prevu-text-muted hover:text-prevu-text hover:bg-prevu-surface-light/40'
+          }`}
+        >
+          <Zap className="w-4 h-4 text-amber-400" />
+          <span>CBT Mock Records</span>
+          {cbtAttempts.length > 0 && (
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 text-white font-mono">
+              {cbtAttempts.length}
+            </span>
+          )}
+        </button>
+
+        <button
           onClick={() => handleTabChange('requests')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'requests'
@@ -208,6 +230,38 @@ export default function StudentDashboardTabs({
 
           {/* Exam Countdown Widget */}
           <ExamCountdownWidget semester={userSem} />
+
+          {/* CBT Performance Highlight Banner (if student has taken mock exams) */}
+          {cbtAttempts.length > 0 && (
+            <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-prevu-surface border border-amber-500/25 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-white shadow-lg shadow-amber-500/30 shrink-0">
+                  <Zap className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-400">CBT Arena Performance</span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                      {cbtAttempts.length} Mock{cbtAttempts.length > 1 ? 's' : ''} Taken
+                    </span>
+                  </div>
+                  <p className="text-xs text-white font-medium mt-0.5">
+                    Latest score: <span className="font-bold text-amber-300">{cbtAttempts[0].score}/{cbtAttempts[0].totalQuestions} ({cbtAttempts[0].percentage}%)</span> in <span className="text-prevu-accent">{cbtAttempts[0].subjectName}</span>
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => handleTabChange('cbt-history')}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-black shadow-lg shadow-amber-500/20 cursor-pointer transition-all"
+                >
+                  <span>View All Mock Results</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* In-Dashboard Search & Browsing Bar */}
           <div className="space-y-4 p-5 rounded-3xl bg-prevu-surface/90 border border-prevu-surface-light shadow-xl">
@@ -359,7 +413,16 @@ export default function StudentDashboardTabs({
       )}
 
       {/* ------------------------------------------------------------ */}
-      {/* TAB 3: PAPER REQUESTS BOARD */}
+      {/* TAB 3: CBT MOCK EXAMS & ACCURACY HISTORY */}
+      {/* ------------------------------------------------------------ */}
+      {activeTab === 'cbt-history' && (
+        <div className="space-y-4 animate-fade-in">
+          <StudentCbtHistoryTab attempts={cbtAttempts} />
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------ */}
+      {/* TAB 4: PAPER REQUESTS BOARD */}
       {/* ------------------------------------------------------------ */}
       {activeTab === 'requests' && (
         <div className="space-y-4 animate-fade-in">

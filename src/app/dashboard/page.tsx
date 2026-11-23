@@ -14,6 +14,7 @@ import {
   GraduationCap
 } from 'lucide-react'
 import { getBookmarkedResources, getPaperRequests } from './actions'
+import { getUserCbtAttempts } from '@/lib/cbt/actions'
 import { isSuperAdminEmail } from '@/lib/auth/admin-check'
 import StudentDashboardTabs from '@/components/dashboard/StudentDashboardTabs'
 import WelcomeFamilyModal from '@/components/dashboard/WelcomeFamilyModal'
@@ -78,9 +79,12 @@ export default async function StudentDashboardPage({
 
   const approvedCount = myResources?.filter(r => r.status === 'approved').length || 0
 
-  // Fetch bookmarks & requests
-  const savedResources = await getBookmarkedResources()
-  const paperRequests = await getPaperRequests()
+  // Fetch bookmarks, requests, and student CBT mock attempts in parallel
+  const [savedResources, paperRequests, cbtAttempts] = await Promise.all([
+    getBookmarkedResources(),
+    getPaperRequests(),
+    getUserCbtAttempts(decoded.uid)
+  ])
 
   // Fetch targeted recommended papers for this student's semester (capped at 12)
   const userSem = userProfile?.current_semester || 1
@@ -204,7 +208,7 @@ export default async function StudentDashboardPage({
         {userProfile && <DashboardWelcomeBanner userProfile={userProfile} />}
 
         {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
           
           <div className="p-4 rounded-2xl border border-prevu-surface-light bg-prevu-surface/70">
             <div className="text-xs text-prevu-text-muted mb-1">My Contributions</div>
@@ -216,6 +220,12 @@ export default async function StudentDashboardPage({
             <div className="text-xs text-prevu-text-muted mb-1">Saved Papers</div>
             <div className="text-2xl font-bold font-mono text-amber-400">{savedResources.length}</div>
             <div className="text-[11px] text-amber-400/80 mt-0.5">Quick revision hub</div>
+          </div>
+
+          <div className="p-4 rounded-2xl border border-prevu-surface-light bg-prevu-surface/70">
+            <div className="text-xs text-prevu-text-muted mb-1">CBT Mock Exams</div>
+            <div className="text-2xl font-bold font-mono text-cyan-400">{cbtAttempts.length}</div>
+            <div className="text-[11px] text-cyan-400/80 mt-0.5">Tests attempted</div>
           </div>
 
           <div className="p-4 rounded-2xl border border-prevu-surface-light bg-prevu-surface/70">
@@ -238,6 +248,7 @@ export default async function StudentDashboardPage({
           myResources={myResources || []}
           savedResources={savedResources}
           paperRequests={paperRequests}
+          cbtAttempts={cbtAttempts}
           liveResources={recommendedPapers || []}
           initialTab={targetTab}
           initialAction={targetAction}

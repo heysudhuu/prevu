@@ -7,6 +7,7 @@ import PreviewButton from '@/components/PreviewButton'
 import SharePaperButton from '@/components/SharePaperButton'
 import ResourceUpvoteButton from '@/components/ResourceUpvoteButton'
 import DownloadButtonWithProgress from '@/components/ui/DownloadButtonWithProgress'
+import ExternalResourceButton from '@/components/ExternalResourceButton'
 import Link from 'next/link'
 
 export function getCleanResourceCardTitle(resource: any): string {
@@ -210,27 +211,17 @@ export function ResourceCard({ resource, isBookmarked = false, initialUpvoted = 
       
       <CardFooter className="flex-none p-4 pt-1 border-t-0 flex gap-2">
         {isGDrive && externalUrl ? (
-          <a
-            href={externalUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
-          >
-            <FolderOpen className="w-3.5 h-3.5" />
-            <span>Open in Google Drive</span>
-            <ExternalLink className="w-3 h-3" />
-          </a>
+          <ExternalResourceButton
+            resource={resource}
+            type="gdrive"
+            url={externalUrl}
+          />
         ) : isYouTube && externalUrl ? (
-          <a
-            href={externalUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-red-500/20 transition-all cursor-pointer"
-          >
-            <Play className="w-3.5 h-3.5" />
-            <span>Watch on YouTube</span>
-            <ExternalLink className="w-3 h-3" />
-          </a>
+          <ExternalResourceButton
+            resource={resource}
+            type="youtube"
+            url={externalUrl}
+          />
         ) : (
           <>
             <PreviewButton 

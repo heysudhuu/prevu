@@ -5,6 +5,7 @@ import { authAdmin } from '@/lib/firebase/server'
 import { getSupabaseAdmin } from '@/utils/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { CbtLeaderboardEntry, CbtUserAnswer, CbtQuestionReport } from './types'
+import { CBT_SUBJECTS } from './cbtRegistry'
 import { 
   saveStoredAttempt, 
   getStoredLeaderboard, 
@@ -274,6 +275,64 @@ export async function getAllCbtLeaderboards(): Promise<Record<string, CbtLeaderb
   }
 
   return grouped
+}
+
+export interface UserCbtHistoryItem {
+  id?: number | string
+  subjectCode: string
+  subjectName: string
+  score: number
+  totalQuestions: number
+  percentage: number
+  timeSpentSeconds: number
+  attemptsCount: number
+  updatedAt: string
+}
+
+/**
+ * Retrieve all CBT mock exam attempts for a specific student
+ */
+export async function getUserCbtAttempts(userId: string): Promise<UserCbtHistoryItem[]> {
+  if (!userId) return []
+
+  try {
+    const supabase = getSupabaseAdmin()
+    const { data, error } = await supabase
+      .from('cbt_attempts')
+      .select('id, subject_code, score, total_questions, percentage, time_spent_seconds, attempts_count, updated_at')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false })
+
+    if (error) {
+      console.warn('[CBT] Supabase error in getUserCbtAttempts:', error.message)
+      return []
+    }
+
+    if (!data || data.length === 0) {
+      return []
+    }
+
+    return data.map((row: any) => {
+      const codeUpper = (row.subject_code || '').trim().toUpperCase()
+      const matched = CBT_SUBJECTS.find(
+        s => s.code.toUpperCase() === codeUpper || s.code.replace(/[^a-zA-Z0-9]/g, '') === codeUpper.replace(/[^a-zA-Z0-9]/g, '')
+      )
+      return {
+        id: row.id,
+        subjectCode: row.subject_code,
+        subjectName: matched?.name || row.subject_code,
+        score: row.score,
+        totalQuestions: row.total_questions,
+        percentage: Number(row.percentage),
+        timeSpentSeconds: row.time_spent_seconds,
+        attemptsCount: row.attempts_count,
+        updatedAt: row.updated_at
+      }
+    })
+  } catch (err) {
+    console.warn('[CBT] Fatal exception in getUserCbtAttempts:', err)
+    return []
+  }
 }
 
 /**

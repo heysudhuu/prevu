@@ -4,12 +4,12 @@ import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { 
-  BookOpen, 
-  Bookmark, 
-  HelpCircle, 
-  Upload, 
-  Search, 
+import {
+  BookOpen,
+  Bookmark,
+  HelpCircle,
+  Upload,
+  Search,
   X,
   FileQuestion,
   MessageSquarePlus,
@@ -79,7 +79,7 @@ export default function StudentDashboardTabs({
       window.history.replaceState(null, '', url.toString())
     }
   }
-  
+
   // Dashboard in-page search & filter states
   const userSem = userProfile?.current_semester || 1
   const [searchQuery, setSearchQuery] = useState('')
@@ -105,16 +105,15 @@ export default function StudentDashboardTabs({
 
   return (
     <div className="space-y-6">
-      
+
       {/* Navigation Tabs */}
       <div className="flex items-center gap-2 border-b border-prevu-surface-light pb-2 overflow-x-auto">
         <button
           onClick={() => handleTabChange('browse')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-            activeTab === 'browse'
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${activeTab === 'browse'
               ? 'bg-prevu-accent text-white shadow-lg shadow-prevu-accent/25'
               : 'text-prevu-text-muted hover:text-prevu-text hover:bg-prevu-surface-light/40'
-          }`}
+            }`}
         >
           <BookOpen className="w-4 h-4" />
           <span>Study Hub & Recommendations</span>
@@ -127,11 +126,10 @@ export default function StudentDashboardTabs({
 
         <button
           onClick={() => handleTabChange('saved')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-            activeTab === 'saved'
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${activeTab === 'saved'
               ? 'bg-prevu-accent text-white shadow-lg shadow-prevu-accent/25'
               : 'text-prevu-text-muted hover:text-prevu-text hover:bg-prevu-surface-light/40'
-          }`}
+            }`}
         >
           <Bookmark className="w-4 h-4" />
           <span>Saved Papers</span>
@@ -144,11 +142,10 @@ export default function StudentDashboardTabs({
 
         <button
           onClick={() => handleTabChange('cbt-history')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-            activeTab === 'cbt-history'
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${activeTab === 'cbt-history'
               ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-500/25'
               : 'text-prevu-text-muted hover:text-prevu-text hover:bg-prevu-surface-light/40'
-          }`}
+            }`}
         >
           <Zap className="w-4 h-4 text-amber-400" />
           <span>CBT Mock Records</span>
@@ -161,11 +158,10 @@ export default function StudentDashboardTabs({
 
         <button
           onClick={() => handleTabChange('requests')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-            activeTab === 'requests'
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${activeTab === 'requests'
               ? 'bg-prevu-accent text-white shadow-lg shadow-prevu-accent/25'
               : 'text-prevu-text-muted hover:text-prevu-text hover:bg-prevu-surface-light/40'
-          }`}
+            }`}
         >
           <HelpCircle className="w-4 h-4" />
           <span>Paper Requests</span>
@@ -178,11 +174,10 @@ export default function StudentDashboardTabs({
 
         <button
           onClick={() => handleTabChange('my-uploads')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-            activeTab === 'my-uploads'
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${activeTab === 'my-uploads'
               ? 'bg-prevu-accent text-white shadow-lg shadow-prevu-accent/25'
               : 'text-prevu-text-muted hover:text-prevu-text hover:bg-prevu-surface-light/40'
-          }`}
+            }`}
         >
           <Upload className="w-4 h-4" />
           <span>My Contributions</span>
@@ -199,7 +194,7 @@ export default function StudentDashboardTabs({
       {/* ------------------------------------------------------------ */}
       {activeTab === 'browse' && (
         <div className="space-y-8 animate-fade-in">
-          
+
           {/* Quick Feature Action Bar (Calendar & Exam Pattern Modal Buttons) */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-3xl bg-gradient-to-r from-prevu-surface via-prevu-surface/90 to-prevu-surface border border-prevu-surface-light shadow-xl">
             <div>
@@ -265,7 +260,7 @@ export default function StudentDashboardTabs({
 
           {/* In-Dashboard Search & Browsing Bar */}
           <div className="space-y-4 p-5 rounded-3xl bg-prevu-surface/90 border border-prevu-surface-light shadow-xl">
-            
+
             <div className="flex flex-col sm:flex-row gap-3">
               {/* Search Bar */}
               <div className="relative flex-1 group">
@@ -298,7 +293,7 @@ export default function StudentDashboardTabs({
 
             {/* Semester & Exam Pattern Filter Pills */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-2 border-t border-prevu-surface-light/60">
-              
+
               {/* Semester Switcher */}
               <div className="flex items-center gap-1.5 overflow-x-auto text-xs py-1">
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-prevu-text-muted shrink-0 mr-1">
@@ -306,11 +301,10 @@ export default function StudentDashboardTabs({
                 </span>
                 <button
                   onClick={() => setSelectedSemester('ALL')}
-                  className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer ${
-                    selectedSemester === 'ALL'
+                  className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer ${selectedSemester === 'ALL'
                       ? 'bg-prevu-accent text-white'
                       : 'bg-prevu-bg border border-prevu-surface-light text-prevu-text-muted hover:text-prevu-text'
-                  }`}
+                    }`}
                 >
                   All
                 </button>
@@ -318,11 +312,10 @@ export default function StudentDashboardTabs({
                   <button
                     key={s}
                     onClick={() => setSelectedSemester(s)}
-                    className={`px-3 py-1 rounded-xl text-xs font-mono font-bold transition-all shrink-0 cursor-pointer ${
-                      selectedSemester === s
+                    className={`px-3 py-1 rounded-xl text-xs font-mono font-bold transition-all shrink-0 cursor-pointer ${selectedSemester === s
                         ? 'bg-prevu-accent text-white shadow-md shadow-prevu-accent/20'
                         : 'bg-prevu-bg border border-prevu-surface-light text-prevu-text-muted hover:text-prevu-text hover:border-prevu-accent/30'
-                    }`}
+                      }`}
                   >
                     Sem {s} {userSem === s && '⭐'}
                   </button>
@@ -335,13 +328,12 @@ export default function StudentDashboardTabs({
                   <button
                     key={type}
                     onClick={() => setSelectedPattern(type)}
-                    className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                      selectedPattern === type
+                    className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer ${selectedPattern === type
                         ? type === 'EST'
                           ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
                           : 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
                         : 'bg-prevu-bg border border-prevu-surface-light text-prevu-text-muted hover:text-prevu-text'
-                    }`}
+                      }`}
                   >
                     {type === 'ALL' && 'All Types'}
                     {type === 'MST1' && '⚡ MST 1'}
@@ -383,7 +375,7 @@ export default function StudentDashboardTabs({
                 </div>
                 <h4 className="text-base font-bold text-white">No papers found</h4>
                 <p className="text-xs text-prevu-text-muted leading-relaxed">
-                  {searchQuery 
+                  {searchQuery
                     ? `No papers match "${searchQuery}". You can post a paper request to your batchmates!`
                     : "No question papers found for this semester filter."
                   }
@@ -426,8 +418,8 @@ export default function StudentDashboardTabs({
       {/* ------------------------------------------------------------ */}
       {activeTab === 'requests' && (
         <div className="space-y-4 animate-fade-in">
-          <PaperRequestsBoard 
-            requests={paperRequests} 
+          <PaperRequestsBoard
+            requests={paperRequests}
             autoOpenModal={initialAction === 'new' || searchParams.get('action') === 'new'}
           />
         </div>
@@ -438,7 +430,7 @@ export default function StudentDashboardTabs({
       {/* ------------------------------------------------------------ */}
       {activeTab === 'my-uploads' && (
         <div className="space-y-6 animate-fade-in">
-          
+
           <div className="flex items-center justify-between pb-3 border-b border-prevu-surface-light">
             <div>
               <h2 className="text-base font-bold text-white">My Contributed Question Papers</h2>
@@ -471,13 +463,12 @@ export default function StudentDashboardTabs({
                       <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-lg bg-prevu-accent/15 text-prevu-accent border border-prevu-accent/25">
                         {resource.exam_types?.name}
                       </span>
-                      <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${
-                        resource.status === 'approved' 
-                          ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' 
+                      <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${resource.status === 'approved'
+                          ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
                           : resource.status === 'rejected'
-                          ? 'bg-red-500/15 text-red-400 border-red-500/30'
-                          : 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-                      }`}>
+                            ? 'bg-red-500/15 text-red-400 border-red-500/30'
+                            : 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                        }`}>
                         {resource.status === 'approved' ? '✓ Approved & Live' : resource.status === 'rejected' ? '✕ Rejected' : '⏳ Under Review'}
                       </span>
                     </div>

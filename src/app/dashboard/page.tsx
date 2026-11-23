@@ -24,7 +24,7 @@ import DashboardDock from '@/components/dashboard/DashboardDock'
 export const dynamic = 'force-dynamic'
 
 export const metadata = {
-  title: 'Student Dashboard | Prevu',
+  title: 'My Dashboard | Prevu',
   description: 'Manage study materials, exams, saved question papers, and requests on Prevu.',
 }
 

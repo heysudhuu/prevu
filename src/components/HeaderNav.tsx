@@ -757,7 +757,7 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                     className="p-2 rounded-xl text-prevu-text-muted hover:text-white hover:bg-prevu-surface flex items-center gap-2.5 font-medium transition-colors"
                   >
                     <LayoutDashboard className="w-3.5 h-3.5 text-prevu-accent" />
-                    <span>Student Dashboard</span>
+                    <span>My Dashboard</span>
                   </Link>
 
                   <div className="pt-1 border-t border-prevu-surface-light/60">
@@ -930,7 +930,7 @@ export default function HeaderNav({ user, isAdmin }: HeaderNavProps) {
                   className="p-2.5 rounded-xl text-xs font-semibold text-prevu-text hover:bg-prevu-surface flex items-center gap-2"
                 >
                   <LayoutDashboard className="w-4 h-4 text-prevu-accent" />
-                  <span>Student Dashboard</span>
+                  <span>My Dashboard</span>
                 </Link>
                 <div className="pt-1">
                   <SignOutButton />

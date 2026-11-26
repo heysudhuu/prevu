@@ -32,7 +32,7 @@ export default function Error({
           <p className="text-sm text-prevu-text-muted leading-relaxed">
             An unexpected error occurred. This has been logged and we&apos;ll look into it.
           </p>
-          {error.digest && (
+          {error?.digest && (
             <p className="text-xs font-mono text-prevu-text-muted/50 mt-2">
               Error ID: {error.digest}
             </p>

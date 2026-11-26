@@ -1,10 +1,8 @@
 // Prevu Progressive Web App Service Worker
-const CACHE_NAME = 'prevu-static-v1';
+const CACHE_NAME = 'prevu-static-v2';
 const PDF_VAULT_CACHE = 'prevu-pdf-vault-v1';
 
 const STATIC_ASSETS = [
-  '/',
-  '/vault',
   '/manifest.json',
   '/icon-512.svg'
 ];
@@ -41,9 +39,12 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET and chrome-extension / analytics requests
+  // Skip non-GET, localhost dev, chrome-extension, Next.js internals, and RSC payloads
   if (request.method !== 'GET') return;
+  if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') return;
   if (url.protocol.startsWith('chrome-extension')) return;
+  if (url.pathname.startsWith('/_next/')) return;
+  if (url.searchParams.has('_rsc') || request.headers.get('RSC') || request.headers.get('Next-Router-Prefetch')) return;
   if (url.pathname.startsWith('/api/analytics')) return;
 
   // A. PDF Vault Requests (Previews & Downloads)

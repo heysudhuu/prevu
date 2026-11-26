@@ -13,16 +13,39 @@ export default function PWAProvider() {
   const [showIosPrompt, setShowIosPrompt] = useState(false)
 
   useEffect(() => {
-    // 1. Register Service Worker
+    // 1. Service Worker management:
+    // Never run SW caching in development/localhost (it breaks Next.js HMR & RSC chunks).
+    // Actively unregister any stale SW on localhost so cached chunks don't cause Flight errors.
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/sw.js')
-        .then((reg) => {
-          console.log('[Prevu PWA] Service Worker registered with scope:', reg.scope)
-        })
-        .catch((err) => {
-          console.warn('[Prevu PWA] Service Worker registration failed:', err)
-        })
+      const isLocalhost =
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1';
+
+      if (isLocalhost || process.env.NODE_ENV !== 'production') {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          for (const reg of registrations) {
+            reg.unregister();
+          }
+        });
+        if ('caches' in window) {
+          caches.keys().then((keys) => {
+            for (const key of keys) {
+              if (key.startsWith('prevu-static-')) {
+                caches.delete(key);
+              }
+            }
+          });
+        }
+      } else {
+        navigator.serviceWorker
+          .register('/sw.js')
+          .then((reg) => {
+            console.log('[Prevu PWA] Service Worker registered with scope:', reg.scope)
+          })
+          .catch((err) => {
+            console.warn('[Prevu PWA] Service Worker registration failed:', err)
+          })
+      }
     }
 
     // 2. Track Online/Offline Status

@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { Download, Loader2, Check, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { notifyResourceDownloaded } from '@/components/feedback/GlobalDownloadFeedbackToast'
 
 interface DownloadButtonWithProgressProps {
   resourceId: string | number
@@ -137,6 +138,7 @@ export default function DownloadButtonWithProgress({
     setProgress(100)
     setIsDownloading(false)
     setIsDone(true)
+    notifyResourceDownloaded(resourceId, fileName)
     setTimeout(() => {
       setIsDone(false)
       setProgress(0)

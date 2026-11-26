@@ -144,6 +144,19 @@
       "timeSpentSeconds": 384,
       "attemptsCount": 1,
       "updatedAt": "2026-10-16T11:11:24.820Z"
+    },
+    {
+      "userId": "xUrFrDdUBvdo7tFjyyDsm0Tp2Nr2",
+      "username": "py7716496",
+      "userName": "Admin",
+      "cuVerified": false,
+      "subjectCode": "FSO-307",
+      "score": 0,
+      "totalQuestions": 15,
+      "percentage": 0,
+      "timeSpentSeconds": 8,
+      "attemptsCount": 2,
+      "updatedAt": "2026-11-26T04:40:26.367Z"
     }
   ],
   "APT-301": [

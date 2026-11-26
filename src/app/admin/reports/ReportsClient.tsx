@@ -3,7 +3,10 @@
 import React, { useState, useMemo } from 'react'
 import {
   Eye,
-  Trash2
+  Trash2,
+  Star,
+  MessageSquare,
+  AlertTriangle
 } from 'lucide-react'
 import { DataTable, Column } from '@/components/admin/ui/DataTable'
 import { StatusBadge } from '@/components/admin/ui/StatusBadge'
@@ -11,6 +14,7 @@ import { DetailDrawer } from '@/components/admin/ui/DetailDrawer'
 import { ConfirmDialog } from '@/components/admin/ui/ConfirmDialog'
 import { Button } from '@/components/ui/Button'
 import { resolveReport, dismissReport, deleteResource } from '../actions'
+import { PlatformFeedbackItem } from '@/lib/feedback/actions'
 
 interface ReportItem {
   id: string
@@ -48,10 +52,18 @@ interface ReportItem {
 
 interface ReportsClientProps {
   initialReports: ReportItem[]
+  initialFeedback?: {
+    items: PlatformFeedbackItem[]
+    avgRating: number
+    totalCount: number
+    cbtAvg: number
+    downloadAvg: number
+  }
 }
 
-export default function ReportsClient({ initialReports }: ReportsClientProps) {
+export default function ReportsClient({ initialReports, initialFeedback }: ReportsClientProps) {
   const [reports, setReports] = useState<ReportItem[]>(initialReports)
+  const [activeView, setActiveView] = useState<'reports' | 'feedback'>('reports')
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null)
   const [resolutionNotes, setResolutionNotes] = useState('')
@@ -185,45 +197,171 @@ export default function ReportsClient({ initialReports }: ReportsClientProps) {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-extrabold text-prevu-text tracking-tight">
-              Content Problem Reports
-            </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-red-500/10 text-red-300 border border-red-500/30">
-              {reports.filter(r => r.status === 'open').length} Open
-            </span>
-          </div>
-          <p className="text-xs text-prevu-text-muted mt-1">
-            Review community flags regarding incorrect subject tags, duplicate uploads, or unreadable papers.
-          </p>
-        </div>
+      {/* View Switcher Tabs */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-prevu-surface-light pb-3">
+        <button
+          type="button"
+          onClick={() => setActiveView('reports')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
+            activeView === 'reports'
+              ? 'bg-prevu-accent text-white shadow-md'
+              : 'bg-prevu-surface/80 text-prevu-text-muted hover:text-white border border-prevu-surface-light'
+          }`}
+        >
+          <AlertTriangle className="w-3.5 h-3.5" />
+          <span>Content Problem Reports</span>
+          <span className="px-2 py-0.2 rounded-full text-[10px] font-mono bg-black/25">
+            {reports.length}
+          </span>
+        </button>
 
-        <div className="flex items-center gap-2">
-          <select
-            value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
-            className="px-3 py-2 bg-prevu-surface border border-prevu-surface-light rounded-xl text-xs text-prevu-text focus:outline-none focus:border-purple-500/50 cursor-pointer"
-          >
-            <option value="ALL">All Statuses</option>
-            <option value="open">Open Reports</option>
-            <option value="resolved">Resolved</option>
-            <option value="dismissed">Dismissed</option>
-          </select>
-        </div>
+        <button
+          type="button"
+          onClick={() => setActiveView('feedback')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
+            activeView === 'feedback'
+              ? 'bg-amber-500 text-black shadow-md'
+              : 'bg-prevu-surface/80 text-prevu-text-muted hover:text-white border border-prevu-surface-light'
+          }`}
+        >
+          <Star className="w-3.5 h-3.5" />
+          <span>Student Ratings &amp; Feedback</span>
+          <span className="px-2 py-0.2 rounded-full text-[10px] font-mono bg-black/20">
+            {initialFeedback?.totalCount || 0}
+          </span>
+        </button>
       </div>
 
-      {/* Reports Table */}
-      <DataTable
-        data={filteredReports}
-        columns={columns}
-        keyExtractor={r => r.id}
-        pageSize={15}
-        emptyTitle="No reports logged"
-        emptyDescription="There are currently no problem reports matching your selection."
-      />
+      {activeView === 'feedback' ? (
+        <div className="space-y-6">
+          {/* Feedback Summary Strip */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="p-4 rounded-2xl bg-prevu-surface/80 border border-prevu-surface-light">
+              <div className="text-[11px] font-mono text-prevu-text-muted">Overall Rating</div>
+              <div className="text-2xl font-black font-mono text-amber-400 mt-1">
+                {initialFeedback?.avgRating || 0} ★
+              </div>
+            </div>
+            <div className="p-4 rounded-2xl bg-prevu-surface/80 border border-prevu-surface-light">
+              <div className="text-[11px] font-mono text-prevu-text-muted">Total Responses</div>
+              <div className="text-2xl font-black font-mono text-white mt-1">
+                {initialFeedback?.totalCount || 0}
+              </div>
+            </div>
+            <div className="p-4 rounded-2xl bg-prevu-surface/80 border border-prevu-surface-light">
+              <div className="text-[11px] font-mono text-prevu-text-muted">CBT Arena Avg</div>
+              <div className="text-2xl font-black font-mono text-cyan-400 mt-1">
+                {initialFeedback?.cbtAvg || 0} ★
+              </div>
+            </div>
+            <div className="p-4 rounded-2xl bg-prevu-surface/80 border border-prevu-surface-light">
+              <div className="text-[11px] font-mono text-prevu-text-muted">PYQ / Notes Avg</div>
+              <div className="text-2xl font-black font-mono text-emerald-400 mt-1">
+                {initialFeedback?.downloadAvg || 0} ★
+              </div>
+            </div>
+          </div>
+
+          {/* Feedback Stream */}
+          {initialFeedback && initialFeedback.items.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {initialFeedback.items.map(item => (
+                <div
+                  key={item.id}
+                  className="p-5 rounded-2xl bg-prevu-surface/80 border border-prevu-surface-light space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase border ${
+                        item.contextType === 'cbt_exam'
+                          ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/25'
+                          : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25'
+                      }`}>
+                        {item.contextType === 'cbt_exam' ? 'CBT Arena' : 'Resource Download'}
+                      </span>
+                      <h4 className="text-sm font-bold text-white mt-1.5">{item.targetTitle}</h4>
+                      <p className="text-[11px] font-mono text-prevu-text-muted">
+                        @{item.username || 'guest'} • {new Date(item.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono text-xs font-bold shrink-0">
+                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                      <span>{item.rating}/5</span>
+                    </div>
+                  </div>
+
+                  {item.tags && item.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {item.tags.map(t => (
+                        <span key={t} className="px-2 py-0.5 rounded-full text-[10px] bg-prevu-bg border border-prevu-surface-light text-prevu-text-muted">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {item.suggestion && (
+                    <div className="p-3 rounded-xl bg-prevu-bg/80 border border-prevu-surface-light text-xs text-prevu-text flex items-start gap-2">
+                      <MessageSquare className="w-3.5 h-3.5 text-purple-400 shrink-0 mt-0.5" />
+                      <span>{item.suggestion}</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-12 rounded-2xl bg-prevu-surface/60 border border-prevu-surface-light text-center space-y-2">
+              <Star className="w-8 h-8 text-amber-400 mx-auto" />
+              <h3 className="text-sm font-bold text-white">No Student Ratings Recorded Yet</h3>
+              <p className="text-xs text-prevu-text-muted">
+                Ratings submitted after CBT Mock Exams and PYQ Downloads will appear here automatically.
+              </p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-extrabold text-prevu-text tracking-tight">
+                  Content Problem Reports
+                </h1>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-red-500/10 text-red-300 border border-red-500/30">
+                  {reports.filter(r => r.status === 'open').length} Open
+                </span>
+              </div>
+              <p className="text-xs text-prevu-text-muted mt-1">
+                Review community flags regarding incorrect subject tags, duplicate uploads, or unreadable papers.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <select
+                value={statusFilter}
+                onChange={e => setStatusFilter(e.target.value)}
+                className="px-3 py-2 bg-prevu-surface border border-prevu-surface-light rounded-xl text-xs text-prevu-text focus:outline-none focus:border-purple-500/50 cursor-pointer"
+              >
+                <option value="ALL">All Statuses</option>
+                <option value="open">Open Reports</option>
+                <option value="resolved">Resolved</option>
+                <option value="dismissed">Dismissed</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Reports Table */}
+          <DataTable
+            data={filteredReports}
+            columns={columns}
+            keyExtractor={r => r.id}
+            pageSize={15}
+            emptyTitle="No reports logged"
+            emptyDescription="There are currently no problem reports matching your selection."
+          />
+        </>
+      )}
 
       {/* Report Detail Drawer */}
       <DetailDrawer

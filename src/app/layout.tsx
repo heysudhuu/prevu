@@ -30,6 +30,7 @@ import PWAProvider from "@/components/pwa/PWAProvider";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import GlobalCommandPalette from "@/components/search/GlobalCommandPalette";
 import GlobalAcademicChatbot from "@/components/ai/GlobalAcademicChatbot";
+import GlobalDownloadFeedbackToast from "@/components/feedback/GlobalDownloadFeedbackToast";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -52,6 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PWAProvider />
         <SiteAnalyticsTracker />
         <GlobalAcademicChatbot />
+        <GlobalDownloadFeedbackToast />
         <AuthListener />
         <Analytics />
       </body>

@@ -32,6 +32,7 @@ import { CollaboratorBadge } from '@/components/ui/CollaboratorBadge'
 import { trackStudentCbtActivity } from '@/lib/activity/activityTracker'
 import CbtReportModal from './CbtReportModal'
 import CbtShareModal from './CbtShareModal'
+import PostCbtFeedbackCard from '@/components/feedback/PostCbtFeedbackCard'
 import Link from 'next/link'
 
 interface CbtExamRunnerProps {
@@ -441,6 +442,9 @@ export default function CbtExamRunner({
               </div>
             )}
           </div>
+
+          {/* 5-Second Post-CBT Feedback & Star Rating Card */}
+          <PostCbtFeedbackCard subjectCode={subject.code} subjectName={subject.name} />
 
           {/* Navigation Tabs (Solutions Review vs Leaderboard) */}
           <div className="flex items-center justify-center gap-3 border-b border-prevu-surface-light pb-2">

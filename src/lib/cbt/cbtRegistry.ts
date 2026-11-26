@@ -67,20 +67,52 @@ export const CBT_SUBJECTS: CbtSubject[] = [
   },
   {
     code: 'FSO-307',
-    name: 'Mobile Application & Device Security',
+    name: 'Digital Cyber Forensics & Mobile Device Security',
     semester: 7,
     year: 4,
     category: 'open-elective',
     categoryLabel: 'Open Elective',
     totalQuestions: FSO307_QUESTIONS.length,
-    description: 'Complete CBT question bank covering mobile security risks, sandboxing, biometrics, TLS encryption, and malware defense.',
+    description: 'Complete 162-question CBT bank covering Digital Cyber Forensics, 10 Unseen Case Study Passages (50 MCQs), Application of AI in Cyber Security, and Mobile Application & Device Security.',
     topics: [
-      'Mobile Application Risks',
-      'Device Security & Biometrics',
-      'Integrity & Code Signing',
-      'Secure TLS Communications',
-      'Malware Prevention & Sandboxing',
-      'Anti-Reverse Engineering & AES'
+      'Digital Cyber Forensics',
+      'Unseen Case Study Passages',
+      'Cyber Security: Application of AI',
+      'Mobile Application & Device Security',
+      'Network & Memory Forensics',
+      'Device Integrity & Cryptography'
+    ],
+    topicsList: [
+      {
+        id: 'all',
+        name: 'All Modules (Mix Practice)',
+        count: FSO307_QUESTIONS.length,
+        description: 'Complete 162-question CBT bank across Digital Forensics, Unseen Case Passages, AI Security, and Mobile Device Security'
+      },
+      {
+        id: 'digital-forensics',
+        name: 'Digital Cyber Forensics',
+        count: FSO307_QUESTIONS.filter(q => q.topic === 'digital-forensics').length,
+        description: 'Metadata, chain of custody, hashing (SHA-256), disk imaging (dd, FTK Imager), Volatility memory forensics, and file carving'
+      },
+      {
+        id: 'unseen-passages',
+        name: 'Unseen Case Study Passages (10 Cases • 50 MCQs)',
+        count: FSO307_QUESTIONS.filter(q => q.topic === 'unseen-passages').length,
+        description: '10 scenario-based unseen case studies (5 sequential MCQs each) covering Digital Forensics, AI Security, and Mobile Forensics'
+      },
+      {
+        id: 'ai-cybersecurity',
+        name: 'Cyber Security: Application of AI',
+        count: FSO307_QUESTIONS.filter(q => q.topic === 'ai-cybersecurity').length,
+        description: 'Supervised & reinforcement learning, anomaly detection, NLP phishing defense, behavioral analytics, and AI ethics'
+      },
+      {
+        id: 'mobile-device-security',
+        name: 'Mobile Application & Device Security',
+        count: FSO307_QUESTIONS.filter(q => q.topic === 'mobile-device-security').length,
+        description: 'Mobile app risks, sandboxing, biometrics, integrity & code signing, TLS communications, and anti-reverse engineering'
+      }
     ],
     credits: 3,
     isReady: true,
@@ -430,14 +462,34 @@ export function generateTestQuestions(
   }
 
   let selected: CbtQuestion[]
-  if (shuffle) {
-    // Fisher-Yates shuffle
-    const shuffled = [...all]
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-        ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  if (shuffle && topicId !== 'unseen-passages') {
+    // Group questions sharing the same `passage` so unseen case study questions stay together in sequence
+    const units: CbtQuestion[][] = []
+    const passageUnitMap = new Map<string, CbtQuestion[]>()
+
+    for (const q of all) {
+      if (q.passage && q.passage.trim().length > 0) {
+        const key = q.passage.trim()
+        let group = passageUnitMap.get(key)
+        if (!group) {
+          group = []
+          passageUnitMap.set(key, group)
+          units.push(group)
+        }
+        group.push(q)
+      } else {
+        units.push([q])
+      }
     }
-    selected = shuffled.slice(0, targetCount)
+
+    // Fisher-Yates shuffle on units (preserving internal question sequence for each passage)
+    for (let i = units.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+        ;[units[i], units[j]] = [units[j], units[i]]
+    }
+
+    const flattened = units.flat()
+    selected = flattened.slice(0, targetCount)
   } else {
     selected = all.slice(0, targetCount)
   }

@@ -1,0 +1,30 @@
+[
+  {
+    "id": "fb-1795668175313-3h6uj",
+    "userId": "xUrFrDdUBvdo7tFjyyDsm0Tp2Nr2",
+    "username": "py7716496",
+    "contextType": "resource_download",
+    "targetId": "99601deb-8a05-4233-b144-8a55c27cfcc2",
+    "targetTitle": "WhatsApp Image 2026-11-24 at 11.50.37 AM.jpeg",
+    "rating": 5,
+    "liked": true,
+    "tags": [],
+    "suggestion": null,
+    "createdAt": "2026-11-26T04:42:55.313Z"
+  },
+  {
+    "id": "fb-1795668049873-4v8xw",
+    "userId": "xUrFrDdUBvdo7tFjyyDsm0Tp2Nr2",
+    "username": "py7716496",
+    "contextType": "cbt_exam",
+    "targetId": "FSO-307",
+    "targetTitle": "FSO-307 — Digital Cyber Forensics & Mobile Device Security",
+    "rating": 5,
+    "liked": true,
+    "tags": [
+      "Exam-Ready"
+    ],
+    "suggestion": null,
+    "createdAt": "2026-11-26T04:40:49.873Z"
+  }
+]

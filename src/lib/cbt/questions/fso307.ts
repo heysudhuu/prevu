@@ -1,11 +1,17 @@
 import { CbtQuestion } from '../types'
+import { FSO307_AI_QUESTIONS } from './fso307_ai'
+import { FSO307_FORENSICS_QUESTIONS } from './fso307_forensics'
+import { FSO307_PASSAGE_QUESTIONS } from './fso307_passages'
 
 /**
- * Mobile Application & Device Security (FSO-307)
- * Official CBT MCQ Bank | 51 Questions from Examination Revision Source
- * Includes Sections A-E across Parts 1, 2, 3, 5, and 6 with explanations.
+ * Digital Cyber Forensics & Mobile Application & Device Security (FSO-307)
+ * Official CBT MCQ Bank | 162 Questions Total:
+ * - Digital Forensics (30 Questions)
+ * - Cyber Security: Application of AI (31 Questions)
+ * - Unseen Case Study Passages (10 Cases • 50 Sequential Questions)
+ * - Mobile Application & Device Security (51 Questions)
  */
-export const FSO307_QUESTIONS: CbtQuestion[] = [
+const FSO307_MOBILE_QUESTIONS: CbtQuestion[] = [
   // -------------------------------------------------------------
   // PART 1: Mobile Application & Device Security (19 Questions)
   // -------------------------------------------------------------
@@ -1124,4 +1130,16 @@ export const FSO307_QUESTIONS: CbtQuestion[] = [
     difficulty: 'easy',
     status: 'approved'
   }
+]
+
+export const FSO307_QUESTIONS: CbtQuestion[] = [
+  ...FSO307_FORENSICS_QUESTIONS,
+  ...FSO307_PASSAGE_QUESTIONS,
+  ...FSO307_AI_QUESTIONS,
+  ...FSO307_MOBILE_QUESTIONS.map((q) => ({
+    ...q,
+    topic: 'mobile-device-security',
+    topicName: 'Mobile Application & Device Security',
+    subjectName: 'Digital Cyber Forensics & Mobile Device Security'
+  }))
 ]

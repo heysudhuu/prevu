@@ -56,6 +56,9 @@ export function SiteAnalyticsTracker() {
   const lastTrackedPath = useRef<string | null>(null)
 
   useEffect(() => {
+    // Do not count admin console navigation as public student traffic
+    if (!pathname || pathname.startsWith('/admin')) return
+
     const visitorId = getOrCreateVisitorId()
     const deviceType = detectDevice()
 

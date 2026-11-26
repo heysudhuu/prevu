@@ -181,8 +181,8 @@ export default function CbtArenaHub({
     },
     {
       id: 'aptitude',
-      label: 'Aptitude & Placements',
-      count: `${subjects.find(s => s.category === 'aptitude')?.totalQuestions || 290} MCQs`,
+      label: 'Aptitude & Logical',
+      count: `${subjects.filter(s => s.category === 'aptitude' && s.isReady).reduce((sum, s) => sum + s.totalQuestions, 0)} MCQs`,
       icon: Zap
     },
     {
@@ -191,7 +191,12 @@ export default function CbtArenaHub({
       count: `${subjects.find(s => s.category === 'open-elective')?.totalQuestions || 162} MCQs`,
       icon: Compass
     },
-    { id: 'uhv', label: 'UHV (Ethics)', count: 'Mandatory', icon: ShieldCheck }
+    {
+      id: 'uhv',
+      label: 'UHV (Ethics)',
+      count: `${subjects.filter(s => s.category === 'uhv' && s.isReady).reduce((sum, s) => sum + s.totalQuestions, 0)} MCQs`,
+      icon: ShieldCheck
+    }
   ], [subjects])
 
   const filteredSubjects = useMemo(() => {
@@ -729,36 +734,59 @@ export default function CbtArenaHub({
             </span>
           </motion.div>
 
-          <motion.div layout className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <motion.div
+            layout
+            className={`grid grid-cols-1 gap-5 ${
+              liveFilteredSubjects.length === 1
+                ? 'max-w-2xl'
+                : liveFilteredSubjects.length === 2 || liveFilteredSubjects.length === 4
+                  ? 'md:grid-cols-2'
+                  : liveFilteredSubjects.length === 5
+                    ? 'md:grid-cols-2 lg:grid-cols-6'
+                    : 'md:grid-cols-2 lg:grid-cols-3'
+            }`}
+          >
             <AnimatePresence mode="popLayout">
               {liveFilteredSubjects.map((subject, idx) => {
                 const subjectEntries = initialLeaderboards[subject.code] || initialLeaderboards[subject.code.toUpperCase()] || []
-                const subjectLeader = subjectEntries.length > 0 ? subjectEntries[0] : null
+                const subjectLeader = subjectEntries.length > 0 && subjectEntries[0].percentage > 0 ? subjectEntries[0] : null
                 const topicsList = subject.topicsList?.filter(t => t.id !== 'all') || []
-                const hasManyTopics = topicsList.length > 6
-                const visibleChips = hasManyTopics ? topicsList.slice(0, 4) : topicsList
                 const theme = categoryColors[subject.category] || categoryColors['open-elective']
+                const spanClass =
+                  liveFilteredSubjects.length === 5
+                    ? idx < 3
+                      ? 'lg:col-span-2'
+                      : 'lg:col-span-3'
+                    : ''
 
                 return (
                   <SpotlightCard
                     key={subject.code}
                     cardKey={subject.code}
-                    delay={Math.min(idx * 0.07, 0.25)}
+                    delay={Math.min(idx * 0.06, 0.22)}
                     spotlightColor={theme.spotlight}
-                    className="rounded-3xl border bg-prevu-surface/85 backdrop-blur-xl border-prevu-surface-light hover:border-prevu-accent/65 hover:shadow-2xl hover:shadow-prevu-accent/15 transition-colors duration-300 flex flex-col justify-between relative overflow-hidden group shadow-xl"
+                    className={`rounded-2xl border bg-prevu-surface/85 backdrop-blur-xl border-prevu-surface-light hover:border-prevu-accent/65 hover:shadow-xl hover:shadow-prevu-accent/10 transition-colors duration-300 flex flex-col justify-between relative overflow-hidden group shadow-lg min-w-0 ${spanClass}`}
                   >
                     {/* Category Accent Rim */}
-                    <div className={`h-1.5 w-full bg-gradient-to-r ${theme.accent} relative z-10`} />
+                    <div className={`h-1 w-full bg-gradient-to-r ${theme.accent} relative z-10`} />
 
-                    <div className="p-6 space-y-4 flex-1 flex flex-col justify-between relative z-10">
-                      <div className="space-y-3.5">
-                        {/* Header Row */}
-                        <div className="flex items-center justify-between gap-2">
-                          <span className={`px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wide border ${theme.bg} ${theme.text} ${theme.border}`}>
-                            {subject.categoryLabel}
-                          </span>
+                    <div className="p-5 space-y-3.5 flex-1 flex flex-col justify-between relative z-10 min-w-0">
+                      <div className="space-y-2.5 min-w-0">
+                        {/* Compact Header Row */}
+                        <div className="flex items-center justify-between gap-2 min-w-0">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className={`px-2 py-0.5 rounded-full text-[9.5px] font-mono font-bold uppercase tracking-wide border truncate max-w-[155px] ${theme.bg} ${theme.text} ${theme.border}`} title={subject.categoryLabel}>
+                              {subject.categoryLabel}
+                            </span>
+                            <span className="text-[11px] font-mono font-bold text-cyan-400 shrink-0">
+                              {subject.code}
+                            </span>
+                            <span className="text-[10px] font-mono text-prevu-text-muted hidden xl:inline shrink-0">
+                              • Sem {subject.semester}
+                            </span>
+                          </div>
 
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 shrink-0">
                             <motion.button
                               type="button"
                               whileHover={{ scale: 1.08 }}
@@ -768,13 +796,12 @@ export default function CbtArenaHub({
                                 setSharingSubject(subject)
                               }}
                               title="Share this subject to WhatsApp"
-                              className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 transition-colors cursor-pointer flex items-center gap-1"
+                              className="p-1.5 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 transition-colors cursor-pointer"
                             >
                               <Share2 className="w-3 h-3" />
-                              <span>Share</span>
                             </motion.button>
 
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
                               <span className="relative flex h-1.5 w-1.5">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
@@ -784,135 +811,82 @@ export default function CbtArenaHub({
                           </div>
                         </div>
 
-                        {/* Code & Title */}
+                        {/* Title + Concise Description */}
                         <div>
-                          <div className="inline-flex items-center gap-1.5 text-xs font-mono font-black text-cyan-400 tracking-wider">
-                            <span>{subject.code}</span>
-                            <span className="text-prevu-text-muted">•</span>
-                            <span className="text-prevu-text-muted text-[11px] font-normal">Sem {subject.semester}, Yr {subject.year}</span>
-                          </div>
-                          <h3 className="text-lg font-bold text-white group-hover:text-cyan-200 transition-colors mt-1 leading-snug">
+                          <h3 className="text-base sm:text-[17px] font-bold text-white group-hover:text-cyan-200 transition-colors leading-snug line-clamp-2 min-h-[2.75rem]">
                             {subject.name}
                           </h3>
+                          <p className="text-[11px] text-prevu-text-muted leading-relaxed line-clamp-2 mt-1">
+                            {subject.description}
+                          </p>
                         </div>
 
-                        {/* Description */}
-                        <p className="text-xs text-prevu-text-muted leading-relaxed line-clamp-2">
-                          {subject.description}
-                        </p>
-
-                        {/* Telemetry Counters */}
-                        <div className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
-                          <div className="px-3 py-1 rounded-xl bg-prevu-bg/90 border border-prevu-surface-light text-white font-semibold flex items-center gap-1.5">
-                            <FileText className="w-3.5 h-3.5 text-emerald-400" />
-                            <span><strong className="text-emerald-400">{subject.totalQuestions}</strong> MCQs</span>
-                          </div>
+                        {/* Compact Telemetry Strip + Inline Rank #1 */}
+                        <div className="flex flex-wrap items-center gap-2 pt-0.5 font-mono text-[10px]">
+                          <span className="px-2.5 py-1 rounded-lg bg-prevu-bg/90 border border-prevu-surface-light text-white font-semibold inline-flex items-center gap-1">
+                            <FileText className="w-3 h-3 text-emerald-400" />
+                            <strong className="text-emerald-400">{subject.totalQuestions}</strong> MCQs
+                          </span>
                           {topicsList.length > 0 && (
-                            <div className="px-3 py-1 rounded-xl bg-prevu-bg/90 border border-prevu-surface-light text-white font-semibold flex items-center gap-1.5">
-                              <Layers className="w-3.5 h-3.5 text-cyan-300" />
-                              <span><strong className="text-cyan-300">{topicsList.length}</strong> Modules</span>
-                            </div>
+                            <span className="px-2.5 py-1 rounded-lg bg-prevu-bg/90 border border-prevu-surface-light text-white font-semibold inline-flex items-center gap-1">
+                              <Layers className="w-3 h-3 text-cyan-300" />
+                              <strong className="text-cyan-300">{topicsList.length}</strong> Modules
+                            </span>
                           )}
-                          {subject.credits && (
-                            <div className="px-2.5 py-1 rounded-xl bg-prevu-bg/90 border border-prevu-surface-light text-prevu-text-muted text-[10px]">
-                              {subject.credits} Credits
-                            </div>
+                          {Boolean(subject.credits && subject.credits > 0) && (
+                            <span className="px-2 py-1 rounded-lg bg-prevu-bg/90 border border-prevu-surface-light text-prevu-text-muted">
+                              {subject.credits} Cr
+                            </span>
+                          )}
+                          {subjectLeader && (
+                            <a
+                              href="#cbt-leaderboard-section"
+                              className="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-300 inline-flex items-center gap-1 hover:border-amber-400/60 transition-colors ml-auto"
+                            >
+                              <Crown className="w-3 h-3 text-amber-400" />
+                              <span className="truncate max-w-[90px] font-sans font-bold text-white">{subjectLeader.userName}</span>
+                              <span className="text-emerald-400 font-bold">{subjectLeader.percentage}%</span>
+                            </a>
                           )}
                         </div>
                       </div>
 
-                      {/* Interactive Topic Chips */}
-                      <div className="pt-3.5 border-t border-prevu-surface-light/60 space-y-2.5">
-                        <div className="flex items-center justify-between text-[11px]">
-                          <span className="font-mono text-cyan-300 font-bold flex items-center gap-1">
-                            <Sparkles className="w-3 h-3 text-cyan-400" />
-                            <span>Select Topic or Mix</span>
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenConfig(subject, 'all')}
-                            className="text-[10px] text-purple-400 hover:text-purple-300 font-bold cursor-pointer flex items-center gap-1"
-                          >
-                            <SlidersHorizontal className="w-3 h-3" />
-                            <span>Custom Setup</span>
-                          </button>
-                        </div>
-
-                        <div className="flex flex-wrap gap-1.5">
-                          <motion.button
-                            type="button"
-                            whileHover={{ scale: 1.05, y: -1 }}
-                            whileTap={{ scale: 0.94 }}
-                            onClick={() => handleOpenConfig(subject, 'all')}
-                            className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-xl bg-prevu-accent/15 hover:bg-prevu-accent/25 border border-prevu-accent/35 text-white transition-colors cursor-pointer"
-                          >
-                            🔀 All ({subject.totalQuestions})
-                          </motion.button>
-                          {visibleChips.map(t => (
-                            <motion.button
-                              key={t.id}
-                              type="button"
-                              whileHover={{ scale: 1.04, y: -1 }}
-                              whileTap={{ scale: 0.94 }}
-                              onClick={() => handleOpenConfig(subject, t.id)}
-                              className="text-[10px] font-mono px-2.5 py-1 rounded-xl bg-prevu-bg/90 border border-prevu-surface-light hover:border-cyan-400 text-prevu-text-muted hover:text-cyan-300 transition-colors cursor-pointer"
-                            >
-                              {t.name} ({t.count})
-                            </motion.button>
+                      {/* Uniform Sleek Module Selector Row */}
+                      <div className="pt-2.5 border-t border-prevu-surface-light/60 flex items-center gap-2 min-w-0">
+                        <select
+                          aria-label={`Select topic for ${subject.code}`}
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              handleOpenConfig(subject, e.target.value)
+                            }
+                          }}
+                          defaultValue=""
+                          className="flex-1 min-w-0 w-full h-9 text-[11px] bg-prevu-bg/95 border border-prevu-surface-light hover:border-cyan-400/60 rounded-xl px-2.5 text-prevu-text font-mono cursor-pointer focus:outline-none focus:border-cyan-400 transition-colors truncate"
+                        >
+                          <option value="" disabled>Practice Specific Topic ({topicsList.length} Modules)...</option>
+                          <option value="all">Mix All Topics ({subject.totalQuestions} MCQs)</option>
+                          {topicsList.map(t => (
+                            <option key={t.id} value={t.id}>
+                              {t.name} ({t.count} MCQs)
+                            </option>
                           ))}
-                        </div>
+                        </select>
 
-                        {hasManyTopics && (
-                          <select
-                            aria-label={`Browse all ${topicsList.length} topics for ${subject.code}`}
-                            onChange={(e) => {
-                              if (e.target.value) {
-                                handleOpenConfig(subject, e.target.value)
-                              }
-                            }}
-                            defaultValue=""
-                            className="w-full text-[11px] bg-prevu-bg/95 border border-prevu-surface-light hover:border-purple-400/60 rounded-xl px-3 py-2 text-prevu-text-muted font-mono cursor-pointer focus:outline-none focus:border-cyan-400 transition-colors"
-                          >
-                            <option value="" disabled>All {topicsList.length} Modules (Quick Jump)...</option>
-                            {topicsList.map(t => (
-                              <option key={t.id} value={t.id}>
-                                {t.name} ({t.count} MCQs)
-                              </option>
-                            ))}
-                          </select>
-                        )}
-
-                        {subjectLeader && (
-                          <div className="p-2.5 rounded-2xl bg-gradient-to-r from-amber-500/10 to-yellow-500/5 border border-amber-500/25 flex items-center justify-between gap-2 text-xs">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <motion.span
-                                animate={{ rotate: [-5, 5, -5] }}
-                                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                                className="inline-flex shrink-0"
-                              >
-                                <Crown className="w-3.5 h-3.5 text-amber-400" />
-                              </motion.span>
-                              <span className="text-[11px] font-bold text-white truncate">
-                                {subjectLeader.userName}
-                              </span>
-                              <span className="text-[10px] font-mono text-emerald-400 font-bold shrink-0">
-                                {subjectLeader.percentage}%
-                              </span>
-                            </div>
-                            <a
-                              href="#cbt-leaderboard-section"
-                              className="text-[10px] font-mono font-bold text-amber-400 hover:text-amber-300 shrink-0 bg-amber-500/10 px-2 py-0.5 rounded-full"
-                            >
-                              Rank #1
-                            </a>
-                          </div>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleOpenConfig(subject, 'all')}
+                          title="Customize Exam Settings"
+                          className="h-9 px-2.5 rounded-xl bg-prevu-bg/90 border border-prevu-surface-light hover:border-purple-400/60 text-[11px] font-semibold text-purple-300 hover:text-white transition-colors cursor-pointer inline-flex items-center gap-1 shrink-0 whitespace-nowrap"
+                        >
+                          <SlidersHorizontal className="w-3 h-3" />
+                          <span>Custom</span>
+                        </button>
                       </div>
                     </div>
 
-                    {/* Footer Action Bar */}
-                    <div className="p-4 bg-prevu-bg/90 border-t border-prevu-surface-light flex items-center justify-between gap-3 relative z-10">
-                      <span className="text-xs font-mono text-emerald-400 font-bold flex items-center gap-1.5">
+                    {/* Sleek Compact Footer */}
+                    <div className="px-5 py-3 bg-prevu-bg/90 border-t border-prevu-surface-light flex items-center justify-between gap-3 relative z-10">
+                      <span className="text-[11px] font-mono text-emerald-400 font-bold flex items-center gap-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>{subject.totalQuestions} Ready</span>
                       </span>
@@ -921,7 +895,7 @@ export default function CbtArenaHub({
                         <Button
                           size="sm"
                           onClick={() => handleOpenConfig(subject, 'all')}
-                          className="relative overflow-hidden h-9 px-4 text-xs font-bold bg-prevu-accent hover:bg-prevu-accent-hover text-white shadow-md shadow-prevu-accent/25 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer"
+                          className="relative overflow-hidden h-8 px-4 text-xs font-bold bg-prevu-accent hover:bg-prevu-accent-hover text-white shadow-md shadow-prevu-accent/25 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer"
                         >
                           <motion.span
                             animate={{ x: ['-150%', '280%'] }}

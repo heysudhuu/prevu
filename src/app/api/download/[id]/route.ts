@@ -59,7 +59,19 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
 
   // Increment download count (only for approved to not skew stats with admin previews)
   if (resource.status === 'approved') {
-    await supabaseAdmin.rpc('increment_download_count', { resource_id: id })
+    const { error: rpcError } = await supabaseAdmin.rpc('increment_download_count', { resource_id: id })
+    if (rpcError) {
+      const { data: curr } = await supabaseAdmin
+        .from('resources')
+        .select('download_count')
+        .eq('id', id)
+        .maybeSingle()
+      const nextCount = ((curr as { download_count?: number } | null)?.download_count || 0) + 1
+      await supabaseAdmin
+        .from('resources')
+        .update({ download_count: nextCount })
+        .eq('id', id)
+    }
   }
 
   // Generate signed URL

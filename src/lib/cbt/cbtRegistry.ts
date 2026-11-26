@@ -1,7 +1,8 @@
 import { CbtSubject, CbtQuestion } from './types'
 import { FSO307_QUESTIONS } from './questions/fso307'
-import { APT301_QUESTIONS } from './questions/apt301'
+import { APT301_QUESTIONS, LOG301_QUESTIONS } from './questions/apt301'
 import { ACP101_QUESTIONS } from './questions/acp101'
+import { UHV101_QUESTIONS } from './questions/uhv101'
 
 /**
  * Registry of available CBT Mock Test subjects in Prevu
@@ -120,13 +121,13 @@ export const CBT_SUBJECTS: CbtSubject[] = [
   },
   {
     code: 'APT-301',
-    name: 'Campus Placement Aptitude & Logical Reasoning',
+    name: 'Quantitative Aptitude (Placements)',
     semester: 5,
     year: 3,
     category: 'aptitude',
-    categoryLabel: 'Aptitude & Placements',
+    categoryLabel: 'Quantitative Aptitude',
     totalQuestions: APT301_QUESTIONS.length,
-    description: 'High-frequency quantitative aptitude, logical reasoning, and spatial orientation MCQs for top tech placement drives.',
+    description: 'High-frequency quantitative aptitude MCQs for top tech placement drives: Percentages, Ratios, Ages, Profit/Loss, Time & Work, Speed & Distance, Geometry, and Probability.',
     topics: [
       'Percentages',
       'Ratio & Proportion',
@@ -143,21 +144,17 @@ export const CBT_SUBJECTS: CbtSubject[] = [
       'Geometry & Mensuration',
       'Permutations, Combinations & Probability',
       'Data Sufficiency',
-      'Blood Relations',
-      'Direction & Distance',
-      'Cube Slicing & Dice Reasoning',
-      'Coding & Decoding',
-      'Syllogisms',
+      'Data Interpretation & Successive %',
+      'Vedic Math & Speed Calculations',
       'Commercial Mathematics & Sets',
-      'Analytical Puzzles & Arrangements',
       'Mixed Aptitude & Series'
     ],
     topicsList: [
       {
         id: 'all',
-        name: 'All Topics (Mix Practice)',
+        name: 'All Quant Topics (Mix Practice)',
         count: APT301_QUESTIONS.length,
-        description: 'Complete 290-question placement master practice across all quantitative aptitude and logical reasoning modules'
+        description: 'Complete Quantitative Aptitude placement bank across all 19 mathematical modules'
       },
       {
         id: 'percentages',
@@ -175,7 +172,7 @@ export const CBT_SUBJECTS: CbtSubject[] = [
         id: 'problems-on-ages',
         name: 'Problems on Ages',
         count: APT301_QUESTIONS.filter(q => q.topic === 'problems-on-ages').length,
-        description: 'Linear age systems, mother-daughter ratios, family age differences, and forward time projections (68 MCQs)'
+        description: 'Linear age systems, mother-daughter ratios, family age differences, and forward time projections'
       },
       {
         id: 'variation',
@@ -256,46 +253,22 @@ export const CBT_SUBJECTS: CbtSubject[] = [
         description: 'Train speeds and work rate evaluation from statements I & II'
       },
       {
-        id: 'blood-relations',
-        name: 'Blood Relations',
-        count: APT301_QUESTIONS.filter(q => q.topic === 'blood-relations').length,
-        description: 'Single-line riddles, maternal uncles, paternal grandmothers, and family aunts'
-      },
-      {
-        id: 'direction-distance',
-        name: 'Direction & Distance',
-        count: APT301_QUESTIONS.filter(q => q.topic === 'direction-distance').length,
-        description: 'Pythagorean displacement, cardinal turns, and relative coordinate positions'
-      },
-      {
-        id: 'cube-dice',
-        name: 'Cube Slicing & Dice Reasoning',
-        count: APT301_QUESTIONS.filter(q => q.topic === 'cube-dice').length,
-        description: 'Painted 4x4x4 cubes, cuboid painted faces, standard dice opposite face rules, and vertex adjacency'
-      },
-      {
-        id: 'coding-decoding',
-        name: 'Coding & Decoding',
-        count: APT301_QUESTIONS.filter(q => q.topic === 'coding-decoding').length,
-        description: 'Letter shifts, reverse alphabetical rank values, shared word mapping, and custom arithmetic operators'
-      },
-      {
-        id: 'syllogisms',
-        name: 'Syllogisms & Deductions',
-        count: APT301_QUESTIONS.filter(q => q.topic === 'syllogisms').length,
-        description: 'Logical deduction, universal affirmative premises, and negative transitivity rules'
-      },
-      {
-        id: 'puzzles-arrangements',
-        name: 'Puzzles & Grid Arrangements',
-        count: APT301_QUESTIONS.filter(q => q.topic === 'puzzles-arrangements').length,
-        description: 'Linear seating orders, race rankings, box-color matching, and production scheduling'
-      },
-      {
         id: 'mixed-aptitude',
         name: 'Mixed Aptitude & Series',
         count: APT301_QUESTIONS.filter(q => q.topic === 'mixed-aptitude').length,
         description: 'LCM, 9-sided polygon angle sums, ball draw probability, machine-time scaling, and round-trip speed'
+      },
+      {
+        id: 'vedic-math',
+        name: 'Vedic Math & Speed Calculations',
+        count: APT301_QUESTIONS.filter(q => q.topic === 'vedic-math').length,
+        description: 'Nikhilam, Ekadhikena Purvena, duplex squares, cubes, roots, digit-sum checks, and approximations'
+      },
+      {
+        id: 'data-interpretation',
+        name: 'Data Interpretation & Successive %',
+        count: APT301_QUESTIONS.filter(q => q.topic === 'data-interpretation').length,
+        description: 'Tabular unit sales DI, percentage growth/decline, and successive discount/increase chains'
       }
     ],
     credits: 0,
@@ -303,17 +276,210 @@ export const CBT_SUBJECTS: CbtSubject[] = [
     badgeColor: 'from-emerald-600 to-teal-600'
   },
   {
+    code: 'LOG-301',
+    name: 'Logical Reasoning & Analytical Puzzles',
+    semester: 5,
+    year: 3,
+    category: 'aptitude',
+    categoryLabel: 'Logical Reasoning',
+    totalQuestions: LOG301_QUESTIONS.length,
+    description: 'Dedicated logical reasoning and spatial orientation bank for campus placements: Blood Relations, Direction Sense, Cubes & Dice, Coding-Decoding, Syllogisms, and Analytical Grids.',
+    topics: [
+      'Blood Relations',
+      'Direction & Distance',
+      'Cube Slicing & Dice Reasoning',
+      'Coding & Decoding',
+      'Syllogisms & Deductions',
+      'Puzzles & Grid Arrangements',
+      'Odd One Out & Analogy'
+    ],
+    topicsList: [
+      {
+        id: 'all',
+        name: 'All Logical Topics (Mix Practice)',
+        count: LOG301_QUESTIONS.length,
+        description: 'Complete Logical Reasoning bank across all 7 analytical & spatial reasoning modules'
+      },
+      {
+        id: 'blood-relations',
+        name: 'Blood Relations',
+        count: LOG301_QUESTIONS.filter(q => q.topic === 'blood-relations').length,
+        description: 'Single-line riddles, maternal uncles, paternal grandmothers, and family tree deductions'
+      },
+      {
+        id: 'direction-distance',
+        name: 'Direction & Distance',
+        count: LOG301_QUESTIONS.filter(q => q.topic === 'direction-distance').length,
+        description: 'Pythagorean displacement, cardinal turns, and relative coordinate positions'
+      },
+      {
+        id: 'cube-dice',
+        name: 'Cube Slicing & Dice Reasoning',
+        count: LOG301_QUESTIONS.filter(q => q.topic === 'cube-dice').length,
+        description: 'Painted 4x4x4 cubes, cuboid painted faces, standard dice opposite face rules, and vertex adjacency'
+      },
+      {
+        id: 'coding-decoding',
+        name: 'Coding & Decoding',
+        count: LOG301_QUESTIONS.filter(q => q.topic === 'coding-decoding').length,
+        description: 'Letter shifts, reverse alphabetical rank values, shared word mapping, and custom arithmetic operators'
+      },
+      {
+        id: 'syllogisms',
+        name: 'Syllogisms & Deductions',
+        count: LOG301_QUESTIONS.filter(q => q.topic === 'syllogisms').length,
+        description: 'Logical deduction, universal affirmative premises, and negative transitivity rules'
+      },
+      {
+        id: 'puzzles-arrangements',
+        name: 'Puzzles & Grid Arrangements',
+        count: LOG301_QUESTIONS.filter(q => q.topic === 'puzzles-arrangements').length,
+        description: 'Linear seating orders, race rankings, box-color matching, and production scheduling'
+      },
+      {
+        id: 'odd-one-out-analogy',
+        name: 'Odd One Out & Analogy',
+        count: LOG301_QUESTIONS.filter(q => q.topic === 'odd-one-out-analogy').length,
+        description: 'Number/alphabet/word classification, verbal/non-verbal analogies, and 180-degree figure rotations'
+      }
+    ],
+    credits: 0,
+    isReady: true,
+    badgeColor: 'from-amber-500 to-orange-600'
+  },
+  {
     code: 'UHV-101',
-    name: 'Universal Human Values & Professional Ethics',
+    name: 'Universal Human Values, Ethics and Life Skills-2',
     semester: 1,
     year: 1,
     category: 'uhv',
     categoryLabel: 'UHV (Mandatory CBT)',
-    totalQuestions: 0,
-    description: 'Chandigarh University mandatory CBT examination on ethical human conduct, harmony in self and society.',
-    topics: ['Self Exploration', 'Harmony in Self', 'Harmony in Family & Society', 'Professional Ethics'],
+    totalQuestions: UHV101_QUESTIONS.length,
+    description: 'Complete 165-MCQ CBT bank aligned to Units 1–3: Personal & Professional Values, Social Values, Environmental & Existential Values, and Integrated Case Applications.',
+    topics: [
+      'Value Education',
+      'Character Formation',
+      'Power of Mind & Therapeutic Methods',
+      'Positive Attitude',
+      'Professional Values & Ethics',
+      'Right Conduct',
+      'Valuing Traditions',
+      'Collaboration & Tolerance',
+      'Appreciating Diversity',
+      'Nurturing Peace',
+      'Nature and Nurture',
+      'Protection and Conservation',
+      'Sustainability in Life',
+      'Secured Future',
+      'Youth for Climate Regulation',
+      'Integrated Application & Case Studies'
+    ],
+    topicsList: [
+      {
+        id: 'all',
+        name: 'All UHV Topics (Units 1–3)',
+        count: UHV101_QUESTIONS.length,
+        description: 'Complete 165-question CBT exam bank across all 15 syllabus topics and integrated case applications'
+      },
+      {
+        id: 'value-education',
+        name: 'Value Education',
+        count: UHV101_QUESTIONS.filter(q => q.topic === 'value-education').length,
+        description: 'Holistic human competence, self-exploration, Viveka, and harmony in Self, family, society, and nature'
+      },
+      {
+        id: 'character-formation',
+        name: 'Character Formation',
+        count: UHV101_QUESTIONS.filter(q => q.topic === 'character-formation').length,
+        description: 'Samskaras, integrity, Indriya Nigraha, moral courage, self-accountability, and habit reinforcement'
+      },
+      {
+        id: 'power-of-mind',
+        name: 'Power of Mind & Therapeutic Methods',
+        count: UHV101_QUESTIONS.filter(q => q.topic === 'power-of-mind').length,
+        description: 'Mindfulness, Chitta Vritti Nirodha, Pranayama, cognitive reframing, Yoga Nidra, and emotional regulation'
+      },
+      {
+        id: 'positive-attitude',
+        name: 'Positive Attitude',
+        count: UHV101_QUESTIONS.filter(q => q.topic === 'positive-attitude').length,
+        description: 'Growth mindset, proactivity, resilience, learned optimism, Circle of Influence, and avoiding toxic positivity'
+      },
+      {
+        id: 'professional-ethics',
+        name: 'Professional Values & Ethics',
+        count: UHV101_QUESTIONS.filter(q => q.topic === 'professional-ethics').length,
+        description: 'Conflict of interest, whistleblowing, confidentiality, intellectual honesty, CSR, fiduciary duty, and work-life balance'
+      },
+      {
+        id: 'right-conduct',
+        name: 'Right Conduct',
+        count: UHV101_QUESTIONS.filter(q => q.topic === 'right-conduct').length,
+        description: 'Dharma, Ahimsa, Satya, Asteya, Aparigraha, empathy, civic sense, and responsible digital citizenship'
+      },
+      {
+        id: 'valuing-traditions',
+        name: 'Valuing Traditions',
+        count: UHV101_QUESTIONS.filter(q => q.topic === 'valuing-traditions').length,
+        description: 'Atithi Devo Bhava, Vasudhaiva Kutumbakam, Intangible Cultural Heritage, and reform of regressive customs'
+      },
+      {
+        id: 'collaboration-tolerance',
+        name: 'Collaboration & Tolerance',
+        count: UHV101_QUESTIONS.filter(q => q.topic === 'collaboration-tolerance').length,
+        description: 'Synergy, active listening, Paradox of Tolerance, constructive disagreement, and Win-Win conflict resolution'
+      },
+      {
+        id: 'appreciating-diversity',
+        name: 'Appreciating Diversity',
+        count: UHV101_QUESTIONS.filter(q => q.topic === 'appreciating-diversity').length,
+        description: 'Inclusion, equity vs equality, unconscious bias, cognitive diversity, universal design, and cultural competence'
+      },
+      {
+        id: 'nurturing-peace',
+        name: 'Nurturing Peace',
+        count: UHV101_QUESTIONS.filter(q => q.topic === 'nurturing-peace').length,
+        description: 'Positive Peace, Satyagraha, Nonviolent Communication (NVC), restorative justice, and interfaith dialogue'
+      },
+      {
+        id: 'nature-and-nurture',
+        name: 'Nature and Nurture',
+        count: UHV101_QUESTIONS.filter(q => q.topic === 'nature-and-nurture').length,
+        description: 'Four orders of Nature, Biophilia, Deep Ecology, Bhoomi Mata, ecosystem services, and existential responsibility'
+      },
+      {
+        id: 'protection-conservation',
+        name: 'Protection and Conservation',
+        count: UHV101_QUESTIONS.filter(q => q.topic === 'protection-conservation').length,
+        description: 'Preservation vs conservation, Chipko Movement, in-situ conservation, Article 51A(g), Sacred Groves, and Ramsar wetlands'
+      },
+      {
+        id: 'sustainability-in-life',
+        name: 'Sustainability in Life',
+        count: UHV101_QUESTIONS.filter(q => q.topic === 'sustainability-in-life').length,
+        description: 'Triple Bottom Line, 5Rs waste hierarchy, Circular Economy, Ecological Footprint, Mission LiFE, and greenwashing'
+      },
+      {
+        id: 'secured-future',
+        name: 'Secured Future',
+        count: UHV101_QUESTIONS.filter(q => q.topic === 'secured-future').length,
+        description: 'Intergenerational justice, Precautionary Principle, UN SDGs, DRR, Planetary Boundaries, and ethical AI/biotech'
+      },
+      {
+        id: 'youth-climate-regulation',
+        name: 'Youth for Climate Regulation',
+        count: UHV101_QUESTIONS.filter(q => q.topic === 'youth-climate-regulation').length,
+        description: 'Paris Agreement, Carbon Footprint, Climate Justice, green entrepreneurship, Miyawaki forests, and Net-Zero'
+      },
+      {
+        id: 'integrated-case-applications',
+        name: 'Integrated Application & Case Studies',
+        count: UHV101_QUESTIONS.filter(q => q.topic === 'integrated-case-applications').length,
+        description: 'Applied ethical, social, and environmental case scenarios across Units 1–3'
+      }
+    ],
     credits: 2,
-    isReady: false,
+    isReady: true,
     badgeColor: 'from-amber-600 to-orange-600'
   },
   {
@@ -406,6 +572,10 @@ export function getQuestionsForSubject(
     pool = [...FSO307_QUESTIONS]
   } else if (code === 'APT-301' || code === 'APT301') {
     pool = [...APT301_QUESTIONS]
+  } else if (code === 'LOG-301' || code === 'LOG301') {
+    pool = [...LOG301_QUESTIONS]
+  } else if (code === 'UHV-101' || code === 'UHV101') {
+    pool = [...UHV101_QUESTIONS]
   }
 
   if (extraApprovedQuestions && extraApprovedQuestions.length > 0) {

@@ -2,7 +2,7 @@ import { cookies } from 'next/headers'
 import { authAdmin } from '@/lib/firebase/server'
 import Header from '@/components/Header'
 import CbtArenaHub from '@/components/cbt/CbtArenaHub'
-import { getAllCbtLeaderboards, getApprovedContributedQuestions } from '@/lib/cbt/actions'
+import { getAllCbtLeaderboards, getApprovedContributedQuestions, getCbtOverrides } from '@/lib/cbt/actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -39,6 +39,16 @@ export default async function CbtPage() {
     approvedQuestions = []
   }
 
+  let overrides: { subjectOverrides: any[]; questionOverrides: any[] } = {
+    subjectOverrides: [],
+    questionOverrides: []
+  }
+  try {
+    overrides = await getCbtOverrides()
+  } catch {
+    overrides = { subjectOverrides: [], questionOverrides: [] }
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#07070c] text-prevu-text relative overflow-hidden">
       {/* Ambient background glows */}
@@ -57,6 +67,8 @@ export default async function CbtPage() {
             isAuthenticated={isAuthenticated} 
             initialLeaderboards={JSON.parse(JSON.stringify(initialLeaderboards || {}))}
             approvedQuestions={JSON.parse(JSON.stringify(approvedQuestions || []))}
+            subjectOverrides={JSON.parse(JSON.stringify(overrides.subjectOverrides || []))}
+            questionOverrides={JSON.parse(JSON.stringify(overrides.questionOverrides || []))}
           />
         </div>
       </main>

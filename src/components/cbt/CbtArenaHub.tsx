@@ -2,8 +2,8 @@
 
 import React, { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence, animate, useMotionValue, useMotionTemplate } from 'framer-motion'
-import { CBT_SUBJECTS, generateTestQuestions } from '@/lib/cbt/cbtRegistry'
-import { CbtSubject, CbtExamConfig, CbtLeaderboardEntry } from '@/lib/cbt/types'
+import { generateTestQuestions, mergeSubjectsWithOverrides } from '@/lib/cbt/cbtRegistry'
+import { CbtSubject, CbtExamConfig, CbtLeaderboardEntry, CbtSubjectOverride, CbtQuestionOverride } from '@/lib/cbt/types'
 import {
   Sparkles,
   Play,
@@ -39,6 +39,8 @@ interface CbtArenaHubProps {
   initialLeaderboards?: Record<string, CbtLeaderboardEntry[]>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   approvedQuestions?: any[]
+  subjectOverrides?: CbtSubjectOverride[]
+  questionOverrides?: CbtQuestionOverride[]
 }
 
 function AnimatedCounter({ value }: { value: number }) {
@@ -117,7 +119,9 @@ function SpotlightCard({
 export default function CbtArenaHub({
   isAuthenticated = false,
   initialLeaderboards = {},
-  approvedQuestions = []
+  approvedQuestions = [],
+  subjectOverrides = [],
+  questionOverrides = []
 }: CbtArenaHubProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState<string>('')
@@ -138,19 +142,8 @@ export default function CbtArenaHub({
   } | null>(null)
 
   const subjects = useMemo(() => {
-    return CBT_SUBJECTS.map(subj => {
-      const code = subj.code.toUpperCase()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const extraCount = (approvedQuestions || []).filter((q: any) => {
-        const qCode = (q.subject_code || q.subjectCode || '').toUpperCase()
-        return qCode === code || qCode.replace(/-/g, '') === code.replace(/-/g, '')
-      }).length
-      return {
-        ...subj,
-        totalQuestions: subj.totalQuestions + extraCount
-      }
-    })
-  }, [approvedQuestions])
+    return mergeSubjectsWithOverrides(subjectOverrides, questionOverrides, approvedQuestions, false)
+  }, [subjectOverrides, questionOverrides, approvedQuestions])
 
   // Total verified questions across all subjects
   const totalVerifiedQuestions = useMemo(() => {
@@ -256,7 +249,8 @@ export default function CbtArenaHub({
       config.questionCount,
       config.shuffleQuestions,
       config.selectedTopic,
-      approvedQuestions
+      approvedQuestions,
+      questionOverrides
     )
 
     setRunningExam({
@@ -283,7 +277,8 @@ export default function CbtArenaHub({
             runningExam.config.questionCount,
             runningExam.config.shuffleQuestions,
             runningExam.config.selectedTopic,
-            approvedQuestions
+            approvedQuestions,
+            questionOverrides
           )
           setRunningExam({
             ...runningExam,
@@ -693,7 +688,7 @@ export default function CbtArenaHub({
         {(selectedCategory !== 'all' || searchQuery) && (
           <div className="flex items-center justify-between text-xs text-prevu-text-muted px-2">
             <div>
-              Showing <span className="font-semibold text-white font-mono">{filteredSubjects.length}</span> of {CBT_SUBJECTS.length} suites
+              Showing <span className="font-semibold text-white font-mono">{filteredSubjects.length}</span> of {subjects.length} suites
             </div>
             <button
               type="button"

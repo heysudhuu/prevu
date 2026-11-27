@@ -20,7 +20,8 @@ import {
   LogOut,
   Compass,
   X,
-  Sparkles
+  Sparkles,
+  SlidersHorizontal
 } from 'lucide-react'
 import { auth } from '@/lib/firebase/client'
 import { signOut } from 'firebase/auth'
@@ -79,6 +80,11 @@ const NAV_ITEMS: NavItem[] = [
     icon: Sparkles,
     badgeKey: 'pendingCbt',
     badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+  },
+  {
+    name: 'CBT Modification',
+    href: '/admin/cbt-manager',
+    icon: SlidersHorizontal
   },
   { name: 'Academic Data', href: '/admin/academic', icon: GraduationCap },
   { name: 'Calendar', href: '/admin/calendar', icon: Calendar },

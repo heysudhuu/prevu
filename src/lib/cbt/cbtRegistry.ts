@@ -1,4 +1,4 @@
-import { CbtSubject, CbtQuestion } from './types'
+import { CbtSubject, CbtQuestion, CbtSubjectOverride, CbtQuestionOverride, CbtSubjectTopic } from './types'
 import { FSO307_QUESTIONS } from './questions/fso307'
 import { APT301_QUESTIONS, LOG301_QUESTIONS } from './questions/apt301'
 import { ACP101_QUESTIONS } from './questions/acp101'
@@ -656,6 +656,214 @@ export function getQuestionsForSubject(
 }
 
 /**
+ * Merge base + contributed questions with non-destructive admin overrides.
+ * Existing base data is never mutated; edits/archiving overlay cleanly by questionId.
+ */
+export function mergeQuestionsWithOverrides(
+  subjectCode: string,
+  topicId?: string,
+  extraApprovedQuestions: (CbtQuestion | any)[] = [],
+  questionOverrides: CbtQuestionOverride[] = [],
+  includeArchived: boolean = false
+): (CbtQuestion & { isOverridden?: boolean; isCustom?: boolean; isArchived?: boolean })[] {
+  const code = subjectCode.toUpperCase()
+  const basePool = getQuestionsForSubject(subjectCode, undefined, extraApprovedQuestions)
+
+  const overrideMap = new Map<string, CbtQuestionOverride>()
+  for (const ov of questionOverrides || []) {
+    overrideMap.set(ov.questionId, ov)
+  }
+
+  const merged: (CbtQuestion & { isOverridden?: boolean; isCustom?: boolean; isArchived?: boolean })[] = []
+  const seenIds = new Set<string>()
+
+  for (const baseQ of basePool) {
+    seenIds.add(baseQ.id)
+    const ov = overrideMap.get(baseQ.id)
+    if (ov?.isArchived && !includeArchived) continue
+
+    if (ov) {
+      merged.push({
+        ...baseQ,
+        topic: ov.topic ?? baseQ.topic,
+        topicName: ov.topicName ?? baseQ.topicName,
+        partName: ov.partName ?? baseQ.partName,
+        sectionName: ov.sectionName ?? baseQ.sectionName,
+        passage: ov.passage === null ? undefined : (ov.passage ?? baseQ.passage),
+        question: ov.question ?? baseQ.question,
+        type: ov.type ?? baseQ.type,
+        options: ov.options && ov.options.length > 0 ? ov.options : baseQ.options,
+        correctAnswers: ov.correctAnswers && ov.correctAnswers.length > 0 ? ov.correctAnswers : baseQ.correctAnswers,
+        explanation: ov.explanation ?? baseQ.explanation,
+        difficulty: ov.difficulty ?? baseQ.difficulty,
+        isOverridden: true,
+        isCustom: Boolean(ov.isCustom),
+        isArchived: Boolean(ov.isArchived)
+      })
+    } else {
+      merged.push({ ...baseQ })
+    }
+  }
+
+  // Append admin-created custom questions for this subject
+  for (const ov of questionOverrides || []) {
+    if (!ov.isCustom || seenIds.has(ov.questionId)) continue
+    const ovCode = (ov.subjectCode || '').toUpperCase()
+    if (ovCode !== code && ovCode.replace(/-/g, '') !== code.replace(/-/g, '')) continue
+    if (ov.isArchived && !includeArchived) continue
+
+    merged.push({
+      id: ov.questionId,
+      subjectCode: ov.subjectCode,
+      subjectName: ov.subjectName || ov.subjectCode,
+      semester: ov.semester || 1,
+      category: ov.category || 'core',
+      topic: ov.topic || 'general',
+      topicName: ov.topicName || ov.topic || 'General',
+      partName: ov.partName || 'Admin Added',
+      sectionName: ov.sectionName || 'Custom Question',
+      passage: ov.passage || undefined,
+      question: ov.question || '',
+      type: ov.type || 'single',
+      options: ov.options || [],
+      correctAnswers: ov.correctAnswers || ['A'],
+      explanation: ov.explanation || '',
+      difficulty: ov.difficulty || 'easy',
+      status: 'approved',
+      isOverridden: true,
+      isCustom: true,
+      isArchived: Boolean(ov.isArchived)
+    })
+  }
+
+  if (topicId && topicId !== 'all') {
+    return merged.filter(q => q.topic === topicId)
+  }
+  return merged
+}
+
+/**
+ * Merge static CBT_SUBJECTS with non-destructive admin subject overrides and live question counts.
+ */
+export function mergeSubjectsWithOverrides(
+  subjectOverrides: CbtSubjectOverride[] = [],
+  questionOverrides: CbtQuestionOverride[] = [],
+  extraApprovedQuestions: (CbtQuestion | any)[] = [],
+  includeArchived: boolean = false
+): (CbtSubject & { isOverridden?: boolean; isCustom?: boolean; isArchived?: boolean })[] {
+  const ovMap = new Map<string, CbtSubjectOverride>()
+  for (const ov of subjectOverrides || []) {
+    ovMap.set(ov.subjectCode.toUpperCase(), ov)
+  }
+
+  const result: (CbtSubject & { isOverridden?: boolean; isCustom?: boolean; isArchived?: boolean })[] = []
+  const seenCodes = new Set<string>()
+
+  const applyCounts = (subj: CbtSubject): CbtSubject => {
+    const liveQs = mergeQuestionsWithOverrides(subj.code, undefined, extraApprovedQuestions, questionOverrides, false)
+    const updatedTopicsList: CbtSubjectTopic[] | undefined = subj.topicsList?.map(t => ({
+      ...t,
+      count: t.id === 'all' ? liveQs.length : liveQs.filter(q => q.topic === t.id).length
+    }))
+
+    // Add any new topic slugs introduced via custom/edited questions
+    if (updatedTopicsList) {
+      const knownIds = new Set(updatedTopicsList.map(t => t.id))
+      for (const q of liveQs) {
+        if (q.topic && !knownIds.has(q.topic)) {
+          knownIds.add(q.topic)
+          updatedTopicsList.push({
+            id: q.topic,
+            name: q.topicName || q.topic,
+            count: liveQs.filter(item => item.topic === q.topic).length,
+            description: q.topicName || q.topic
+          })
+        }
+      }
+    }
+
+    return {
+      ...subj,
+      totalQuestions: liveQs.length,
+      ...(updatedTopicsList ? { topicsList: updatedTopicsList } : {})
+    }
+  }
+
+  for (const baseSubj of CBT_SUBJECTS) {
+    const code = baseSubj.code.toUpperCase()
+    seenCodes.add(code)
+    const ov = ovMap.get(code)
+    if (ov?.isArchived && !includeArchived) continue
+
+    const mergedSubj: CbtSubject & { isOverridden?: boolean; isCustom?: boolean; isArchived?: boolean } = ov
+      ? {
+          ...baseSubj,
+          name: ov.name ?? baseSubj.name,
+          description: ov.description ?? baseSubj.description,
+          semester: ov.semester ?? baseSubj.semester,
+          year: ov.year ?? baseSubj.year,
+          category: ov.category ?? baseSubj.category,
+          categoryLabel: ov.categoryLabel ?? baseSubj.categoryLabel,
+          credits: ov.credits ?? baseSubj.credits,
+          isReady: ov.isReady ?? baseSubj.isReady,
+          badgeColor: ov.badgeColor ?? baseSubj.badgeColor,
+          isOverridden: true,
+          isCustom: Boolean(ov.isCustom),
+          isArchived: Boolean(ov.isArchived)
+        }
+      : { ...baseSubj }
+
+    result.push({
+      ...applyCounts(mergedSubj),
+      isOverridden: mergedSubj.isOverridden,
+      isCustom: mergedSubj.isCustom,
+      isArchived: mergedSubj.isArchived
+    })
+  }
+
+  for (const ov of subjectOverrides || []) {
+    const code = ov.subjectCode.toUpperCase()
+    if (!ov.isCustom || seenCodes.has(code)) continue
+    if (ov.isArchived && !includeArchived) continue
+
+    const customSubj: CbtSubject & { isOverridden?: boolean; isCustom?: boolean; isArchived?: boolean } = {
+      code,
+      name: ov.name || code,
+      semester: ov.semester || 1,
+      year: ov.year || 1,
+      category: ov.category || 'core',
+      categoryLabel: ov.categoryLabel || 'Custom CBT',
+      totalQuestions: 0,
+      description: ov.description || 'Admin-created CBT practice suite.',
+      topics: [],
+      topicsList: [
+        {
+          id: 'all',
+          name: 'All Topics (Mix Practice)',
+          count: 0,
+          description: 'All verified questions in this subject'
+        }
+      ],
+      credits: ov.credits ?? 2,
+      isReady: ov.isReady ?? true,
+      badgeColor: ov.badgeColor || 'from-cyan-600 to-blue-600',
+      isOverridden: true,
+      isCustom: true,
+      isArchived: Boolean(ov.isArchived)
+    }
+
+    result.push({
+      ...applyCounts(customSubj),
+      isOverridden: true,
+      isCustom: true,
+      isArchived: Boolean(ov.isArchived)
+    })
+  }
+
+  return result
+}
+
+/**
  * Generates a randomized sample of questions for the test
  */
 export function generateTestQuestions(
@@ -663,14 +871,15 @@ export function generateTestQuestions(
   requestedCount: number,
   shuffle: boolean = true,
   topicId?: string,
-  extraApprovedQuestions: (CbtQuestion | any)[] = []
+  extraApprovedQuestions: (CbtQuestion | any)[] = [],
+  questionOverrides: CbtQuestionOverride[] = []
 ): {
   questions: CbtQuestion[]
   totalAvailable: number
   actualCount: number
   notice?: string
 } {
-  const all = getQuestionsForSubject(subjectCode, topicId, extraApprovedQuestions)
+  const all = mergeQuestionsWithOverrides(subjectCode, topicId, extraApprovedQuestions, questionOverrides, false)
   const totalAvailable = all.length
 
   if (totalAvailable === 0) {

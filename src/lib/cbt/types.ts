@@ -113,3 +113,43 @@ export interface CbtLeaderboardEntry {
   attemptsCount: number
   updatedAt: string
 }
+
+export interface CbtSubjectOverride {
+  subjectCode: string
+  name?: string
+  description?: string
+  semester?: number
+  year?: number
+  category?: 'open-elective' | 'aptitude' | 'uhv' | 'core'
+  categoryLabel?: string
+  credits?: number
+  isReady?: boolean
+  badgeColor?: string
+  isCustom?: boolean
+  isArchived?: boolean
+  updatedBy?: string
+  updatedAt?: string
+}
+
+export interface CbtQuestionOverride {
+  questionId: string
+  subjectCode: string
+  subjectName?: string
+  semester?: number
+  category?: 'open-elective' | 'aptitude' | 'uhv' | 'core'
+  topic?: string
+  topicName?: string
+  partName?: string
+  sectionName?: string
+  passage?: string | null
+  question?: string
+  type?: CbtQuestionType
+  options?: CbtOption[]
+  correctAnswers?: string[]
+  explanation?: string
+  difficulty?: 'easy' | 'medium' | 'hard'
+  isCustom?: boolean
+  isArchived?: boolean
+  updatedBy?: string
+  updatedAt?: string
+}

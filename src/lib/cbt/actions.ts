@@ -4,8 +4,16 @@ import { cookies } from 'next/headers'
 import { authAdmin } from '@/lib/firebase/server'
 import { getSupabaseAdmin } from '@/utils/supabase/admin'
 import { revalidatePath } from 'next/cache'
-import { CbtLeaderboardEntry, CbtUserAnswer, CbtQuestionReport } from './types'
+import { CbtLeaderboardEntry, CbtUserAnswer, CbtQuestionReport, CbtSubjectOverride, CbtQuestionOverride } from './types'
 import { CBT_SUBJECTS } from './cbtRegistry'
+import {
+  getStoredSubjectOverrides,
+  upsertStoredSubjectOverride,
+  deleteStoredSubjectOverride,
+  getStoredQuestionOverrides,
+  upsertStoredQuestionOverride,
+  deleteStoredQuestionOverride
+} from './cbtOverridesStore'
 import { 
   saveStoredAttempt, 
   getStoredLeaderboard, 
@@ -843,6 +851,223 @@ export async function reportCbtQuestion(data: {
  */
 export async function getAllCbtQuestionReports(): Promise<CbtQuestionReport[]> {
   return getStoredQuestionReports()
+}
+
+/**
+ * Fetch non-destructive admin overrides for CBT subjects and questions.
+ * Merges Supabase overrides (when table exists) with fail-safe local store.
+ */
+export async function getCbtOverrides(): Promise<{
+  subjectOverrides: CbtSubjectOverride[]
+  questionOverrides: CbtQuestionOverride[]
+}> {
+  const localSubjects = getStoredSubjectOverrides()
+  const localQuestions = getStoredQuestionOverrides()
+
+  try {
+    const supabase = getSupabaseAdmin()
+    const [subjRes, quesRes] = await Promise.all([
+      supabase.from('cbt_subject_overrides').select('*'),
+      supabase.from('cbt_question_overrides').select('*')
+    ])
+
+    const subjMap = new Map<string, CbtSubjectOverride>()
+    for (const s of localSubjects) subjMap.set(s.subjectCode.toUpperCase(), s)
+    if (!subjRes.error && Array.isArray(subjRes.data)) {
+      for (const row of subjRes.data) {
+        const code = String(row.subject_code || '').toUpperCase()
+        if (!code) continue
+        subjMap.set(code, {
+          subjectCode: code,
+          name: row.name ?? undefined,
+          description: row.description ?? undefined,
+          semester: row.semester ?? undefined,
+          year: row.year ?? undefined,
+          category: row.category ?? undefined,
+          categoryLabel: row.category_label ?? undefined,
+          credits: row.credits ?? undefined,
+          isReady: row.is_ready ?? undefined,
+          badgeColor: row.badge_color ?? undefined,
+          isCustom: Boolean(row.is_custom),
+          isArchived: Boolean(row.is_archived),
+          updatedBy: row.updated_by ?? undefined,
+          updatedAt: row.updated_at ?? undefined
+        })
+      }
+    }
+
+    const qMap = new Map<string, CbtQuestionOverride>()
+    for (const q of localQuestions) qMap.set(q.questionId, q)
+    if (!quesRes.error && Array.isArray(quesRes.data)) {
+      for (const row of quesRes.data) {
+        const qId = String(row.question_id || '')
+        if (!qId) continue
+        qMap.set(qId, {
+          questionId: qId,
+          subjectCode: String(row.subject_code || ''),
+          subjectName: row.subject_name ?? undefined,
+          semester: row.semester ?? undefined,
+          category: row.category ?? undefined,
+          topic: row.topic ?? undefined,
+          topicName: row.topic_name ?? undefined,
+          partName: row.part_name ?? undefined,
+          sectionName: row.section_name ?? undefined,
+          passage: row.passage === null ? null : (row.passage ?? undefined),
+          question: row.question ?? undefined,
+          type: row.type ?? undefined,
+          options: Array.isArray(row.options_json) ? row.options_json : undefined,
+          correctAnswers: Array.isArray(row.correct_answers_json) ? row.correct_answers_json : undefined,
+          explanation: row.explanation ?? undefined,
+          difficulty: row.difficulty ?? undefined,
+          isCustom: Boolean(row.is_custom),
+          isArchived: Boolean(row.is_archived),
+          updatedBy: row.updated_by ?? undefined,
+          updatedAt: row.updated_at ?? undefined
+        })
+      }
+    }
+
+    return {
+      subjectOverrides: Array.from(subjMap.values()),
+      questionOverrides: Array.from(qMap.values())
+    }
+  } catch {
+    return {
+      subjectOverrides: localSubjects,
+      questionOverrides: localQuestions
+    }
+  }
+}
+
+export async function saveAdminSubjectOverride(payload: CbtSubjectOverride) {
+  const user = await getCurrentUser()
+  if (!user || user.role !== 'admin') {
+    return { error: 'Unauthorized: Admin access required.' }
+  }
+
+  const entry: CbtSubjectOverride = {
+    ...payload,
+    subjectCode: payload.subjectCode.trim().toUpperCase(),
+    updatedBy: user.email || user.name,
+    updatedAt: new Date().toISOString()
+  }
+
+  upsertStoredSubjectOverride(entry)
+
+  try {
+    const supabase = getSupabaseAdmin()
+    await supabase.from('cbt_subject_overrides').upsert({
+      subject_code: entry.subjectCode,
+      name: entry.name ?? null,
+      description: entry.description ?? null,
+      semester: entry.semester ?? null,
+      year: entry.year ?? null,
+      category: entry.category ?? null,
+      category_label: entry.categoryLabel ?? null,
+      credits: entry.credits ?? null,
+      is_ready: entry.isReady ?? null,
+      badge_color: entry.badgeColor ?? null,
+      is_custom: Boolean(entry.isCustom),
+      is_archived: Boolean(entry.isArchived),
+      updated_by: entry.updatedBy,
+      updated_at: entry.updatedAt
+    }, { onConflict: 'subject_code' })
+  } catch {
+    // Fail-safe local store already persisted
+  }
+
+  revalidatePath('/cbt')
+  revalidatePath('/admin/cbt-moderation')
+  return { success: true, override: entry }
+}
+
+export async function resetAdminSubjectOverride(subjectCode: string) {
+  const user = await getCurrentUser()
+  if (!user || user.role !== 'admin') {
+    return { error: 'Unauthorized: Admin access required.' }
+  }
+
+  const code = subjectCode.trim().toUpperCase()
+  deleteStoredSubjectOverride(code)
+
+  try {
+    const supabase = getSupabaseAdmin()
+    await supabase.from('cbt_subject_overrides').delete().eq('subject_code', code)
+  } catch {
+    // Non-blocking
+  }
+
+  revalidatePath('/cbt')
+  revalidatePath('/admin/cbt-moderation')
+  return { success: true }
+}
+
+export async function saveAdminQuestionOverride(payload: CbtQuestionOverride) {
+  const user = await getCurrentUser()
+  if (!user || user.role !== 'admin') {
+    return { error: 'Unauthorized: Admin access required.' }
+  }
+
+  const entry: CbtQuestionOverride = {
+    ...payload,
+    subjectCode: payload.subjectCode.trim().toUpperCase(),
+    updatedBy: user.email || user.name,
+    updatedAt: new Date().toISOString()
+  }
+
+  upsertStoredQuestionOverride(entry)
+
+  try {
+    const supabase = getSupabaseAdmin()
+    await supabase.from('cbt_question_overrides').upsert({
+      question_id: entry.questionId,
+      subject_code: entry.subjectCode,
+      subject_name: entry.subjectName ?? null,
+      semester: entry.semester ?? null,
+      category: entry.category ?? null,
+      topic: entry.topic ?? null,
+      topic_name: entry.topicName ?? null,
+      part_name: entry.partName ?? null,
+      section_name: entry.sectionName ?? null,
+      passage: entry.passage === undefined ? null : entry.passage,
+      question: entry.question ?? null,
+      type: entry.type ?? 'single',
+      options_json: entry.options ?? null,
+      correct_answers_json: entry.correctAnswers ?? null,
+      explanation: entry.explanation ?? null,
+      difficulty: entry.difficulty ?? 'easy',
+      is_custom: Boolean(entry.isCustom),
+      is_archived: Boolean(entry.isArchived),
+      updated_by: entry.updatedBy,
+      updated_at: entry.updatedAt
+    }, { onConflict: 'question_id' })
+  } catch {
+    // Fail-safe local store already persisted
+  }
+
+  revalidatePath('/cbt')
+  revalidatePath('/admin/cbt-moderation')
+  return { success: true, override: entry }
+}
+
+export async function resetAdminQuestionOverride(questionId: string) {
+  const user = await getCurrentUser()
+  if (!user || user.role !== 'admin') {
+    return { error: 'Unauthorized: Admin access required.' }
+  }
+
+  deleteStoredQuestionOverride(questionId)
+
+  try {
+    const supabase = getSupabaseAdmin()
+    await supabase.from('cbt_question_overrides').delete().eq('question_id', questionId)
+  } catch {
+    // Non-blocking
+  }
+
+  revalidatePath('/cbt')
+  revalidatePath('/admin/cbt-moderation')
+  return { success: true }
 }
 
 

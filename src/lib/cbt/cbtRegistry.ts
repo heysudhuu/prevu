@@ -3,6 +3,7 @@ import { FSO307_QUESTIONS } from './questions/fso307'
 import { APT301_QUESTIONS, LOG301_QUESTIONS } from './questions/apt301'
 import { ACP101_QUESTIONS } from './questions/acp101'
 import { UHV101_QUESTIONS } from './questions/uhv101'
+import { ENT101_QUESTIONS } from './questions/ent101'
 
 /**
  * Registry of available CBT Mock Test subjects in Prevu
@@ -65,6 +66,64 @@ export const CBT_SUBJECTS: CbtSubject[] = [
     credits: 2,
     isReady: true,
     badgeColor: 'from-emerald-600 to-teal-600'
+  },
+  {
+    code: 'ENT-101',
+    name: 'Entrepreneurship Mindset',
+    semester: 1,
+    year: 1,
+    category: 'core',
+    categoryLabel: 'Career & Life Skills (CBT)',
+    totalQuestions: ENT101_QUESTIONS.length,
+    description: '160 practice MCQs across 2 complete sets (40 single MCQs + 8 case-study passages × 5 per set) covering opportunity discovery, personas, digital branding, Canva, pricing, responsible AI, customer trust, and scaling.',
+    topics: [
+      'Opportunity, Validation & Personas',
+      'Digital Branding, Content & Canva',
+      'Revenue, Pricing, Leads & Responsible AI',
+      'Customer Feedback, Support & Brand Trust',
+      'Finance, Contracts, Growth & Pitching'
+    ],
+    topicsList: [
+      {
+        id: 'all',
+        name: 'All Topics & Case Studies (Mix Practice)',
+        count: ENT101_QUESTIONS.length,
+        description: 'Complete 160-question CBT exam bank across Set 1 & Set 2 (80 Single MCQs + 16 Case Study Passages)'
+      },
+      {
+        id: 'opportunity-personas',
+        name: 'Opportunity, Validation & Personas',
+        count: ENT101_QUESTIONS.filter(q => q.topic === 'opportunity-personas').length,
+        description: 'NEP 2020 context, problem discovery, user interviews, idea validation, customer personas, pain points, and value propositions'
+      },
+      {
+        id: 'digital-branding-content',
+        name: 'Digital Branding, Content & Canva',
+        count: ENT101_QUESTIONS.filter(q => q.topic === 'digital-branding-content').length,
+        description: 'Instagram/YouTube/LinkedIn profiles, bios, taglines, reels, hooks, storyboards, CTAs, Canva visual consistency, and content calendars'
+      },
+      {
+        id: 'revenue-pricing-ai',
+        name: 'Revenue, Pricing, Leads & Responsible AI',
+        count: ENT101_QUESTIONS.filter(q => q.topic === 'revenue-pricing-ai').length,
+        description: 'Advertising, digital products, service revenue models, pricing basics, leads & conversions, and human-reviewed AI workflows'
+      },
+      {
+        id: 'customer-trust-feedback',
+        name: 'Customer Feedback, Support & Brand Trust',
+        count: ENT101_QUESTIONS.filter(q => q.topic === 'customer-trust-feedback').length,
+        description: 'Feedback forms, consent-based testimonials, private order resolution, professional query handling, and brand trust'
+      },
+      {
+        id: 'finance-contracts-scaling',
+        name: 'Finance, Contracts, Growth & Pitching',
+        count: ENT101_QUESTIONS.filter(q => q.topic === 'finance-contracts-scaling').length,
+        description: 'Revenue, operating expenses, profit/loss, basic contracts, funding sources, influencer/referral growth, and pitch decks'
+      }
+    ],
+    credits: 2,
+    isReady: true,
+    badgeColor: 'from-violet-600 to-indigo-600'
   },
   {
     code: 'FSO-307',
@@ -576,6 +635,8 @@ export function getQuestionsForSubject(
     pool = [...LOG301_QUESTIONS]
   } else if (code === 'UHV-101' || code === 'UHV101') {
     pool = [...UHV101_QUESTIONS]
+  } else if (code === 'ENT-101' || code === 'ENT101') {
+    pool = [...ENT101_QUESTIONS]
   }
 
   if (extraApprovedQuestions && extraApprovedQuestions.length > 0) {

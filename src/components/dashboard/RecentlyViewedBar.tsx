@@ -1,6 +1,7 @@
 'use client'
 
 import { useSyncExternalStore } from 'react'
+import { motion } from 'framer-motion'
 import { 
   History, 
   ExternalLink, 
@@ -57,17 +58,22 @@ export default function RecentlyViewedBar() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {activities.slice(0, 4).map((item: StudentActivityItem) => {
+      <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-thin lg:grid lg:grid-cols-4 lg:overflow-visible lg:snap-none lg:pb-0">
+        {activities.slice(0, 4).map((item: StudentActivityItem, idx: number) => {
           const isDrive = item.format === 'gdrive'
           const isYouTube = item.format === 'youtube'
           const isCbt = item.format === 'cbt'
           const isNotes = item.format === 'notes'
 
           return (
-            <div 
+            <motion.div
               key={item.id}
-              className="p-3.5 rounded-2xl bg-prevu-surface/90 border border-prevu-surface-light hover:border-prevu-accent/50 transition-all flex flex-col justify-between shadow-lg group relative overflow-hidden"
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: idx * 0.05, type: 'spring', stiffness: 320, damping: 24 }}
+              whileHover={{ y: -3, transition: { type: 'spring', stiffness: 420, damping: 22 } }}
+              className="p-3.5 rounded-2xl bg-prevu-surface/80 border border-prevu-surface-light hover:border-prevu-accent/50 backdrop-blur-xl transition-colors flex flex-col justify-between shadow-lg hover:shadow-xl group relative overflow-hidden snap-start shrink-0 w-[280px] lg:w-auto lg:shrink"
             >
               <div>
                 <div className="flex items-center justify-between gap-1 mb-2">
@@ -159,7 +165,7 @@ export default function RecentlyViewedBar() {
                   </Link>
                 )}
               </div>
-            </div>
+            </motion.div>
           )
         })}
       </div>

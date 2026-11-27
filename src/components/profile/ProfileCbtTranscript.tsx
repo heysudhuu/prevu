@@ -1,6 +1,8 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { motion, useMotionValue, useSpring, useReducedMotion } from 'framer-motion'
 import { 
   Zap, 
   Trophy, 
@@ -13,12 +15,38 @@ import {
   GraduationCap,
   Sparkles
 } from 'lucide-react'
-import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { UserCbtHistoryItem } from '@/lib/cbt/actions'
 
 interface ProfileCbtTranscriptProps {
   attempts: UserCbtHistoryItem[]
+}
+
+function AnimatedStatValue({ value, suffix = '' }: { value: number; suffix?: string }) {
+  const [display, setDisplay] = useState(value)
+  const mv = useMotionValue(0)
+  const spring = useSpring(mv, { stiffness: 90, damping: 20 })
+  const prefersReduced = useReducedMotion()
+
+  useEffect(() => {
+    if (prefersReduced) {
+      setDisplay(value)
+      return
+    }
+    mv.set(value)
+  }, [value, mv, prefersReduced])
+
+  useEffect(() => {
+    if (prefersReduced) return
+    return spring.on('change', (v) => setDisplay(Math.round(v * 10) / 10))
+  }, [spring, prefersReduced])
+
+  return (
+    <span>
+      {Number.isInteger(value) ? Math.round(display) : display.toFixed(1)}
+      {suffix}
+    </span>
+  )
 }
 
 function formatDuration(seconds: number): string {
@@ -45,15 +73,30 @@ function formatRelativeTime(dateStr?: string): string {
 
 function getPerformanceBadge(percentage: number) {
   if (percentage >= 90) {
-    return { label: 'Outstanding (O)', bg: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' }
+    return { label: 'Outstanding (O)', bg: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30', bar: 'from-emerald-500 to-teal-400' }
   } else if (percentage >= 75) {
-    return { label: 'Distinction (A+)', bg: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30' }
+    return { label: 'Distinction (A+)', bg: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30', bar: 'from-cyan-500 to-emerald-400' }
   } else if (percentage >= 60) {
-    return { label: 'First Class (A)', bg: 'bg-purple-500/15 text-purple-300 border-purple-500/30' }
+    return { label: 'First Class (A)', bg: 'bg-purple-500/15 text-purple-300 border-purple-500/30', bar: 'from-purple-500 to-cyan-400' }
   } else if (percentage >= 40) {
-    return { label: 'Passed (B)', bg: 'bg-amber-500/15 text-amber-300 border-amber-500/30' }
+    return { label: 'Passed (B)', bg: 'bg-amber-500/15 text-amber-300 border-amber-500/30', bar: 'from-amber-500 to-yellow-400' }
   }
-  return { label: 'Needs Practice (F)', bg: 'bg-rose-500/15 text-rose-300 border-rose-500/30' }
+  return { label: 'Needs Practice (F)', bg: 'bg-rose-500/15 text-rose-300 border-rose-500/30', bar: 'from-rose-500 to-amber-500' }
+}
+
+const gridStagger = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.06, delayChildren: 0.05 } }
+}
+
+const cardItem = {
+  hidden: { opacity: 0, y: 14, scale: 0.98 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { type: 'spring' as const, stiffness: 320, damping: 24 }
+  }
 }
 
 export default function ProfileCbtTranscript({ attempts = [] }: ProfileCbtTranscriptProps) {
@@ -68,10 +111,18 @@ export default function ProfileCbtTranscript({ attempts = [] }: ProfileCbtTransc
   const totalAttemptedQuestions = attempts.reduce((sum, a) => sum + (a.totalQuestions || 0), 0)
 
   return (
-    <div className="space-y-5">
+    <motion.section
+      initial={{ opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      className="space-y-5"
+    >
       {/* SECTION HEADER */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-prevu-surface via-prevu-surface/90 to-prevu-surface border border-prevu-surface-light shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-start sm:items-center gap-3.5">
+      <div className="relative p-6 rounded-3xl bg-gradient-to-r from-prevu-surface via-prevu-surface/90 to-prevu-surface border border-prevu-surface-light backdrop-blur-xl shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 overflow-hidden">
+        <div className="absolute -right-10 -top-10 w-44 h-44 bg-amber-500/10 blur-3xl rounded-full pointer-events-none" />
+
+        <div className="relative z-10 flex items-start sm:items-center gap-3.5">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-white shadow-xl shadow-amber-500/25 shrink-0">
             <Zap className="w-6 h-6" />
           </div>
@@ -80,7 +131,7 @@ export default function ProfileCbtTranscript({ attempts = [] }: ProfileCbtTransc
               <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
                 CBT Examination Academic Transcript
               </h2>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold uppercase tracking-wider">
+              <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold uppercase tracking-wider">
                 Digital Record
               </span>
             </div>
@@ -90,21 +141,23 @@ export default function ProfileCbtTranscript({ attempts = [] }: ProfileCbtTransc
           </div>
         </div>
 
-        <Button
-          size="sm"
-          asChild
-          className="h-9 px-4 text-xs font-bold bg-prevu-accent hover:opacity-90 text-white shadow-lg shadow-prevu-accent/20 cursor-pointer self-start sm:self-auto shrink-0"
-        >
-          <Link href="/cbt" className="flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Open CBT Arena</span>
-            <ArrowRight className="w-3.5 h-3.5 ml-0.5" />
-          </Link>
-        </Button>
+        <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="relative z-10 self-start sm:self-auto shrink-0">
+          <Button
+            size="sm"
+            asChild
+            className="h-9 px-4 text-xs font-bold bg-prevu-accent hover:opacity-95 text-white shadow-lg shadow-prevu-accent/25 cursor-pointer"
+          >
+            <Link href="/cbt" className="flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Open CBT Arena</span>
+              <ArrowRight className="w-3.5 h-3.5 ml-0.5" />
+            </Link>
+          </Button>
+        </motion.div>
       </div>
 
       {totalAttempts === 0 ? (
-        <div className="p-8 sm:p-10 rounded-3xl bg-prevu-surface/60 border border-prevu-surface-light text-center space-y-4 shadow-xl">
+        <div className="p-8 sm:p-10 rounded-3xl bg-prevu-surface/60 border border-prevu-surface-light backdrop-blur-xl text-center space-y-4 shadow-xl">
           <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center mx-auto text-amber-400">
             <GraduationCap className="w-7 h-7" />
           </div>
@@ -128,55 +181,80 @@ export default function ProfileCbtTranscript({ attempts = [] }: ProfileCbtTransc
         <>
           {/* STATS STRIP */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-            <div className="p-4 rounded-2xl bg-prevu-surface/80 border border-prevu-surface-light space-y-1">
+            <motion.div
+              whileHover={{ y: -2 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+              className="p-4 rounded-2xl bg-prevu-surface/70 border border-prevu-surface-light hover:border-amber-500/30 backdrop-blur-md space-y-1 transition-colors"
+            >
               <div className="text-[10px] font-mono uppercase text-prevu-text-muted flex items-center gap-1">
                 <Zap className="w-3 h-3 text-amber-400" /> Tests Taken
               </div>
               <div className="text-xl sm:text-2xl font-black font-mono text-white">
-                {totalAttempts}
+                <AnimatedStatValue value={totalAttempts} />
               </div>
               <div className="text-[10px] text-zinc-400">Official Exam Suites</div>
-            </div>
+            </motion.div>
 
-            <div className="p-4 rounded-2xl bg-prevu-surface/80 border border-prevu-surface-light space-y-1">
+            <motion.div
+              whileHover={{ y: -2 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+              className="p-4 rounded-2xl bg-prevu-surface/70 border border-prevu-surface-light hover:border-amber-400/40 backdrop-blur-md space-y-1 transition-colors"
+            >
               <div className="text-[10px] font-mono uppercase text-prevu-text-muted flex items-center gap-1">
                 <Trophy className="w-3 h-3 text-amber-400" /> Best Score
               </div>
               <div className="text-xl sm:text-2xl font-black font-mono text-amber-400">
-                {bestPercentage}%
+                <AnimatedStatValue value={bestPercentage} suffix="%" />
               </div>
               <div className="text-[10px] text-zinc-400">Peak Examination Score</div>
-            </div>
+            </motion.div>
 
-            <div className="p-4 rounded-2xl bg-prevu-surface/80 border border-prevu-surface-light space-y-1">
+            <motion.div
+              whileHover={{ y: -2 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+              className="p-4 rounded-2xl bg-prevu-surface/70 border border-prevu-surface-light hover:border-emerald-400/40 backdrop-blur-md space-y-1 transition-colors"
+            >
               <div className="text-[10px] font-mono uppercase text-prevu-text-muted flex items-center gap-1">
                 <Award className="w-3 h-3 text-emerald-400" /> Avg Accuracy
               </div>
               <div className="text-xl sm:text-2xl font-black font-mono text-emerald-400">
-                {avgPercentage}%
+                <AnimatedStatValue value={avgPercentage} suffix="%" />
               </div>
               <div className="text-[10px] text-zinc-400">Across All Subjects</div>
-            </div>
+            </motion.div>
 
-            <div className="p-4 rounded-2xl bg-prevu-surface/80 border border-prevu-surface-light space-y-1">
+            <motion.div
+              whileHover={{ y: -2 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+              className="p-4 rounded-2xl bg-prevu-surface/70 border border-prevu-surface-light hover:border-cyan-400/40 backdrop-blur-md space-y-1 transition-colors"
+            >
               <div className="text-[10px] font-mono uppercase text-prevu-text-muted flex items-center gap-1">
                 <CheckCircle2 className="w-3 h-3 text-cyan-400" /> MCQs Solved
               </div>
               <div className="text-xl sm:text-2xl font-black font-mono text-cyan-300">
-                {totalCorrect} <span className="text-xs text-prevu-text-muted font-normal">/ {totalAttemptedQuestions}</span>
+                <AnimatedStatValue value={totalCorrect} />{' '}
+                <span className="text-xs text-prevu-text-muted font-normal">/ {totalAttemptedQuestions}</span>
               </div>
               <div className="text-[10px] text-zinc-400">Correct Answers</div>
-            </div>
+            </motion.div>
           </div>
 
           {/* TRANSCRIPT CARDS */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <motion.div
+            variants={gridStagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: '-20px' }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          >
             {attempts.map((attempt) => {
               const badge = getPerformanceBadge(attempt.percentage)
               return (
-                <div 
+                <motion.div
                   key={attempt.id || attempt.subjectCode}
-                  className="p-5 rounded-3xl bg-prevu-surface/80 border border-prevu-surface-light hover:border-amber-500/40 transition-all flex flex-col justify-between space-y-4 shadow-xl"
+                  variants={cardItem}
+                  whileHover={{ y: -3, transition: { type: 'spring', stiffness: 420, damping: 22 } }}
+                  className="p-5 rounded-3xl bg-prevu-surface/75 border border-prevu-surface-light hover:border-amber-500/40 backdrop-blur-xl transition-colors flex flex-col justify-between space-y-4 shadow-xl"
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-2.5">
@@ -191,6 +269,17 @@ export default function ProfileCbtTranscript({ attempts = [] }: ProfileCbtTransc
                     <h3 className="text-sm sm:text-base font-bold text-white tracking-tight leading-snug">
                       {attempt.subjectName}
                     </h3>
+
+                    {/* Animated Accuracy Progress Bar */}
+                    <div className="mt-3 h-1.5 rounded-full bg-prevu-bg/90 overflow-hidden border border-white/5">
+                      <motion.div
+                        className={`h-full rounded-full bg-gradient-to-r ${badge.bar}`}
+                        initial={{ width: 0 }}
+                        whileInView={{ width: `${Math.min(100, Math.max(3, attempt.percentage))}%` }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                      />
+                    </div>
 
                     {/* METRICS ROW */}
                     <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-prevu-surface-light/80">
@@ -252,12 +341,12 @@ export default function ProfileCbtTranscript({ attempts = [] }: ProfileCbtTransc
                       </Link>
                     </Button>
                   </div>
-                </div>
+                </motion.div>
               )
             })}
-          </div>
+          </motion.div>
         </>
       )}
-    </div>
+    </motion.section>
   )
 }

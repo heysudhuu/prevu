@@ -61,19 +61,19 @@ export default async function ProfilePage() {
     <div className="min-h-screen bg-prevu-bg text-prevu-text flex flex-col pb-16">
       <Header />
 
-      <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl space-y-10">
+      <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl space-y-10 relative">
         
-        {/* Back Link */}
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" size="sm" asChild className="text-xs text-prevu-text-muted hover:text-prevu-text">
+        {/* Top Breadcrumb Bar */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <Button variant="outline" size="sm" asChild className="h-9 px-3.5 rounded-xl text-xs bg-prevu-surface/60 border-prevu-surface-light text-prevu-text-muted hover:text-white hover:border-prevu-accent/50 backdrop-blur-md transition-all">
             <Link href="/dashboard" className="flex items-center gap-1.5">
-              <ArrowLeft className="w-4 h-4" /> Back to Dashboard
+              <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
             </Link>
           </Button>
 
-          <div className="flex items-center gap-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-prevu-surface/70 border border-prevu-surface-light backdrop-blur-md shadow-sm">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-xs font-mono text-prevu-text-muted">
+            <span className="text-[11px] font-mono font-semibold text-prevu-text">
               Student Identity Hub
             </span>
           </div>

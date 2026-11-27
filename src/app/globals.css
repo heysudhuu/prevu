@@ -1124,3 +1124,95 @@ html.theme-solarized-dark [class*="text-emerald-300"] {
     padding-right: 2.5rem;
   }
 }
+
+
+/* ==========================================================================
+   DASHBOARD REDESIGN — Animation Keyframes & Utilities
+   ========================================================================== */
+@keyframes gradient-shift {
+  0%, 100% { opacity: 0.15; transform: translate(0, 0) scale(1); }
+  50% { opacity: 0.25; transform: translate(-10px, 10px) scale(1.05); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(35, 134, 54, 0.15); }
+  50% { box-shadow: 0 0 20px rgba(35, 134, 54, 0.3); }
+}
+
+.animate-gradient-shift {
+  animation: gradient-shift 10s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* Thin scrollbar for sidebar and horizontal scroll areas */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+}
+.scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 2px; }
+.scrollbar-thin::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.15); }
+
+/* ==========================================================================
+   21ST.DEV / DRIBBBLE / FIGMA KINETIC UTILITIES
+   ========================================================================== */
+@keyframes border-beam-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer-sweep {
+  0% { transform: translateX(-120%) skewX(-18deg); }
+  100% { transform: translateX(220%) skewX(-18deg); }
+}
+
+@keyframes text-shimmer {
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-border-beam {
+  animation: border-beam-spin 7s linear infinite;
+}
+
+.animate-text-shimmer {
+  background-size: 200% auto;
+  animation: text-shimmer 6s linear infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 5s ease-in-out infinite;
+}
+
+.btn-shimmer-sweep {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shimmer-sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 45%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.24),
+    transparent
+  );
+  transform: translateX(-140%) skewX(-18deg);
+  pointer-events: none;
+}
+
+.btn-shimmer-sweep:hover::after {
+  animation: shimmer-sweep 0.75s ease-out;
+}

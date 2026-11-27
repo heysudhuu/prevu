@@ -1,10 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
-import { Clock, ChevronRight } from 'lucide-react'
+import { Clock, ChevronRight, ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
+import BorderBeam from '@/components/ui/kinetic/BorderBeam'
+import LottieBadge from '@/components/ui/kinetic/LottieBadge'
 
 export interface AcademicMilestone {
   id: string
@@ -93,19 +96,22 @@ export const CU_CALENDAR_EVENTS: AcademicMilestone[] = [
   }
 ]
 
-export default function ExamCountdownWidget({ semester = 1 }: { semester?: number }) {
-  const [now, setNow] = useState(new Date())
+export default function ExamCountdownWidget({ semester = 1, compact = false }: { semester?: number; compact?: boolean }) {
+  const [now, setNow] = useState<Date | null>(null)
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
 
   useEffect(() => {
+    setNow(new Date())
     const timer = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(timer)
   }, [])
 
+  const currentNow = now ?? new Date('2026-11-27T00:00:00')
+
   // Find next upcoming milestone or ongoing milestone
   const upcomingEvents = CU_CALENDAR_EVENTS.filter(e => {
     const end = e.endDate ? e.endDate.getTime() : e.startDate.getTime()
-    return end >= now.getTime()
+    return end >= currentNow.getTime()
   })
 
   const currentOrNextEvent = upcomingEvents.length > 0 ? upcomingEvents[0] : CU_CALENDAR_EVENTS[CU_CALENDAR_EVENTS.length - 1]
@@ -113,14 +119,126 @@ export default function ExamCountdownWidget({ semester = 1 }: { semester?: numbe
     ? (CU_CALENDAR_EVENTS.find(e => e.id === selectedEventId) || currentOrNextEvent)
     : currentOrNextEvent
 
-  const isOngoing = activeEvent.endDate && now >= activeEvent.startDate && now <= activeEvent.endDate
+  const activeIdx = CU_CALENDAR_EVENTS.findIndex(e => e.id === activeEvent.id)
+  const stepMilestone = (dir: -1 | 1) => {
+    const nextIdx = (activeIdx + dir + CU_CALENDAR_EVENTS.length) % CU_CALENDAR_EVENTS.length
+    setSelectedEventId(CU_CALENDAR_EVENTS[nextIdx].id)
+  }
+
+  const isOngoing = Boolean(now && activeEvent.endDate && currentNow >= activeEvent.startDate && currentNow <= activeEvent.endDate)
   const targetTime = isOngoing && activeEvent.endDate ? activeEvent.endDate.getTime() : activeEvent.startDate.getTime()
   
-  const diffMs = Math.max(0, targetTime - now.getTime())
+  const diffMs = now ? Math.max(0, targetTime - currentNow.getTime()) : 0
   const days = Math.floor(diffMs / (1000 * 60 * 60 * 24))
   const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24)
   const minutes = Math.floor((diffMs / (1000 * 60)) % 60)
   const seconds = Math.floor((diffMs / 1000) % 60)
+
+  // ─── Compact Sidebar Variant ─────────────────────────────────────
+  if (compact) {
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return (
+      <div className="p-4 rounded-2xl bg-prevu-surface/65 border border-prevu-surface-light backdrop-blur-xl space-y-3 shadow-lg shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] relative overflow-hidden">
+        <BorderBeam duration={11} colorFrom="#238636" colorTo="#38bdf8" borderWidth={1} />
+        <div className="absolute -top-8 -right-8 w-24 h-24 bg-prevu-accent/10 blur-2xl rounded-full pointer-events-none" />
+
+        <div className="relative z-10 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[0.16em] text-prevu-accent font-bold">
+            <LottieBadge variant="radar" size={16} />
+            <span>Exam Radar</span>
+          </div>
+          <div className="flex items-center gap-1">
+            {isOngoing && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse mr-1">
+                ● LIVE
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => stepMilestone(-1)}
+              aria-label="Previous milestone"
+              className="p-1 rounded-lg bg-prevu-bg/70 hover:bg-prevu-surface-light border border-prevu-surface-light/60 text-prevu-text-muted hover:text-white transition-colors cursor-pointer"
+            >
+              <ChevronLeft className="w-3 h-3" />
+            </button>
+            <button
+              type="button"
+              onClick={() => stepMilestone(1)}
+              aria-label="Next milestone"
+              className="p-1 rounded-lg bg-prevu-bg/70 hover:bg-prevu-surface-light border border-prevu-surface-light/60 text-prevu-text-muted hover:text-white transition-colors cursor-pointer"
+            >
+              <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeEvent.id}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.18 }}
+            className="space-y-0.5"
+          >
+            <div className="flex items-center gap-1.5">
+              <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-prevu-accent/15 text-prevu-accent border border-prevu-accent/25">
+                {activeEvent.code}
+              </span>
+              <span className="text-xs font-bold text-white line-clamp-1" title={activeEvent.name}>
+                {activeEvent.name.split('(')[0].trim()}
+              </span>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+
+        <div className="grid grid-cols-4 gap-1.5 text-center">
+          <div className="p-2 rounded-xl bg-prevu-bg/85 border border-prevu-surface-light/70 shadow-inner">
+            <div className="text-base font-black font-mono text-white leading-none">{now ? pad(days) : '--'}</div>
+            <div className="text-[8px] text-prevu-text-muted uppercase mt-1 tracking-wider">Days</div>
+          </div>
+          <div className="p-2 rounded-xl bg-prevu-bg/85 border border-prevu-surface-light/70 shadow-inner">
+            <div className="text-base font-black font-mono text-white leading-none">{now ? pad(hours) : '--'}</div>
+            <div className="text-[8px] text-prevu-text-muted uppercase mt-1 tracking-wider">Hrs</div>
+          </div>
+          <div className="p-2 rounded-xl bg-prevu-bg/85 border border-prevu-surface-light/70 shadow-inner">
+            <div className="text-base font-black font-mono text-white leading-none">{now ? pad(minutes) : '--'}</div>
+            <div className="text-[8px] text-prevu-text-muted uppercase mt-1 tracking-wider">Min</div>
+          </div>
+          <div className="p-2 rounded-xl bg-prevu-bg/85 border border-prevu-accent/30 shadow-inner overflow-hidden">
+            <motion.div
+              key={now ? seconds : 'init'}
+              initial={{ y: -4, opacity: 0.6 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.18 }}
+              className="text-base font-black font-mono text-prevu-accent leading-none"
+            >
+              {now ? pad(seconds) : '--'}
+            </motion.div>
+            <div className="text-[8px] text-prevu-text-muted uppercase mt-1 tracking-wider">Sec</div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between text-[10px] font-mono text-prevu-text-muted">
+          <span>
+            📅 {activeEvent.startDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+            {activeEvent.endDate ? ` – ${activeEvent.endDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : ''}
+          </span>
+          <span className="text-prevu-text-muted/70">{activeIdx + 1}/{CU_CALENDAR_EVENTS.length}</span>
+        </div>
+
+        {activeEvent.practiceExamType && (
+          <Link
+            href={`/browse?sem=${semester}&type=${activeEvent.practiceExamType}`}
+            className="flex items-center justify-between w-full px-3 py-2 rounded-xl bg-prevu-accent/15 hover:bg-prevu-accent/25 text-prevu-accent text-xs font-bold transition-all border border-prevu-accent/25 group"
+          >
+            <span>Solve {activeEvent.practiceExamType} Papers</span>
+            <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+        )}
+      </div>
+    )
+  }
 
   return (
     <Card className="border-prevu-surface-light bg-gradient-to-br from-prevu-surface via-prevu-surface/90 to-prevu-surface shadow-2xl relative overflow-hidden">
@@ -218,7 +336,7 @@ export default function ExamCountdownWidget({ semester = 1 }: { semester?: numbe
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
             {CU_CALENDAR_EVENTS.map((event) => {
               const isEventSelected = (selectedEventId === event.id) || (!selectedEventId && currentOrNextEvent.id === event.id)
-              const isPast = event.endDate ? now > event.endDate : now > event.startDate
+              const isPast = event.endDate ? currentNow > event.endDate : currentNow > event.startDate
 
               return (
                 <button

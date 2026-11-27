@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -15,7 +15,6 @@ import {
   Mail, 
   CheckCircle2, 
   AlertCircle, 
-  ShieldCheck, 
   Save, 
   Loader2, 
   Lock,
@@ -33,9 +32,17 @@ import {
   Info,
   Trash2,
   AlertTriangle,
-  Flame
+  Flame,
+  ShieldCheck
 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useSpring,
+  useMotionTemplate,
+  useReducedMotion
+} from 'framer-motion'
 import DeleteAccountModal from './DeleteAccountModal'
 import { CollaboratorBadge, getCollaboratorTier } from '@/components/ui/CollaboratorBadge'
 
@@ -46,6 +53,30 @@ interface ProfileFormProps {
     uploads?: number
     bookmarks?: number
   }
+}
+
+type ProfileSectionFilter = 'all' | 'identity' | 'academics' | 'security'
+
+function AnimatedMetricNumber({ value }: { value: number }) {
+  const [display, setDisplay] = useState(value)
+  const mv = useMotionValue(0)
+  const spring = useSpring(mv, { stiffness: 90, damping: 20 })
+  const prefersReduced = useReducedMotion()
+
+  useEffect(() => {
+    if (prefersReduced) {
+      setDisplay(value)
+      return
+    }
+    mv.set(value)
+  }, [value, mv, prefersReduced])
+
+  useEffect(() => {
+    if (prefersReduced) return
+    return spring.on('change', (v) => setDisplay(Math.round(v)))
+  }, [spring, prefersReduced])
+
+  return <span>{display}</span>
 }
 
 // Recommended subject directory mapping per semester for BE-CSE
@@ -92,6 +123,25 @@ export default function ProfileForm({ user, stats }: ProfileFormProps) {
   const [success, setSuccess] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [sectionFilter, setSectionFilter] = useState<ProfileSectionFilter>('all')
+
+  const prefersReduced = useReducedMotion()
+
+  // Holographic ID Card cursor spotlight
+  const idCardMouseX = useMotionValue(-300)
+  const idCardMouseY = useMotionValue(-300)
+  const idCardSheen = useMotionTemplate`radial-gradient(360px circle at ${idCardMouseX}px ${idCardMouseY}px, rgba(168, 85, 247, 0.16), rgba(56, 189, 248, 0.08) 45%, transparent 75%)`
+
+  const handleIdCardMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    idCardMouseX.set(e.clientX - rect.left)
+    idCardMouseY.set(e.clientY - rect.top)
+  }
+
+  const handleIdCardLeave = () => {
+    idCardMouseX.set(-300)
+    idCardMouseY.set(-300)
+  }
 
   const isUsernameLocked = changesLeft <= 0 && username === initialUsername
   const isCUVerified = user?.cu_verified || cuEmail?.trim().toLowerCase().endsWith('@cuchd.in')
@@ -210,6 +260,22 @@ export default function ProfileForm({ user, stats }: ProfileFormProps) {
   const userKarma = ((stats?.uploads || 0) * 25) + (isCUVerified ? 15 : 0)
   const collaboratorTier = getCollaboratorTier(userKarma)
 
+  // Profile completeness calculation
+  const completenessChecks = [
+    { label: 'Display Name', done: Boolean(name.trim()) },
+    { label: 'Campus Handle', done: Boolean(username.trim()) },
+    { label: 'University UID', done: Boolean(studentUid.trim()) },
+    { label: 'Profile Photo', done: Boolean(displayAvatar) },
+    { label: '@cuchd.in Verification', done: Boolean(isCUVerified) },
+  ]
+  const completedSteps = completenessChecks.filter(c => c.done).length
+  const completenessPct = Math.round((completedSteps / completenessChecks.length) * 100)
+  const nextMissingStep = completenessChecks.find(c => !c.done)?.label
+
+  const showIdentity = sectionFilter === 'all' || sectionFilter === 'identity'
+  const showAcademics = sectionFilter === 'all' || sectionFilter === 'academics'
+  const showSecurity = sectionFilter === 'all' || sectionFilter === 'security'
+
   return (
     <div className="w-full">
       {/* Hidden file input for Avatar */}
@@ -224,29 +290,54 @@ export default function ProfileForm({ user, stats }: ProfileFormProps) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* ========================================================
-            LEFT COLUMN: DIGITAL STUDENT ID CARD & ENGAGEMENT STATS
+            LEFT COLUMN: HOLOGRAPHIC DIGITAL STUDENT ID CARD & STATS
             ======================================================== */}
-        <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-20 self-start">
+        <motion.div
+          initial={{ opacity: 0, x: -16 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          className="lg:col-span-5 space-y-5 lg:sticky lg:top-20 self-start"
+        >
           
           {/* Digital Student Card Container */}
-          <div className="relative group">
+          <div
+            onMouseMove={handleIdCardMove}
+            onMouseLeave={handleIdCardLeave}
+            className="relative group/idcard"
+          >
             {/* Ambient Background Glow */}
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600/30 via-indigo-600/20 to-pink-600/30 rounded-3xl blur-xl opacity-75 group-hover:opacity-100 transition duration-1000 -z-10" />
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600/30 via-indigo-600/20 to-cyan-500/25 rounded-3xl blur-xl opacity-70 group-hover/idcard:opacity-100 transition duration-700 -z-10" />
 
             <div className="rounded-3xl border border-purple-500/30 bg-gradient-to-br from-zinc-900/95 via-prevu-surface to-zinc-950 p-6 shadow-2xl backdrop-blur-2xl relative overflow-hidden">
-              
+              {/* Subtle Architectural Grid Texture */}
+              <div
+                className="absolute inset-0 opacity-[0.12] pointer-events-none"
+                style={{
+                  backgroundImage: 'radial-gradient(rgba(255,255,255,0.25) 1px, transparent 1px)',
+                  backgroundSize: '18px 18px'
+                }}
+              />
+
+              {/* Cursor Holographic Sheen */}
+              {!prefersReduced && (
+                <motion.div
+                  className="absolute inset-0 pointer-events-none opacity-0 group-hover/idcard:opacity-100 transition-opacity duration-300"
+                  style={{ background: idCardSheen }}
+                />
+              )}
+
               {/* Subtle ambient blur lights */}
-              <div className="absolute -top-12 -right-12 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -top-12 -right-12 w-48 h-48 bg-purple-500/12 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-indigo-500/12 rounded-full blur-3xl pointer-events-none" />
 
               {/* ID Card Top Header */}
               <div className="flex items-center justify-between pb-5 border-b border-white/10 relative z-10">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 shadow-inner">
                     <Sparkles className="w-4 h-4 text-purple-400" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-purple-400 font-bold block leading-none">
+                    <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-purple-400 font-bold block leading-none">
                       PREVU IDENTITY
                     </span>
                     <span className="text-xs font-semibold text-white tracking-tight">
@@ -256,7 +347,7 @@ export default function ProfileForm({ user, stats }: ProfileFormProps) {
                 </div>
 
                 {/* Status Indicator */}
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold bg-emerald-500/10 border border-emerald-500/25 text-emerald-400">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   <span>ACTIVE</span>
                 </div>
@@ -265,13 +356,19 @@ export default function ProfileForm({ user, stats }: ProfileFormProps) {
               {/* ID Card Body: Avatar + Names */}
               <div className="py-6 flex flex-col sm:flex-row items-center sm:items-start gap-5 relative z-10">
                 
-                {/* Interactive Avatar with Camera Overlay & Collaborator Ring */}
+                {/* Interactive Avatar with Animated Ring & Camera Overlay */}
                 <div 
                   className="relative group/avatar cursor-pointer shrink-0" 
                   onClick={() => fileInputRef.current?.click()}
                   title="Click to change photo"
                 >
-                  <div className={`w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-gradient-to-br from-purple-600 via-indigo-600 to-violet-800 flex items-center justify-center text-white text-3xl font-extrabold shadow-xl ${collaboratorTier.ringColor} ${collaboratorTier.glowColor} relative`}>
+                  <motion.div
+                    className="absolute -inset-1 rounded-2xl opacity-60 group-hover/avatar:opacity-100 blur-[1px] transition-opacity"
+                    style={{ background: 'conic-gradient(from 0deg, #a855f7, #06b6d4, #238636, #f59e0b, #a855f7)' }}
+                    animate={prefersReduced ? undefined : { rotate: 360 }}
+                    transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+                  />
+                  <div className={`w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-gradient-to-br from-purple-600 via-indigo-600 to-violet-800 flex items-center justify-center text-white text-3xl font-extrabold shadow-xl ${collaboratorTier.ringColor} ${collaboratorTier.glowColor} relative border-2 border-zinc-950`}>
                     {displayAvatar ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img 
@@ -292,7 +389,7 @@ export default function ProfileForm({ user, stats }: ProfileFormProps) {
 
                   {/* Corner Collaborator Tier Badge */}
                   <div 
-                    className="absolute -bottom-2 -right-2 p-1.5 rounded-xl bg-zinc-950 border border-white/20 text-white shadow-lg flex items-center justify-center text-xs"
+                    className="absolute -bottom-2 -right-2 p-1.5 rounded-xl bg-zinc-950 border border-white/20 text-white shadow-lg flex items-center justify-center text-xs z-10"
                     title={`${collaboratorTier.title} (${userKarma} Karma pts)`}
                   >
                     <span>{collaboratorTier.icon}</span>
@@ -301,7 +398,7 @@ export default function ProfileForm({ user, stats }: ProfileFormProps) {
 
                 {/* Identity Information */}
                 <div className="text-center sm:text-left space-y-1.5 flex-1 min-w-0">
-                  <h3 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight truncate">
+                  <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight truncate">
                     {name || 'Student Name'}
                   </h3>
                   
@@ -319,36 +416,40 @@ export default function ProfileForm({ user, stats }: ProfileFormProps) {
                   </p>
 
                   <div className="pt-2 flex flex-wrap gap-2 items-center justify-center sm:justify-start">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => fileInputRef.current?.click()}
-                      className="h-7 text-[11px] font-semibold flex items-center gap-1.5 border-prevu-surface-light hover:border-purple-500/60"
-                    >
-                      <Camera className="w-3 h-3 text-purple-400" />
-                      <span>Update Photo</span>
-                    </Button>
+                    <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="h-7 text-[11px] font-semibold flex items-center gap-1.5 border-prevu-surface-light hover:border-purple-500/60"
+                      >
+                        <Camera className="w-3 h-3 text-purple-400" />
+                        <span>Update Photo</span>
+                      </Button>
+                    </motion.div>
 
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleCopyProfile}
-                      className="h-7 text-[11px] text-prevu-text-muted hover:text-white flex items-center gap-1.5"
-                    >
-                      {copiedLink ? (
-                        <>
-                          <Check className="w-3 h-3 text-emerald-400" />
-                          <span className="text-emerald-400">Copied!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3 h-3" />
-                          <span>Share Link</span>
-                        </>
-                      )}
-                    </Button>
+                    <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleCopyProfile}
+                        className="h-7 text-[11px] text-prevu-text-muted hover:text-white flex items-center gap-1.5"
+                      >
+                        {copiedLink ? (
+                          <>
+                            <Check className="w-3 h-3 text-emerald-400" />
+                            <span className="text-emerald-400">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3" />
+                            <span>Share Link</span>
+                          </>
+                        )}
+                      </Button>
+                    </motion.div>
                   </div>
                 </div>
 
@@ -389,11 +490,42 @@ export default function ProfileForm({ user, stats }: ProfileFormProps) {
                 </div>
               </div>
 
+              {/* Profile Completeness Meter */}
+              <div className="mt-4 pt-3.5 border-t border-white/10 relative z-10 space-y-2">
+                <div className="flex items-center justify-between text-[11px] font-mono">
+                  <span className="text-prevu-text-muted uppercase tracking-wider">ID Completeness</span>
+                  <span className={`font-bold ${completenessPct === 100 ? 'text-emerald-400' : 'text-purple-300'}`}>
+                    {completenessPct}%
+                  </span>
+                </div>
+                <div className="h-1.5 rounded-full bg-white/5 overflow-hidden border border-white/10">
+                  <motion.div
+                    className={`h-full rounded-full ${
+                      completenessPct === 100
+                        ? 'bg-gradient-to-r from-emerald-500 to-cyan-400'
+                        : 'bg-gradient-to-r from-purple-500 via-indigo-400 to-cyan-400'
+                    }`}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${completenessPct}%` }}
+                    transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
+                  />
+                </div>
+                {nextMissingStep ? (
+                  <p className="text-[10px] text-prevu-text-muted">
+                    Next step: <span className="text-purple-300 font-semibold">{nextMissingStep}</span>
+                  </p>
+                ) : (
+                  <p className="text-[10px] text-emerald-400 flex items-center gap-1 font-medium">
+                    <ShieldCheck className="w-3 h-3" /> Your Digital Student ID is 100% verified &amp; complete.
+                  </p>
+                )}
+              </div>
+
             </div>
           </div>
 
           {/* Student Engagement & Activity Summary */}
-          <div className="rounded-2xl border border-prevu-surface-light bg-prevu-surface/90 p-5 shadow-lg space-y-4">
+          <div className="rounded-2xl border border-prevu-surface-light bg-prevu-surface/75 backdrop-blur-xl p-5 shadow-lg space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider font-mono">
                 <Award className="w-4 h-4 text-purple-400" /> Prevu Standing
@@ -404,35 +536,47 @@ export default function ProfileForm({ user, stats }: ProfileFormProps) {
             </div>
 
             <div className="grid grid-cols-3 gap-2.5 text-center">
-              <div className="p-3 rounded-xl bg-prevu-bg border border-prevu-surface-light space-y-1">
+              <motion.div
+                whileHover={{ y: -2 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+                className="p-3 rounded-xl bg-prevu-bg/85 border border-prevu-surface-light hover:border-amber-500/40 space-y-1 transition-colors"
+              >
                 <div className="flex items-center justify-center gap-1 text-prevu-text-muted text-[11px]">
                   <Flame className="w-3.5 h-3.5 text-amber-400" />
                   <span>Karma</span>
                 </div>
                 <div className="text-xl font-bold text-amber-300 font-mono">
-                  {userKarma}
+                  <AnimatedMetricNumber value={userKarma} />
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="p-3 rounded-xl bg-prevu-bg border border-prevu-surface-light space-y-1">
+              <motion.div
+                whileHover={{ y: -2 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+                className="p-3 rounded-xl bg-prevu-bg/85 border border-prevu-surface-light hover:border-purple-500/40 space-y-1 transition-colors"
+              >
                 <div className="flex items-center justify-center gap-1 text-prevu-text-muted text-[11px]">
                   <BookOpen className="w-3.5 h-3.5 text-purple-400" />
                   <span>Shared</span>
                 </div>
                 <div className="text-xl font-bold text-white font-mono">
-                  {stats?.uploads ?? 0}
+                  <AnimatedMetricNumber value={stats?.uploads ?? 0} />
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="p-3 rounded-xl bg-prevu-bg border border-prevu-surface-light space-y-1">
+              <motion.div
+                whileHover={{ y: -2 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+                className="p-3 rounded-xl bg-prevu-bg/85 border border-prevu-surface-light hover:border-emerald-500/40 space-y-1 transition-colors"
+              >
                 <div className="flex items-center justify-center gap-1 text-prevu-text-muted text-[11px]">
                   <BookmarkCheck className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Vault</span>
                 </div>
                 <div className="text-xl font-bold text-white font-mono">
-                  {stats?.bookmarks ?? 0}
+                  <AnimatedMetricNumber value={stats?.bookmarks ?? 0} />
                 </div>
-              </div>
+              </motion.div>
             </div>
 
             {/* Collaborator Tier Banner */}
@@ -460,336 +604,417 @@ export default function ProfileForm({ user, stats }: ProfileFormProps) {
             </div>
           </div>
 
-        </div>
+        </motion.div>
 
         {/* ========================================================
-            RIGHT COLUMN: ENHANCED PROFILE CONFIGURATION FORM
+            RIGHT COLUMN: ORGANIZED PROFILE CONFIGURATION WORKSPACE
             ======================================================== */}
-        <div className="lg:col-span-7 space-y-6">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+          className="lg:col-span-7 space-y-6"
+        >
+          {/* Quick Section Filter Pill Bar */}
+          <div className="p-1.5 rounded-2xl bg-prevu-surface/75 border border-prevu-surface-light backdrop-blur-xl shadow-lg overflow-x-auto scrollbar-thin">
+            <div className="flex items-center gap-1.5 min-w-max">
+              {(
+                [
+                  { id: 'all', label: 'All Settings' },
+                  { id: 'identity', label: 'Identity & Handle' },
+                  { id: 'academics', label: 'University & Program' },
+                  { id: 'security', label: 'Contact & Danger Zone' }
+                ] as { id: ProfileSectionFilter; label: string }[]
+              ).map((tab) => {
+                const isActive = sectionFilter === tab.id
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setSectionFilter(tab.id)}
+                    className={`relative px-3.5 py-2 rounded-xl text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
+                      isActive ? 'text-white' : 'text-prevu-text-muted hover:text-white hover:bg-prevu-surface-light/40'
+                    }`}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="profile-section-filter-pill"
+                        transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+                        className="absolute inset-0 rounded-xl bg-purple-600 shadow-md shadow-purple-600/30"
+                      />
+                    )}
+                    <span className="relative z-10">{tab.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
           <form id="profile-form" onSubmit={handleSubmit} className="space-y-6">
 
             {/* SECTION 1: PUBLIC IDENTITY */}
-            <Card className="border-prevu-surface-light bg-prevu-surface/90 shadow-xl overflow-hidden">
-              <CardHeader className="border-b border-prevu-surface-light/60 pb-4">
-                <div className="flex items-center gap-2 text-purple-400 text-xs font-semibold uppercase tracking-wider font-mono">
-                  <User className="w-4 h-4" />
-                  <span>Public Identity</span>
-                </div>
-                <CardTitle className="text-lg font-bold text-white">
-                  Student Name & Handle
-                </CardTitle>
-                <CardDescription className="text-xs text-prevu-text-muted">
-                  How your profile and community contributions appear to classmates and professors.
-                </CardDescription>
-              </CardHeader>
+            {showIdentity && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+              >
+                <Card className="border-prevu-surface-light bg-prevu-surface/75 backdrop-blur-xl shadow-xl overflow-hidden">
+                  <CardHeader className="border-b border-prevu-surface-light/60 pb-4">
+                    <div className="flex items-center gap-2 text-purple-400 text-xs font-semibold uppercase tracking-wider font-mono">
+                      <User className="w-4 h-4" />
+                      <span>Public Identity</span>
+                    </div>
+                    <CardTitle className="text-lg font-bold text-white">
+                      Student Name &amp; Handle
+                    </CardTitle>
+                    <CardDescription className="text-xs text-prevu-text-muted">
+                      How your profile and community contributions appear to classmates and professors.
+                    </CardDescription>
+                  </CardHeader>
 
-              <CardContent className="p-6 space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  
-                  {/* Full Name */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-prevu-text flex items-center gap-1.5" htmlFor="name">
-                      Full Name <span className="text-red-400">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-prevu-text-muted">
-                        <User className="w-4 h-4 text-purple-400" />
+                  <CardContent className="p-6 space-y-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      
+                      {/* Full Name */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-prevu-text flex items-center gap-1.5" htmlFor="name">
+                          Full Name <span className="text-red-400">*</span>
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-prevu-text-muted">
+                            <User className="w-4 h-4 text-purple-400" />
+                          </div>
+                          <input 
+                            type="text"
+                            id="name"
+                            value={name}
+                            onChange={e => setName(e.target.value)}
+                            placeholder="e.g. Sudhanshu Yadav"
+                            required
+                            className="w-full pl-10 pr-3.5 py-2.5 bg-prevu-bg/90 border border-prevu-surface-light rounded-xl text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                          />
+                        </div>
                       </div>
-                      <input 
-                        type="text"
-                        id="name"
-                        value={name}
-                        onChange={e => setName(e.target.value)}
-                        placeholder="e.g. Sudhanshu Yadav"
-                        required
-                        className="w-full pl-10 pr-3.5 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
-                      />
-                    </div>
-                  </div>
 
-                  {/* Username / Handle */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-prevu-text flex items-center gap-1.5" htmlFor="username">
-                        Username / Handle <span className="text-red-400">*</span>
-                      </label>
-                      <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
-                        changesLeft > 1 
-                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
-                          : changesLeft === 1 
-                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                          : 'bg-red-500/10 text-red-400 border-red-500/30'
-                      }`}>
-                        {changesLeft > 0 ? `${changesLeft}/3 left` : 'Locked'}
-                      </span>
-                    </div>
+                      {/* Username / Handle */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-semibold text-prevu-text flex items-center gap-1.5" htmlFor="username">
+                            Username / Handle <span className="text-red-400">*</span>
+                          </label>
+                          <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
+                            changesLeft > 1 
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
+                              : changesLeft === 1 
+                              ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                              : 'bg-red-500/10 text-red-400 border-red-500/30'
+                          }`}>
+                            {changesLeft > 0 ? `${changesLeft}/3 left` : 'Locked'}
+                          </span>
+                        </div>
 
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-prevu-text-muted">
-                        <AtSign className="w-4 h-4 text-purple-400" />
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-prevu-text-muted">
+                            <AtSign className="w-4 h-4 text-purple-400" />
+                          </div>
+                          <input 
+                            type="text"
+                            id="username"
+                            value={username}
+                            onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-zA-Z0-9_.-]/g, ''))}
+                            disabled={isUsernameLocked}
+                            placeholder="e.g. sudhanshu"
+                            required
+                            className={`w-full pl-10 pr-10 py-2.5 bg-prevu-bg/90 border rounded-xl text-sm font-mono text-white placeholder-zinc-500 focus:outline-none transition-all ${
+                              isUsernameLocked 
+                                ? 'border-zinc-800 text-zinc-500 bg-zinc-900/40 cursor-not-allowed' 
+                                : 'border-prevu-surface-light focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20'
+                            }`}
+                          />
+                          {isUsernameLocked && (
+                            <Lock className="w-4 h-4 text-zinc-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
+                          )}
+                        </div>
                       </div>
-                      <input 
-                        type="text"
-                        id="username"
-                        value={username}
-                        onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-zA-Z0-9_.-]/g, ''))}
-                        disabled={isUsernameLocked}
-                        placeholder="e.g. sudhanshu"
-                        required
-                        className={`w-full pl-10 pr-10 py-2.5 bg-prevu-bg border rounded-xl text-sm font-mono text-white placeholder-zinc-500 focus:outline-none transition-all ${
-                          isUsernameLocked 
-                            ? 'border-zinc-800 text-zinc-500 bg-zinc-900/40 cursor-not-allowed' 
-                            : 'border-prevu-surface-light focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20'
-                        }`}
-                      />
-                      {isUsernameLocked && (
-                        <Lock className="w-4 h-4 text-zinc-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
-                      )}
-                    </div>
-                  </div>
 
-                </div>
-              </CardContent>
-            </Card>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
             {/* SECTION 2: ACADEMIC CREDENTIALS */}
-            <Card className="border-prevu-surface-light bg-prevu-surface/90 shadow-xl overflow-hidden">
-              <CardHeader className="border-b border-prevu-surface-light/60 pb-4">
-                <div className="flex items-center gap-2 text-purple-400 text-xs font-semibold uppercase tracking-wider font-mono">
-                  <GraduationCap className="w-4 h-4" />
-                  <span>Academic Enrollment</span>
-                </div>
-                <CardTitle className="text-lg font-bold text-white">
-                  University & Program Details
-                </CardTitle>
-                <CardDescription className="text-xs text-prevu-text-muted">
-                  Powers customized question papers, exam countdowns, and branch-specific study notes.
-                </CardDescription>
-              </CardHeader>
-
-              <CardContent className="p-6 space-y-6">
-                
-                {/* University UID & Branch */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  
-                  {/* Student UID */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-prevu-text flex items-center gap-1.5" htmlFor="student_uid">
-                      University UID
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-prevu-text-muted">
-                        <Hash className="w-4 h-4 text-purple-400" />
-                      </div>
-                      <input 
-                        type="text"
-                        id="student_uid"
-                        value={studentUid}
-                        onChange={e => setStudentUid(e.target.value.toUpperCase())}
-                        placeholder="e.g. 23BCS10890"
-                        className="w-full pl-10 pr-3.5 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm font-mono uppercase text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
-                      />
+            {showAcademics && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+              >
+                <Card className="border-prevu-surface-light bg-prevu-surface/75 backdrop-blur-xl shadow-xl overflow-hidden">
+                  <CardHeader className="border-b border-prevu-surface-light/60 pb-4">
+                    <div className="flex items-center gap-2 text-purple-400 text-xs font-semibold uppercase tracking-wider font-mono">
+                      <GraduationCap className="w-4 h-4" />
+                      <span>Academic Enrollment</span>
                     </div>
-                    <p className="text-[11px] text-prevu-text-muted">
-                      Your official Chandigarh University student registration code.
-                    </p>
-                  </div>
+                    <CardTitle className="text-lg font-bold text-white">
+                      University &amp; Program Details
+                    </CardTitle>
+                    <CardDescription className="text-xs text-prevu-text-muted">
+                      Powers customized question papers, exam countdowns, and branch-specific study notes.
+                    </CardDescription>
+                  </CardHeader>
 
-                  {/* Branch Selection */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-prevu-text flex items-center gap-1.5" htmlFor="branch">
-                      Branch & Specialization
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-prevu-text-muted">
-                        <GraduationCap className="w-4 h-4 text-purple-400" />
+                  <CardContent className="p-6 space-y-6">
+                    
+                    {/* University UID & Branch */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      
+                      {/* Student UID */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-prevu-text flex items-center gap-1.5" htmlFor="student_uid">
+                          University UID
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-prevu-text-muted">
+                            <Hash className="w-4 h-4 text-purple-400" />
+                          </div>
+                          <input 
+                            type="text"
+                            id="student_uid"
+                            value={studentUid}
+                            onChange={e => setStudentUid(e.target.value.toUpperCase())}
+                            placeholder="e.g. 23BCS10890"
+                            className="w-full pl-10 pr-3.5 py-2.5 bg-prevu-bg/90 border border-prevu-surface-light rounded-xl text-sm font-mono uppercase text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                          />
+                        </div>
+                        <p className="text-[11px] text-prevu-text-muted">
+                          Your official Chandigarh University student registration code.
+                        </p>
                       </div>
-                      <select 
-                        id="branch"
-                        value={branch}
-                        onChange={e => setBranch(e.target.value)}
-                        className="w-full pl-10 pr-8 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all cursor-pointer"
-                      >
-                        {branches.map(b => (
-                          <option key={b.id} value={b.id} className="bg-zinc-900 text-white">{b.label}</option>
-                        ))}
-                      </select>
+
+                      {/* Branch Selection */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-prevu-text flex items-center gap-1.5" htmlFor="branch">
+                          Branch &amp; Specialization
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-prevu-text-muted">
+                            <GraduationCap className="w-4 h-4 text-purple-400" />
+                          </div>
+                          <select 
+                            id="branch"
+                            value={branch}
+                            onChange={e => setBranch(e.target.value)}
+                            className="w-full pl-10 pr-8 py-2.5 bg-prevu-bg/90 border border-prevu-surface-light rounded-xl text-sm text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all cursor-pointer"
+                          >
+                            {branches.map(b => (
+                              <option key={b.id} value={b.id} className="bg-zinc-900 text-white">{b.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
                     </div>
-                  </div>
 
-                </div>
+                    {/* Current Semester: Gliding Interactive Pill Selector */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-prevu-text flex items-center gap-1.5">
+                          <Layers className="w-4 h-4 text-purple-400" /> Current Semester
+                        </label>
+                        <span className="text-xs font-mono text-purple-300 font-semibold">
+                          Semester {currentSemester} &bull; Year {Math.ceil(currentSemester / 2)}
+                        </span>
+                      </div>
 
-                {/* Current Semester: Interactive Pill Selector */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-prevu-text flex items-center gap-1.5">
-                      <Layers className="w-4 h-4 text-purple-400" /> Current Semester
-                    </label>
-                    <span className="text-xs font-mono text-purple-300 font-semibold">
-                      Semester {currentSemester} &bull; Year {Math.ceil(currentSemester / 2)}
-                    </span>
-                  </div>
+                      {/* 8-Semester Interactive Pills with Shared layoutId */}
+                      <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => {
+                          const isSelected = currentSemester === sem
+                          return (
+                            <motion.button
+                              key={sem}
+                              type="button"
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => setCurrentSemester(sem)}
+                              className={`relative py-2 px-1 text-center rounded-xl border transition-colors cursor-pointer ${
+                                isSelected
+                                  ? 'border-purple-400/60 text-white'
+                                  : 'bg-prevu-bg/80 border-prevu-surface-light text-prevu-text-muted hover:text-white hover:border-purple-500/40'
+                              }`}
+                            >
+                              {isSelected && (
+                                <motion.div
+                                  layoutId="profile-semester-pill"
+                                  transition={{ type: 'spring', stiffness: 420, damping: 30 }}
+                                  className="absolute inset-0 rounded-xl bg-purple-600 shadow-lg shadow-purple-600/35"
+                                />
+                              )}
+                              <span className="relative z-10 block text-xs font-bold font-mono">Sem {sem}</span>
+                              <span className={`relative z-10 block text-[10px] ${isSelected ? 'text-purple-200' : 'text-zinc-500'}`}>
+                                Y{Math.ceil(sem / 2)}
+                              </span>
+                            </motion.button>
+                          )
+                        })}
+                      </div>
 
-                  {/* 8-Semester Interactive Pills */}
-                  <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => {
-                      const isSelected = currentSemester === sem
-                      return (
-                        <button
-                          key={sem}
-                          type="button"
-                          onClick={() => setCurrentSemester(sem)}
-                          className={`py-2 px-1 text-center rounded-xl border transition-all cursor-pointer ${
-                            isSelected
-                              ? 'bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-600/30 scale-105'
-                              : 'bg-prevu-bg border-prevu-surface-light text-prevu-text-muted hover:text-white hover:border-purple-500/40'
-                          }`}
+                      {/* Dynamic Curriculum Deck for selected semester */}
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key={`curr-${currentSemester}`}
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -4 }}
+                          transition={{ duration: 0.18 }}
+                          className="p-3.5 rounded-xl bg-purple-500/5 border border-purple-500/15 space-y-2 mt-2"
                         >
-                          <span className="block text-xs font-bold font-mono">Sem {sem}</span>
-                          <span className={`block text-[10px] ${isSelected ? 'text-purple-200' : 'text-zinc-500'}`}>
-                            Y{Math.ceil(sem / 2)}
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-semibold text-purple-300 flex items-center gap-1.5">
+                              <BookOpen className="w-3.5 h-3.5 text-purple-400" />
+                              <span>Curriculum for Semester {currentSemester}</span>
+                            </span>
+                            <Link 
+                              href="/subjects" 
+                              className="text-[11px] text-prevu-accent hover:underline flex items-center gap-1 font-mono"
+                            >
+                              <span>Browse Papers</span>
+                              <ArrowRight className="w-3 h-3" />
+                            </Link>
+                          </div>
+
+                          <div className="flex flex-wrap gap-1.5">
+                            {SEMESTER_SUBJECTS[currentSemester]?.map(subject => (
+                              <span 
+                                key={subject} 
+                                className="px-2.5 py-1 rounded-lg bg-zinc-900/90 border border-white/5 text-[11px] text-zinc-300 font-medium"
+                              >
+                                {subject}
+                              </span>
+                            ))}
+                          </div>
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Email Credentials Split: Login Email vs CU Campus Email */}
+                    <div className="pt-2 border-t border-prevu-surface-light/60 space-y-4">
+                      
+                      {/* Account Login Identity (Read Only) */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-semibold text-prevu-text flex items-center gap-1.5">
+                            <Mail className="w-3.5 h-3.5 text-zinc-400" /> Primary Account Email
+                          </label>
+                          <span className="text-[10px] font-mono text-zinc-400 flex items-center gap-1 bg-zinc-800/80 px-2 py-0.5 rounded-full">
+                            <Lock className="w-3 h-3" /> Login Credential
                           </span>
-                        </button>
-                      )
-                    })}
-                  </div>
-
-                  {/* Dynamic Curriculum Deck for selected semester */}
-                  <div className="p-3.5 rounded-xl bg-purple-500/5 border border-purple-500/15 space-y-2 mt-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-purple-300 flex items-center gap-1.5">
-                        <BookOpen className="w-3.5 h-3.5 text-purple-400" />
-                        <span>Curriculum for Semester {currentSemester}</span>
-                      </span>
-                      <Link 
-                        href="/subjects" 
-                        className="text-[11px] text-prevu-accent hover:underline flex items-center gap-1 font-mono"
-                      >
-                        <span>Browse Papers</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </Link>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1.5">
-                      {SEMESTER_SUBJECTS[currentSemester]?.map(subject => (
-                        <span 
-                          key={subject} 
-                          className="px-2.5 py-1 rounded-lg bg-zinc-900 border border-white/5 text-[11px] text-zinc-300 font-medium"
-                        >
-                          {subject}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Email Credentials Split: Login Email vs CU Campus Email */}
-                <div className="pt-2 border-t border-prevu-surface-light/60 space-y-4">
-                  
-                  {/* Account Login Identity (Read Only) */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-prevu-text flex items-center gap-1.5">
-                        <Mail className="w-3.5 h-3.5 text-zinc-400" /> Primary Account Email
-                      </label>
-                      <span className="text-[10px] font-mono text-zinc-400 flex items-center gap-1 bg-zinc-800/80 px-2 py-0.5 rounded-full">
-                        <Lock className="w-3 h-3" /> Login Credential
-                      </span>
-                    </div>
-                    <div className="px-3.5 py-2.5 bg-zinc-900/60 border border-zinc-800 rounded-xl text-sm font-mono text-zinc-400 flex items-center justify-between">
-                      <span>{accountLoginEmail || 'No login email'}</span>
-                      <span className="text-[11px] text-zinc-500">Managed via Firebase Auth</span>
-                    </div>
-                  </div>
-
-                  {/* Chandigarh University Campus Email (@cuchd.in) */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-prevu-text flex items-center gap-1.5" htmlFor="cu_email">
-                        <GraduationCap className="w-3.5 h-3.5 text-purple-400" /> Chandigarh University Email <span className="text-[11px] text-zinc-500 font-normal">(Optional)</span>
-                      </label>
-                      {isCUVerified ? (
-                        <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                          <CheckCircle2 className="w-3 h-3" /> Verified CU Domain
-                        </span>
-                      ) : hasInvalidCuDomain ? (
-                        <span className="text-[11px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 flex items-center gap-1 font-mono">
-                          <ShieldAlert className="w-3 h-3" /> Must end in @cuchd.in
-                        </span>
-                      ) : (
-                        <span className="text-[11px] text-zinc-400 bg-zinc-800/60 px-2 py-0.5 rounded-full border border-zinc-700/50">
-                          Leave blank if no CU email
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-prevu-text-muted">
-                        <Mail className="w-4 h-4 text-purple-400" />
+                        </div>
+                        <div className="px-3.5 py-2.5 bg-zinc-900/60 border border-zinc-800 rounded-xl text-sm font-mono text-zinc-400 flex items-center justify-between gap-2">
+                          <span className="truncate">{accountLoginEmail || 'No login email'}</span>
+                          <span className="text-[11px] text-zinc-500 shrink-0">Managed via Firebase Auth</span>
+                        </div>
                       </div>
-                      <input 
-                        type="email"
-                        id="cu_email"
-                        value={cuEmail}
-                        onChange={e => setCuEmail(e.target.value.toLowerCase())}
-                        placeholder="e.g. 23bcs10890@cuchd.in (Optional)"
-                        className={`w-full pl-10 pr-3.5 py-2.5 bg-prevu-bg border rounded-xl text-sm font-mono text-white placeholder-zinc-500 focus:outline-none transition-all ${
-                          hasInvalidCuDomain
-                            ? 'border-amber-500/60 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/20'
-                            : 'border-prevu-surface-light focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20'
-                        }`}
-                      />
+
+                      {/* Chandigarh University Campus Email (@cuchd.in) */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <label className="text-xs font-semibold text-prevu-text flex items-center gap-1.5" htmlFor="cu_email">
+                            <GraduationCap className="w-3.5 h-3.5 text-purple-400" /> Chandigarh University Email <span className="text-[11px] text-zinc-500 font-normal">(Optional)</span>
+                          </label>
+                          {isCUVerified ? (
+                            <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                              <CheckCircle2 className="w-3 h-3" /> Verified CU Domain
+                            </span>
+                          ) : hasInvalidCuDomain ? (
+                            <span className="text-[11px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 flex items-center gap-1 font-mono">
+                              <ShieldAlert className="w-3 h-3" /> Must end in @cuchd.in
+                            </span>
+                          ) : (
+                            <span className="text-[11px] text-zinc-400 bg-zinc-800/60 px-2 py-0.5 rounded-full border border-zinc-700/50">
+                              Leave blank if no CU email
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-prevu-text-muted">
+                            <Mail className="w-4 h-4 text-purple-400" />
+                          </div>
+                          <input 
+                            type="email"
+                            id="cu_email"
+                            value={cuEmail}
+                            onChange={e => setCuEmail(e.target.value.toLowerCase())}
+                            placeholder="e.g. 23bcs10890@cuchd.in (Optional)"
+                            className={`w-full pl-10 pr-3.5 py-2.5 bg-prevu-bg/90 border rounded-xl text-sm font-mono text-white placeholder-zinc-500 focus:outline-none transition-all ${
+                              hasInvalidCuDomain
+                                ? 'border-amber-500/60 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/20'
+                                : 'border-prevu-surface-light focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20'
+                            }`}
+                          />
+                        </div>
+
+                        <div className="flex items-start gap-1.5 text-[11px] text-prevu-text-muted">
+                          <Info className="w-3.5 h-3.5 text-zinc-500 shrink-0 mt-0.5" />
+                          <span>
+                            Enter your official campus ID (ends in <strong>@cuchd.in</strong>) to earn the Verified Student badge. You can leave this empty if you only use your personal Google account.
+                          </span>
+                        </div>
+                      </div>
+
                     </div>
 
-                    <div className="flex items-start gap-1.5 text-[11px] text-prevu-text-muted">
-                      <Info className="w-3.5 h-3.5 text-zinc-500 shrink-0 mt-0.5" />
-                      <span>
-                        Enter your official campus ID (ends in <strong>@cuchd.in</strong>) to earn the Verified Student badge. You can leave this empty if you only use your personal Google account.
-                      </span>
-                    </div>
-                  </div>
-
-                </div>
-
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
             {/* SECTION 3: CONTACT & PRIVACY */}
-            <Card className="border-prevu-surface-light bg-prevu-surface/90 shadow-xl overflow-hidden">
-              <CardHeader className="border-b border-prevu-surface-light/60 pb-4">
-                <div className="flex items-center gap-2 text-purple-400 text-xs font-semibold uppercase tracking-wider font-mono">
-                  <Phone className="w-4 h-4" />
-                  <span>Contact & Communications</span>
-                </div>
-                <CardTitle className="text-lg font-bold text-white">
-                  Phone Number
-                </CardTitle>
-                <CardDescription className="text-xs text-prevu-text-muted">
-                  Used for urgent academic paper alerts and verification requests. Kept strictly private.
-                </CardDescription>
-              </CardHeader>
-
-              <CardContent className="p-6">
-                <div className="space-y-2 max-w-md">
-                  <label className="text-xs font-semibold text-prevu-text flex items-center gap-1.5" htmlFor="phone_number">
-                    Phone Number <span className="text-prevu-text-muted text-[11px] font-normal">(Optional)</span>
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-prevu-text-muted">
-                      <Phone className="w-4 h-4 text-purple-400" />
+            {showSecurity && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+              >
+                <Card className="border-prevu-surface-light bg-prevu-surface/75 backdrop-blur-xl shadow-xl overflow-hidden">
+                  <CardHeader className="border-b border-prevu-surface-light/60 pb-4">
+                    <div className="flex items-center gap-2 text-purple-400 text-xs font-semibold uppercase tracking-wider font-mono">
+                      <Phone className="w-4 h-4" />
+                      <span>Contact &amp; Communications</span>
                     </div>
-                    <input 
-                      type="tel"
-                      id="phone_number"
-                      value={phoneNumber}
-                      onChange={e => setPhoneNumber(e.target.value)}
-                      placeholder="e.g. +91 96847XXXXX"
-                      className="w-full pl-10 pr-3.5 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm font-mono text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                    <CardTitle className="text-lg font-bold text-white">
+                      Phone Number
+                    </CardTitle>
+                    <CardDescription className="text-xs text-prevu-text-muted">
+                      Used for urgent academic paper alerts and verification requests. Kept strictly private.
+                    </CardDescription>
+                  </CardHeader>
+
+                  <CardContent className="p-6">
+                    <div className="space-y-2 max-w-md">
+                      <label className="text-xs font-semibold text-prevu-text flex items-center gap-1.5" htmlFor="phone_number">
+                        Phone Number <span className="text-prevu-text-muted text-[11px] font-normal">(Optional)</span>
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-prevu-text-muted">
+                          <Phone className="w-4 h-4 text-purple-400" />
+                        </div>
+                        <input 
+                          type="tel"
+                          id="phone_number"
+                          value={phoneNumber}
+                          onChange={e => setPhoneNumber(e.target.value)}
+                          placeholder="e.g. +91 96847XXXXX"
+                          className="w-full pl-10 pr-3.5 py-2.5 bg-prevu-bg/90 border border-prevu-surface-light rounded-xl text-sm font-mono text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
             {/* STATUS FEEDBACK ALERTS */}
             <AnimatePresence>
@@ -825,16 +1050,17 @@ export default function ProfileForm({ user, stats }: ProfileFormProps) {
             </AnimatePresence>
 
             {/* ACTION BAR FOOTER */}
-            <Card className="border-prevu-surface-light bg-prevu-surface/90 shadow-xl overflow-hidden">
+            <Card className="border-prevu-surface-light bg-prevu-surface/80 backdrop-blur-xl shadow-xl overflow-hidden">
               <CardFooter className="p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 mt-0 border-t-0">
                 <div className="flex items-center gap-2 text-xs text-prevu-text-muted">
                   {isDirty ? (
-                    <span className="flex items-center gap-1.5 text-amber-400">
+                    <span className="flex items-center gap-1.5 text-amber-400 font-medium">
                       <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
                       Unsaved changes detected
                     </span>
                   ) : (
                     <span className="flex items-center gap-1.5 text-zinc-500 font-mono">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500/70" />
                       All changes saved
                     </span>
                   )}
@@ -848,31 +1074,33 @@ export default function ProfileForm({ user, stats }: ProfileFormProps) {
                       size="sm"
                       onClick={handleReset}
                       disabled={isSaving}
-                      className="text-xs text-prevu-text-muted hover:text-white"
+                      className="text-xs text-prevu-text-muted hover:text-white cursor-pointer"
                     >
                       <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
                       Discard
                     </Button>
                   )}
 
-                  <Button 
-                    type="submit" 
-                    form="profile-form" 
-                    disabled={isSaving}
-                    className="w-full sm:w-auto px-6 py-2.5 text-sm flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-600/30 font-bold rounded-xl transition-all cursor-pointer"
-                  >
-                    {isSaving ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Saving Profile...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4" />
-                        <span>Save Profile Changes</span>
-                      </>
-                    )}
-                  </Button>
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full sm:w-auto">
+                    <Button 
+                      type="submit" 
+                      form="profile-form" 
+                      disabled={isSaving}
+                      className="w-full sm:w-auto px-6 py-2.5 text-sm flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-600/30 font-bold rounded-xl transition-all cursor-pointer"
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Saving Profile...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4" />
+                          <span>Save Profile Changes</span>
+                        </>
+                      )}
+                    </Button>
+                  </motion.div>
                 </div>
               </CardFooter>
             </Card>
@@ -882,45 +1110,92 @@ export default function ProfileForm({ user, stats }: ProfileFormProps) {
           {/* ============================================================ */}
           {/* DANGER ZONE: ACCOUNT DELETION */}
           {/* ============================================================ */}
-          <Card className="border-rose-500/25 bg-rose-950/10 backdrop-blur-md rounded-3xl overflow-hidden mt-6">
-            <CardHeader className="pb-3 border-b border-rose-500/15">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-rose-400">
-                  <AlertTriangle className="w-4 h-4" />
-                  <CardTitle className="text-sm font-bold text-rose-300">Danger Zone</CardTitle>
-                </div>
-                <span className="text-[10px] font-mono uppercase tracking-wider text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20 font-bold">
-                  Irreversible
-                </span>
-              </div>
-              <CardDescription className="text-xs text-prevu-text-muted mt-1">
-                Permanently delete your Prevu student account and remove personal data.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-4 pb-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="space-y-0.5">
-                  <p className="text-xs font-semibold text-white">Delete Student Account</p>
-                  <p className="text-[11px] text-prevu-text-muted leading-relaxed">
-                    Your digital student ID, bookmarks, and notification inbox will be removed permanently.
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setDeleteModalOpen(true)}
-                  className="shrink-0 text-xs font-bold border-rose-500/40 bg-rose-500/10 text-rose-300 hover:bg-rose-600 hover:text-white transition-all cursor-pointer"
-                >
-                  <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                  <span>Delete Account</span>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          {showSecurity && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+            >
+              <Card className="border-rose-500/25 bg-rose-950/10 backdrop-blur-md rounded-3xl overflow-hidden">
+                <CardHeader className="pb-3 border-b border-rose-500/15">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-rose-400">
+                      <AlertTriangle className="w-4 h-4" />
+                      <CardTitle className="text-sm font-bold text-rose-300">Danger Zone</CardTitle>
+                    </div>
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20 font-bold">
+                      Irreversible
+                    </span>
+                  </div>
+                  <CardDescription className="text-xs text-prevu-text-muted mt-1">
+                    Permanently delete your Prevu student account and remove personal data.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-4 pb-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-semibold text-white">Delete Student Account</p>
+                      <p className="text-[11px] text-prevu-text-muted leading-relaxed">
+                        Your digital student ID, bookmarks, and notification inbox will be removed permanently.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setDeleteModalOpen(true)}
+                      className="shrink-0 text-xs font-bold border-rose-500/40 bg-rose-500/10 text-rose-300 hover:bg-rose-600 hover:text-white transition-all cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                      <span>Delete Account</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
 
-        </div>
+        </motion.div>
 
       </div>
+
+      {/* Floating Unsaved Changes Pill Bar (Bottom Center) */}
+      <AnimatePresence>
+        {isDirty && (
+          <motion.div
+            initial={{ opacity: 0, y: 24, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 360, damping: 28 }}
+            className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-[#0d1117]/95 border border-purple-500/40 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.75)]"
+          >
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-300 whitespace-nowrap">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+              <span>Unsaved changes</span>
+            </span>
+
+            <div className="h-4 w-px bg-prevu-surface-light" />
+
+            <button
+              type="button"
+              onClick={handleReset}
+              disabled={isSaving}
+              className="text-xs font-semibold text-prevu-text-muted hover:text-white transition-colors cursor-pointer px-2 py-1"
+            >
+              Discard
+            </button>
+
+            <button
+              type="submit"
+              form="profile-form"
+              disabled={isSaving}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-purple-600/30 transition-all cursor-pointer"
+            >
+              {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+              <span>{isSaving ? 'Saving...' : 'Save'}</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Interactive Account Deletion Modal */}
       <DeleteAccountModal

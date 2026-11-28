@@ -99,6 +99,15 @@ export interface CbtAttemptResult {
   completedAt: string
 }
 
+export interface CbtAttemptHistoryRecord {
+  score: number
+  totalQuestions: number
+  percentage: number
+  timeSpentSeconds: number
+  arenaScore?: number
+  attemptedAt: string
+}
+
 export interface CbtLeaderboardEntry {
   rank?: number
   userId: string
@@ -111,6 +120,8 @@ export interface CbtLeaderboardEntry {
   percentage: number
   timeSpentSeconds: number
   attemptsCount: number
+  arenaScore?: number
+  history?: CbtAttemptHistoryRecord[]
   updatedAt: string
 }
 

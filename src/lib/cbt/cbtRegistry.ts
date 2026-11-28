@@ -4,6 +4,7 @@ import { APT301_QUESTIONS, LOG301_QUESTIONS } from './questions/apt301'
 import { ACP101_QUESTIONS } from './questions/acp101'
 import { UHV101_QUESTIONS } from './questions/uhv101'
 import { ENT101_QUESTIONS } from './questions/ent101'
+import { COA201_QUESTIONS } from './questions/coa201'
 
 /**
  * Registry of available CBT Mock Test subjects in Prevu
@@ -568,6 +569,71 @@ export const CBT_SUBJECTS: CbtSubject[] = [
     credits: 4,
     isReady: false,
     badgeColor: 'from-fuchsia-600 to-pink-600'
+  },
+  {
+    code: 'COA-201',
+    name: 'Computer Organization & Architecture',
+    semester: 3,
+    year: 2,
+    category: 'core',
+    categoryLabel: 'Core Technical CBT',
+    totalQuestions: COA201_QUESTIONS.length,
+    description: '162 comprehensive MCQs covering Unit-1 (Data Representation, ISA & Computer Arithmetic), Unit-2 (CPU Control Unit & Memory Organization), and Unit-3 (Peripheral I/O, Processes & Parallel Processors).',
+    topics: [
+      'Data Representation & Functional Blocks',
+      'ISA & Computer Arithmetic',
+      'CPU Control Unit Design',
+      'Memory System Design & Organization',
+      'Peripheral Devices & I/O',
+      'Processes & Parallel Processors'
+    ],
+    topicsList: [
+      {
+        id: 'all',
+        name: 'All Units & Chapters (Mix Practice)',
+        count: COA201_QUESTIONS.length,
+        description: 'Complete 162-question CBT bank covering Unit-1, Unit-2, and Unit-3'
+      },
+      {
+        id: 'data-representation',
+        name: 'Data Representation & Functional Blocks',
+        count: COA201_QUESTIONS.filter(q => q.topic === 'data-representation').length,
+        description: 'Number systems, 1s/2s complement, fixed/floating-point, ASCII/EBCDIC/Unicode, and Von Neumann blocks'
+      },
+      {
+        id: 'isa-arithmetic',
+        name: 'ISA & Computer Arithmetic',
+        count: COA201_QUESTIONS.filter(q => q.topic === 'isa-arithmetic').length,
+        description: 'CPU registers, RTL, addressing modes, Booth algorithm, BCD/CLA adders, IEEE 754, and division'
+      },
+      {
+        id: 'control-unit',
+        name: 'CPU Control Unit Design',
+        count: COA201_QUESTIONS.filter(q => q.topic === 'control-unit').length,
+        description: 'Hardwired vs micro-programmed control, horizontal vs vertical microprogramming, SC, and mapping'
+      },
+      {
+        id: 'memory-organization',
+        name: 'Memory System Design & Organization',
+        count: COA201_QUESTIONS.filter(q => q.topic === 'memory-organization').length,
+        description: 'Memory hierarchy, locality, cache mapping/replacement/write policies, MESI, virtual memory, and TLB'
+      },
+      {
+        id: 'peripheral-io',
+        name: 'Peripheral Devices & I/O',
+        count: COA201_QUESTIONS.filter(q => q.topic === 'peripheral-io').length,
+        description: 'Memory-mapped vs isolated I/O, programmed/interrupt I/O, DMA, traps, exceptions, and IVT'
+      },
+      {
+        id: 'processes-parallel',
+        name: 'Processes & Parallel Processors',
+        count: COA201_QUESTIONS.filter(q => q.topic === 'processes-parallel').length,
+        description: 'Process states, SCSI, USB, instruction/arithmetic pipelining, hazards, RISC vs CISC, and Flynn classification'
+      }
+    ],
+    credits: 4,
+    isReady: true,
+    badgeColor: 'from-sky-600 to-indigo-600'
   }
 ]
 
@@ -637,6 +703,8 @@ export function getQuestionsForSubject(
     pool = [...UHV101_QUESTIONS]
   } else if (code === 'ENT-101' || code === 'ENT101') {
     pool = [...ENT101_QUESTIONS]
+  } else if (code === 'COA-201' || code === 'COA201') {
+    pool = [...COA201_QUESTIONS]
   }
 
   if (extraApprovedQuestions && extraApprovedQuestions.length > 0) {

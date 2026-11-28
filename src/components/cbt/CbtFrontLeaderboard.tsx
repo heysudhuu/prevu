@@ -12,11 +12,15 @@ import {
   Play,
   ChevronRight,
   Award,
-  Sparkles
+  Sparkles,
+  History,
+  X,
+  Zap
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { CollaboratorBadge } from '@/components/ui/CollaboratorBadge'
 import { getCbtLeaderboard } from '@/lib/cbt/actions'
+import { calculateArenaScore } from '@/lib/cbt/ranking'
 
 interface CbtFrontLeaderboardProps {
   initialLeaderboards: Record<string, CbtLeaderboardEntry[]>
@@ -70,6 +74,7 @@ export default function CbtFrontLeaderboard({
   const readySubjects = CBT_SUBJECTS.filter(s => s.isReady)
 
   const [selectedSubjectCode, setSelectedSubjectCode] = useState<string>(() => readySubjects[0]?.code || 'ACP-101')
+  const [selectedHistoryEntry, setSelectedHistoryEntry] = useState<CbtLeaderboardEntry | null>(null)
   const [isRefreshing, startTransition] = useTransition()
 
   // Find all subjects that have leaderboard entries or ready status
@@ -462,7 +467,7 @@ export default function CbtFrontLeaderboard({
                       <span>@{firstPlace.username}</span>
                       <span>•</span>
                       <span className="text-emerald-400 font-semibold inline-flex items-center gap-1">
-                        <Sparkles className="w-3 h-3" /> Top Accuracy
+                        <Sparkles className="w-3 h-3" /> {firstPlace.arenaScore ?? calculateArenaScore(firstPlace)} pts
                       </span>
                     </div>
                   </div>
@@ -644,14 +649,23 @@ export default function CbtFrontLeaderboard({
                             <span className="text-white font-semibold">{formatDuration(entry.timeSpentSeconds)}</span>
                           </td>
 
-                          {/* Attempts & Relative Date */}
+                          {/* Attempts & Relative Date (Clickable for History) */}
                           <td className="py-4 px-4 text-right font-mono text-[11px] text-prevu-text-muted">
-                            <div>
-                              <span className="font-semibold text-white">{entry.attemptsCount}</span> {entry.attemptsCount === 1 ? 'try' : 'tries'}
-                            </div>
-                            <div className="text-[10px] text-prevu-text-muted/70">
-                              {formatRelativeTime(entry.updatedAt)}
-                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedHistoryEntry(entry)}
+                              title="View attempt record"
+                              className="inline-flex flex-col items-end group cursor-pointer rounded-lg px-2 py-1 -mr-2 hover:bg-prevu-surface/80 transition-colors"
+                            >
+                              <span className="inline-flex items-center gap-1 group-hover:text-prevu-accent transition-colors">
+                                <History className="w-3 h-3 text-prevu-text-muted group-hover:text-prevu-accent" />
+                                <span className="font-semibold text-white group-hover:text-prevu-accent">{entry.attemptsCount}</span>
+                                <span>{entry.attemptsCount === 1 ? 'try' : 'tries'}</span>
+                              </span>
+                              <span className="text-[10px] text-prevu-text-muted/70">
+                                {formatRelativeTime(entry.updatedAt)}
+                              </span>
+                            </button>
                           </td>
                         </motion.tr>
                       )
@@ -687,6 +701,142 @@ export default function CbtFrontLeaderboard({
         </AnimatePresence>
 
       </motion.div>
+
+      {/* ATTEMPT HISTORY MODAL */}
+      <AnimatePresence>
+        {selectedHistoryEntry && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedHistoryEntry(null)}
+            className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 12 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-lg rounded-3xl bg-prevu-surface border border-prevu-surface-light shadow-2xl overflow-hidden"
+            >
+              <div className="p-5 border-b border-prevu-surface-light flex items-center justify-between">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-prevu-accent/15 border border-prevu-accent/30 flex items-center justify-center text-sm font-bold text-white shrink-0">
+                    {selectedHistoryEntry.userName.charAt(0)}
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-base font-bold text-white truncate flex items-center gap-1.5">
+                      <span>{selectedHistoryEntry.userName}</span>
+                      {selectedHistoryEntry.cuVerified && (
+                        <CollaboratorBadge karma={25} size="sm" showKarma={false} />
+                      )}
+                    </h3>
+                    <p className="text-xs font-mono text-prevu-text-muted">
+                      @{selectedHistoryEntry.username} • {selectedHistoryEntry.subjectCode} • {selectedHistoryEntry.attemptsCount} {selectedHistoryEntry.attemptsCount === 1 ? 'attempt' : 'attempts'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedHistoryEntry(null)}
+                  className="p-2 rounded-xl text-prevu-text-muted hover:text-white hover:bg-prevu-bg transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="p-5 space-y-4 max-h-[65vh] overflow-y-auto">
+                {/* Summary Stats */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="p-3 rounded-2xl bg-prevu-bg/80 border border-prevu-surface-light text-center">
+                    <div className="text-[10px] font-mono uppercase text-prevu-text-muted">Arena Score</div>
+                    <div className="text-lg font-black text-amber-400 font-mono mt-0.5 flex items-center justify-center gap-1">
+                      <Zap className="w-3.5 h-3.5" />
+                      {selectedHistoryEntry.arenaScore ?? calculateArenaScore(selectedHistoryEntry)}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-prevu-bg/80 border border-prevu-surface-light text-center">
+                    <div className="text-[10px] font-mono uppercase text-prevu-text-muted">Best Score</div>
+                    <div className="text-lg font-black text-white font-mono mt-0.5">
+                      {selectedHistoryEntry.score}/{selectedHistoryEntry.totalQuestions}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-prevu-bg/80 border border-prevu-surface-light text-center">
+                    <div className="text-[10px] font-mono uppercase text-prevu-text-muted">Pace / MCQ</div>
+                    <div className="text-lg font-black text-cyan-400 font-mono mt-0.5">
+                      {(selectedHistoryEntry.timeSpentSeconds / Math.max(1, selectedHistoryEntry.totalQuestions)).toFixed(1)}s
+                    </div>
+                  </div>
+                </div>
+
+                {/* Attempt Records */}
+                <div className="space-y-2.5">
+                  <div className="text-[11px] font-mono uppercase tracking-wider text-prevu-text-muted">
+                    Recorded Attempts
+                  </div>
+                  {(selectedHistoryEntry.history && selectedHistoryEntry.history.length > 0
+                    ? selectedHistoryEntry.history
+                    : [
+                        {
+                          score: selectedHistoryEntry.score,
+                          totalQuestions: selectedHistoryEntry.totalQuestions,
+                          percentage: selectedHistoryEntry.percentage,
+                          timeSpentSeconds: selectedHistoryEntry.timeSpentSeconds,
+                          arenaScore: selectedHistoryEntry.arenaScore ?? calculateArenaScore(selectedHistoryEntry),
+                          attemptedAt: selectedHistoryEntry.updatedAt
+                        }
+                      ]
+                  ).map((rec, i, arr) => {
+                    const recArena = rec.arenaScore ?? calculateArenaScore(rec)
+                    const bestArena = Math.max(...arr.map(r => r.arenaScore ?? calculateArenaScore(r)))
+                    const isBest = recArena === bestArena
+                    return (
+                      <div
+                        key={i}
+                        className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${
+                          isBest
+                            ? 'bg-amber-500/10 border-amber-500/35'
+                            : 'bg-prevu-bg/60 border-prevu-surface-light'
+                        }`}
+                      >
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-white font-mono">
+                              {rec.score} / {rec.totalQuestions}
+                            </span>
+                            <span className={`text-xs font-mono font-bold ${
+                              rec.percentage >= 80 ? 'text-emerald-400' :
+                              rec.percentage >= 60 ? 'text-cyan-400' : 'text-amber-400'
+                            }`}>
+                              ({rec.percentage}%)
+                            </span>
+                            {isBest && (
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/35">
+                                Personal Best
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] font-mono text-prevu-text-muted">
+                            {formatDuration(rec.timeSpentSeconds)} • {(rec.timeSpentSeconds / Math.max(1, rec.totalQuestions)).toFixed(1)}s/Q • {formatRelativeTime(rec.attemptedAt)}
+                          </div>
+                        </div>
+                        <div className="text-right font-mono shrink-0">
+                          <div className="text-xs font-bold text-amber-300">{recArena} pts</div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                  {(!selectedHistoryEntry.history || selectedHistoryEntry.history.length === 0) && selectedHistoryEntry.attemptsCount > 1 && (
+                    <p className="text-[11px] text-prevu-text-muted/80 leading-relaxed pt-1">
+                      Showing current Personal Best record across {selectedHistoryEntry.attemptsCount} total attempts.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </section>
   )

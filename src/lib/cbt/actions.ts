@@ -6,6 +6,7 @@ import { getSupabaseAdmin } from '@/utils/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { CbtLeaderboardEntry, CbtUserAnswer, CbtQuestionReport, CbtSubjectOverride, CbtQuestionOverride } from './types'
 import { CBT_SUBJECTS } from './cbtRegistry'
+import { calculateArenaScore, sortLeaderboardEntries } from './ranking'
 import {
   getStoredSubjectOverrides,
   upsertStoredSubjectOverride,
@@ -121,7 +122,7 @@ export async function recordCbtAttempt(payload: {
     const supabase = getSupabaseAdmin()
     const { data: existing, error: selectErr } = await supabase
       .from('cbt_attempts')
-      .select('id, attempts_count')
+      .select('id, attempts_count, score, total_questions, percentage, time_spent_seconds')
       .eq('user_id', userId)
       .eq('subject_code', payload.subjectCode)
       .maybeSingle()
@@ -131,23 +132,51 @@ export async function recordCbtAttempt(payload: {
     }
 
     const attemptsCount = (existing?.attempts_count || 0) + 1
+    const newArenaScore = calculateArenaScore({
+      score: payload.score,
+      totalQuestions: effectiveTotal,
+      percentage,
+      timeSpentSeconds: payload.timeSpentSeconds
+    })
+    const existingArenaScore = existing
+      ? calculateArenaScore({
+          score: existing.score || 0,
+          totalQuestions: existing.total_questions || 1,
+          percentage: Number(existing.percentage) || 0,
+          timeSpentSeconds: existing.time_spent_seconds || 0
+        })
+      : -1
 
-    const { error: upsertErr } = await supabase
-      .from('cbt_attempts')
-      .upsert({
-        user_id: userId,
-        subject_code: payload.subjectCode,
-        score: payload.score,
-        total_questions: payload.totalQuestions,
-        percentage,
-        time_spent_seconds: payload.timeSpentSeconds,
-        allotted_minutes: payload.allottedMinutes,
-        attempts_count: attemptsCount,
-        answers_json: payload.answers,
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'user_id,subject_code'
-      })
+    let upsertErr: { message: string } | null = null
+    if (existing && existingArenaScore > newArenaScore) {
+      // Personal Best protection: keep existing higher Arena Score on leaderboard, only increment attempts_count
+      const { error: updateErr } = await supabase
+        .from('cbt_attempts')
+        .update({
+          attempts_count: attemptsCount,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existing.id)
+      upsertErr = updateErr
+    } else {
+      const { error } = await supabase
+        .from('cbt_attempts')
+        .upsert({
+          user_id: userId,
+          subject_code: payload.subjectCode,
+          score: payload.score,
+          total_questions: payload.totalQuestions,
+          percentage,
+          time_spent_seconds: payload.timeSpentSeconds,
+          allotted_minutes: payload.allottedMinutes,
+          attempts_count: attemptsCount,
+          answers_json: payload.answers,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,subject_code'
+        })
+      upsertErr = error
+    }
 
     if (upsertErr) {
       console.error('[CBT] Supabase upsert error:', upsertErr.message)
@@ -182,12 +211,13 @@ async function fetchAttemptsWithProfiles(subjectCode?: string): Promise<CbtLeade
     let query = supabase
       .from('cbt_attempts')
       .select('score, total_questions, percentage, time_spent_seconds, attempts_count, updated_at, subject_code, user_id')
+      .order('score', { ascending: false })
       .order('percentage', { ascending: false })
       .order('time_spent_seconds', { ascending: true })
 
     if (subjectCode) {
       const clean = subjectCode.trim()
-      query = query.or(`subject_code.eq.${clean},subject_code.ilike.${clean}`).limit(50)
+      query = query.or(`subject_code.eq.${clean},subject_code.ilike.${clean}`).limit(200)
     }
 
     const { data: attempts, error } = await query
@@ -222,10 +252,9 @@ async function fetchAttemptsWithProfiles(subjectCode?: string): Promise<CbtLeade
       }
     }
 
-    return attempts.map((row: any, index: number) => {
+    const mapped: CbtLeaderboardEntry[] = attempts.map((row: any) => {
       const user = userMap.get(row.user_id)
       return {
-        rank: index + 1,
         userId: row.user_id || '',
         username: user?.username || 'scholar',
         userName: user?.name || 'Student Candidate',
@@ -239,6 +268,9 @@ async function fetchAttemptsWithProfiles(subjectCode?: string): Promise<CbtLeade
         updatedAt: row.updated_at
       }
     })
+
+    const sorted = sortLeaderboardEntries(mapped)
+    return subjectCode ? sorted.slice(0, 50) : sorted
   } catch (err) {
     console.warn('[CBT] fetchAttemptsWithProfiles exception:', err)
     return []
@@ -275,10 +307,10 @@ export async function getAllCbtLeaderboards(): Promise<Record<string, CbtLeaderb
       if (!grouped[code]) {
         grouped[code] = []
       }
-      grouped[code].push({
-        ...item,
-        rank: grouped[code].length + 1
-      })
+      grouped[code].push(item)
+    }
+    for (const code of Object.keys(grouped)) {
+      grouped[code] = sortLeaderboardEntries(grouped[code])
     }
   }
 

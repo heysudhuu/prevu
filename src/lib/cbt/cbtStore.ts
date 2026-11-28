@@ -1,7 +1,8 @@
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
-import { CbtLeaderboardEntry, CbtQuestionReport } from './types'
+import { CbtAttemptHistoryRecord, CbtLeaderboardEntry, CbtQuestionReport } from './types'
+import { calculateArenaScore, sortLeaderboardEntries } from './ranking'
 
 // Bundled read-only seed data directory (packaged with Next.js build)
 const BUNDLED_DATA_DIR = path.join(process.cwd(), 'src', 'lib', 'cbt', 'data')
@@ -281,17 +282,8 @@ export function getStoredLeaderboard(subjectCode: string): CbtLeaderboardEntry[]
     const codeKey = (subjectCode || '').trim().toUpperCase()
     const list = (data && (data[codeKey] || data[subjectCode])) || []
 
-    const sorted = [...list].sort((a, b) => {
-      if (b.percentage !== a.percentage) {
-        return b.percentage - a.percentage
-      }
-      return a.timeSpentSeconds - b.timeSpentSeconds
-    })
-
-    return sorted.map((item, idx) => ({
-      ...item,
-      rank: idx + 1
-    }))
+    const sorted = sortLeaderboardEntries(list)
+    return sorted
   } catch (err) {
     console.warn('Error reading stored leaderboard:', err)
     return []
@@ -311,16 +303,7 @@ export function getAllStoredLeaderboards(): Record<string, CbtLeaderboardEntry[]
     const result: Record<string, CbtLeaderboardEntry[]> = {}
 
     for (const [code, list] of Object.entries(data || {})) {
-      const sorted = [...list].sort((a, b) => {
-        if (b.percentage !== a.percentage) {
-          return b.percentage - a.percentage
-        }
-        return a.timeSpentSeconds - b.timeSpentSeconds
-      })
-      result[code] = sorted.map((item, idx) => ({
-        ...item,
-        rank: idx + 1
-      }))
+      result[code] = sortLeaderboardEntries(list)
     }
 
     return result
@@ -355,21 +338,62 @@ export function saveStoredAttempt(entry: {
 
     const existingIdx = list.findIndex(i => i.userId === entry.userId || i.username.toLowerCase() === entry.username.toLowerCase())
     let attemptsCount = 1
+    const nowIso = new Date().toISOString()
+    const newArenaScore = calculateArenaScore(entry)
+    const newHistoryItem: CbtAttemptHistoryRecord = {
+      score: entry.score,
+      totalQuestions: entry.totalQuestions,
+      percentage: entry.percentage,
+      timeSpentSeconds: entry.timeSpentSeconds,
+      arenaScore: newArenaScore,
+      attemptedAt: nowIso
+    }
 
     if (existingIdx !== -1) {
-      attemptsCount = (list[existingIdx].attemptsCount || 1) + 1
-      list[existingIdx] = {
-        ...entry,
-        subjectCode: codeKey,
-        attemptsCount,
-        updatedAt: new Date().toISOString()
+      const prev = list[existingIdx]
+      attemptsCount = (prev.attemptsCount || 1) + 1
+      const prevArenaScore = calculateArenaScore(prev)
+      const prevHistory: CbtAttemptHistoryRecord[] =
+        prev.history && prev.history.length > 0
+          ? prev.history
+          : [
+              {
+                score: prev.score,
+                totalQuestions: prev.totalQuestions,
+                percentage: prev.percentage,
+                timeSpentSeconds: prev.timeSpentSeconds,
+                arenaScore: prevArenaScore,
+                attemptedAt: prev.updatedAt || nowIso
+              }
+            ]
+      const updatedHistory = [newHistoryItem, ...prevHistory].slice(0, 20)
+
+      if (prevArenaScore > newArenaScore) {
+        // Personal Best protection: keep higher Arena Score, only update attemptsCount & history
+        list[existingIdx] = {
+          ...prev,
+          attemptsCount,
+          history: updatedHistory,
+          updatedAt: nowIso
+        }
+      } else {
+        list[existingIdx] = {
+          ...entry,
+          subjectCode: codeKey,
+          attemptsCount,
+          arenaScore: newArenaScore,
+          history: updatedHistory,
+          updatedAt: nowIso
+        }
       }
     } else {
       list.push({
         ...entry,
         subjectCode: codeKey,
         attemptsCount: 1,
-        updatedAt: new Date().toISOString()
+        arenaScore: newArenaScore,
+        history: [newHistoryItem],
+        updatedAt: nowIso
       })
     }
 

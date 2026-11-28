@@ -59,8 +59,25 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
 
   // Increment download count (only for approved to not skew stats with admin previews)
   if (resource.status === 'approved') {
-    const { error: rpcError } = await supabaseAdmin.rpc('increment_download_count', { resource_id: id })
-    if (rpcError) {
+    const {
+      isMissingSchemaObjectError,
+      isSchemaMarkedMissing,
+      markSchemaMissing,
+    } = await import('@/lib/supabase/missingSchemaCache')
+    const rpcMissingKey = 'rpc:increment_download_count'
+
+    let usedFallback = isSchemaMarkedMissing(rpcMissingKey)
+    if (!usedFallback) {
+      const { error: rpcError } = await supabaseAdmin.rpc('increment_download_count', { resource_id: id })
+      if (rpcError) {
+        if (isMissingSchemaObjectError(rpcError)) {
+          markSchemaMissing(rpcMissingKey)
+        }
+        usedFallback = true
+      }
+    }
+
+    if (usedFallback) {
       const { data: curr } = await supabaseAdmin
         .from('resources')
         .select('download_count')

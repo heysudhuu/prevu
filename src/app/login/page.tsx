@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import AuthForm from '@/components/auth/AuthForm'
-import { Loader2 } from 'lucide-react'
+import PrevuLoadingIndicator from '@/components/ui/PrevuLoadingIndicator'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
@@ -11,10 +11,7 @@ export const metadata = {
 
 function AuthLoading() {
   return (
-    <div className="flex flex-col items-center justify-center p-8 text-prevu-text-muted">
-      <Loader2 className="w-8 h-8 animate-spin text-prevu-accent mb-4" />
-      <p className="text-sm">Loading security credentials...</p>
-    </div>
+    <PrevuLoadingIndicator label="Loading security credentials" className="p-8" />
   )
 }
 

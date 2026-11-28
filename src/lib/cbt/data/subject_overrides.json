@@ -1,0 +1,30 @@
+[
+  {
+    "subjectCode": "ENT-101",
+    "name": "Entrepreneurship Mindset",
+    "description": "160 practice MCQs across 2 complete sets (40 single MCQs + 8 case-study passages × 5 per set) covering opportunity discovery, personas, digital branding, Canva, pricing, responsible AI, customer trust, and scaling.",
+    "semester": 3,
+    "year": 2,
+    "category": "core",
+    "categoryLabel": "Career & Life Skills (CBT)",
+    "credits": 2,
+    "isReady": true,
+    "isArchived": false,
+    "updatedBy": "py7716496@gmail.com",
+    "updatedAt": "2026-11-27T15:27:28.857Z"
+  },
+  {
+    "subjectCode": "UHV-101",
+    "name": "Universal Human Values, Ethics and Life Skills-2",
+    "description": "Complete 165-MCQ CBT bank aligned to Units 1–3: Personal & Professional Values, Social Values, Environmental & Existential Values, and Integrated Case Applications.",
+    "semester": 3,
+    "year": 2,
+    "category": "uhv",
+    "categoryLabel": "UHV (Mandatory CBT)",
+    "credits": 2,
+    "isReady": true,
+    "isArchived": false,
+    "updatedBy": "py7716496@gmail.com",
+    "updatedAt": "2026-11-27T15:27:47.946Z"
+  }
+]

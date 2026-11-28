@@ -87,15 +87,26 @@ export async function getCommunityRequests(filters?: {
   const token = (await cookies()).get('firebase-token')?.value
   if (token) {
     try {
+      const {
+        isMissingSchemaObjectError,
+        isSchemaMarkedMissing,
+        markSchemaMissing,
+      } = await import('@/lib/supabase/missingSchemaCache')
+      const upvotesTableKey = 'table:request_upvotes'
       const decoded = await authAdmin.verifyIdToken(token)
       currentUserId = decoded.uid
-      const { data: upvotes } = await supabase
-        .from('request_upvotes')
-        .select('request_id')
-        .eq('user_id', decoded.uid)
 
-      if (upvotes) {
-        userUpvotedIds = upvotes.map(u => u.request_id)
+      if (!isSchemaMarkedMissing(upvotesTableKey)) {
+        const { data: upvotes, error } = await supabase
+          .from('request_upvotes')
+          .select('request_id')
+          .eq('user_id', decoded.uid)
+
+        if (error && isMissingSchemaObjectError(error)) {
+          markSchemaMissing(upvotesTableKey)
+        } else if (upvotes) {
+          userUpvotedIds = upvotes.map(u => u.request_id)
+        }
       }
     } catch {
       userUpvotedIds = []
@@ -488,12 +499,28 @@ export async function toggleRequestUpvote(requestId: number) {
   const supabase = getSupabaseAdmin()
 
   try {
-    const { data: existing } = await supabase
+    const {
+      isMissingSchemaObjectError,
+      isSchemaMarkedMissing,
+      markSchemaMissing,
+    } = await import('@/lib/supabase/missingSchemaCache')
+    const upvotesTableKey = 'table:request_upvotes'
+
+    if (isSchemaMarkedMissing(upvotesTableKey)) {
+      throw new Error('request_upvotes table pending migration')
+    }
+
+    const { data: existing, error: existingErr } = await supabase
       .from('request_upvotes')
       .select('id')
       .eq('request_id', requestId)
       .eq('user_id', decoded.uid)
       .maybeSingle()
+
+    if (existingErr && isMissingSchemaObjectError(existingErr)) {
+      markSchemaMissing(upvotesTableKey)
+      throw existingErr
+    }
 
     if (existing) {
       // Remove upvote

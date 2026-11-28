@@ -1,25 +1,60 @@
 import { getSupabaseAdmin } from '@/utils/supabase/admin'
+import {
+  isMissingSchemaObjectError,
+  isSchemaMarkedMissing,
+  markSchemaMissing,
+} from '@/lib/supabase/missingSchemaCache'
 import Link from 'next/link'
 import { Sparkles, ArrowRight } from 'lucide-react'
 import RecentPapersCarousel from './RecentPapersCarousel'
 
+const RESOURCE_CATEGORY_MISSING_KEY = 'col:resources.resource_category'
+
 export default async function RecentPapersSection() {
   try {
     const supabase = getSupabaseAdmin()
-    const { data: papers } = await supabase
-      .from('resources')
-      .select(`
-        id,
-        original_filename,
-        exam_year,
-        created_at,
-        resource_category,
-        subjects ( name, code ),
-        exam_types ( name )
-      `)
-      .eq('status', 'approved')
-      .order('created_at', { ascending: false })
-      .limit(12)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let papers: any[] | null = null
+
+    if (!isSchemaMarkedMissing(RESOURCE_CATEGORY_MISSING_KEY)) {
+      const { data, error } = await supabase
+        .from('resources')
+        .select(`
+          id,
+          original_filename,
+          exam_year,
+          created_at,
+          resource_category,
+          subjects ( name, code ),
+          exam_types ( name )
+        `)
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false })
+        .limit(12)
+
+      if (!error) {
+        papers = data
+      } else if (isMissingSchemaObjectError(error)) {
+        markSchemaMissing(RESOURCE_CATEGORY_MISSING_KEY)
+      }
+    }
+
+    if (!papers) {
+      const { data: fallbackData } = await supabase
+        .from('resources')
+        .select(`
+          id,
+          original_filename,
+          exam_year,
+          created_at,
+          subjects ( name, code ),
+          exam_types ( name )
+        `)
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false })
+        .limit(12)
+      papers = fallbackData
+    }
 
     if (!papers || papers.length === 0) return null
 

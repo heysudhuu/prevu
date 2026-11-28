@@ -27,7 +27,10 @@ import {
   Sun,
   PenTool,
   Cloud,
-  Focus
+  Focus,
+  Pin,
+  CornerDownRight,
+  CheckCircle2
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -98,10 +101,44 @@ export default function PDFViewerModal({ isOpen, onClose, resource }: PDFViewerM
   // Discussion Comments State
   const [comments, setComments] = useState<CommentItem[]>([])
   const [commentText, setCommentText] = useState('')
+  const [replyingToId, setReplyingToId] = useState<string | null>(null)
+  const [replyText, setReplyText] = useState('')
   const [commentsLoading, setCommentsLoading] = useState(false)
   const [submittingComment, setSubmittingComment] = useState(false)
   const [commentError, setCommentError] = useState<string | null>(null)
   const [isMockExamOpen, setIsMockExamOpen] = useState(false)
+
+  // Fetch real per-document doubts whenever modal opens or resource changes
+  useEffect(() => {
+    if (!isOpen || !resource.id) return
+    let cancelled = false
+    setComments([])
+    setReplyingToId(null)
+    setReplyText('')
+    setCommentError(null)
+    setCommentsLoading(true)
+
+    getPaperComments(resource.id)
+      .then((data) => {
+        if (!cancelled) {
+          setComments(Array.isArray(data) ? data : [])
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setComments([])
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setCommentsLoading(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen, resource.id])
 
   // Portal mount check for SSR using React 19 recommended useSyncExternalStore
   const isClient = useSyncExternalStore(
@@ -134,53 +171,14 @@ export default function PDFViewerModal({ isOpen, onClose, resource }: PDFViewerM
   const handleSelectTab = (tab: ModalTab) => {
     setActiveTab(tab)
 
-    if (tab === 'discussion' && comments.length === 0 && !commentsLoading) {
+    if (tab === 'discussion' && !commentsLoading) {
       setCommentsLoading(true)
       getPaperComments(resource.id)
         .then(data => {
-          if (data && data.length > 0) {
-            setComments(data)
-          } else {
-            // Simulated verified peer doubts & answers for preview resources
-            setComments([
-              {
-                id: 'c-demo-1',
-                resource_id: resource.id,
-                user_id: 'u-senior-1',
-                comment: 'Is question Q2.b in Section B compliant with the updated examination syllabus?',
-                created_at: new Date(Date.now() - 3600000 * 24).toISOString(),
-                user: { name: 'Harsh Vardhan', username: 'harsh_cse', cu_verified: true, role: 'student' }
-              },
-              {
-                id: 'c-demo-2',
-                resource_id: resource.id,
-                user_id: 'u-topper-1',
-                comment: 'Yes, verified with the department solution rubric. Show all calculation steps and labeled diagrams for full credit.',
-                created_at: new Date(Date.now() - 3600000 * 18).toISOString(),
-                user: { name: 'Senior Academic Topper', username: 'topper_akash', cu_verified: true, role: 'admin' }
-              }
-            ])
-          }
+          setComments(Array.isArray(data) ? data : [])
         })
         .catch(() => {
-          setComments([
-            {
-              id: 'c-demo-1',
-              resource_id: resource.id,
-              user_id: 'u-senior-1',
-              comment: 'Is question Q2.b in Section B compliant with the updated examination syllabus?',
-              created_at: new Date(Date.now() - 3600000 * 24).toISOString(),
-              user: { name: 'Harsh Vardhan', username: 'harsh_cse', cu_verified: true, role: 'student' }
-            },
-            {
-              id: 'c-demo-2',
-              resource_id: resource.id,
-              user_id: 'u-topper-1',
-              comment: 'Yes, verified with the department solution rubric. Show all calculation steps and labeled diagrams for full credit.',
-              created_at: new Date(Date.now() - 3600000 * 18).toISOString(),
-              user: { name: 'Senior Academic Topper', username: 'topper_akash', cu_verified: true, role: 'admin' }
-            }
-          ])
+          setComments([])
         })
         .finally(() => setCommentsLoading(false))
     }
@@ -256,17 +254,41 @@ export default function PDFViewerModal({ isOpen, onClose, resource }: PDFViewerM
     if (res.error) {
       setCommentError(res.error)
     } else if (res.comment) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setComments(prev => [...prev, res.comment as any])
+      setComments(prev => [...prev, res.comment as CommentItem])
       setCommentText('')
     }
     setSubmittingComment(false)
   }
 
+  const handleAddReply = async (parentId: string) => {
+    if (!replyText.trim()) return
+
+    setSubmittingComment(true)
+    setCommentError(null)
+
+    const res = await addPaperComment({
+      resourceId: resource.id,
+      comment: replyText.trim(),
+      parentId
+    })
+
+    if (res.error) {
+      setCommentError(res.error)
+    } else if (res.comment) {
+      setComments(prev => [...prev, res.comment as CommentItem])
+      setReplyText('')
+      setReplyingToId(null)
+    }
+    setSubmittingComment(false)
+  }
+
   const handleDeleteComment = async (commentId: string) => {
+    setCommentError(null)
     const res = await deletePaperComment(commentId)
     if (res.success) {
-      setComments(prev => prev.filter(c => c.id !== commentId))
+      setComments(prev => prev.filter(c => c.id !== commentId && c.parent_id !== commentId))
+    } else if (res.error) {
+      setCommentError(res.error)
     }
   }
 
@@ -751,54 +773,167 @@ export default function PDFViewerModal({ isOpen, onClose, resource }: PDFViewerM
                 </span>
               </div>
 
-              {/* Comments Feed */}
+              {/* Comments Feed (Threaded Doubts & Official Replies) */}
               <div className="flex-1 overflow-y-auto space-y-3 pr-2 mb-4">
                 {commentsLoading ? (
                   <div className="flex items-center justify-center py-16 text-prevu-text-muted text-xs">
                     <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading discussion...
                   </div>
                 ) : comments.length > 0 ? (
-                  comments.map(c => (
-                    <div 
-                      key={c.id} 
-                      className="p-3.5 rounded-2xl bg-prevu-surface border border-prevu-surface-light/80 space-y-2 animate-fade-in"
-                    >
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-white">
-                            @{c.user?.username || c.user?.name || 'student'}
-                          </span>
-                          {c.user?.cu_verified && (
-                            <span className="text-emerald-400" title="CU Verified">
-                              <CheckCircle className="w-3.5 h-3.5" />
-                            </span>
+                  (() => {
+                    const commentIds = new Set(comments.map(c => c.id))
+                    const topLevel = comments
+                      .filter(c => !c.parent_id || !commentIds.has(c.parent_id))
+                      .sort((a, b) => Number(Boolean(b.is_pinned)) - Number(Boolean(a.is_pinned)))
+
+                    return topLevel.map(c => {
+                      const replies = comments.filter(r => r.parent_id === c.id)
+                      const isResolved = c.status === 'resolved'
+                      const isPinned = Boolean(c.is_pinned)
+
+                      return (
+                        <div
+                          key={c.id}
+                          className={`p-3.5 rounded-2xl border space-y-2.5 animate-fade-in ${
+                            isPinned
+                              ? 'bg-amber-500/5 border-amber-500/35'
+                              : isResolved
+                                ? 'bg-prevu-surface border-emerald-500/25'
+                                : 'bg-prevu-surface border-prevu-surface-light/80'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2 text-xs flex-wrap">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-semibold text-white">
+                                @{c.user?.username || c.user?.name || 'student'}
+                              </span>
+                              {c.user?.cu_verified && (
+                                <span className="text-emerald-400" title="CU Verified">
+                                  <CheckCircle className="w-3.5 h-3.5" />
+                                </span>
+                              )}
+                              {(c.user?.role === 'admin' || c.user?.role === 'super_admin') && (
+                                <span className="px-1.5 py-0.2 rounded text-[10px] bg-purple-500/20 text-purple-300 font-bold border border-purple-500/30">
+                                  Admin
+                                </span>
+                              )}
+                              {isPinned && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] bg-amber-500/15 text-amber-300 font-bold border border-amber-500/30">
+                                  <Pin className="w-2.5 h-2.5" /> Pinned
+                                </span>
+                              )}
+                              {isResolved && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] bg-emerald-500/15 text-emerald-300 font-bold border border-emerald-500/30">
+                                  <CheckCircle2 className="w-2.5 h-2.5" /> Resolved
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-prevu-text-muted text-[11px] font-mono">
+                              <span>{new Date(c.created_at).toLocaleDateString()}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setReplyingToId(prev => prev === c.id ? null : c.id)
+                                  setReplyText('')
+                                }}
+                                className="text-cyan-400 hover:text-cyan-300 px-1.5 py-0.5 rounded hover:bg-cyan-500/10 text-[10px] font-bold cursor-pointer"
+                              >
+                                Reply
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteComment(c.id)}
+                                className="text-prevu-text-muted/60 hover:text-red-400 p-1 cursor-pointer"
+                                title="Delete comment"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <p className="text-xs text-prevu-text leading-relaxed whitespace-pre-wrap">
+                            {c.comment}
+                          </p>
+
+                          {/* Nested Replies */}
+                          {replies.length > 0 && (
+                            <div className="pl-3 sm:pl-4 ml-1 border-l-2 border-prevu-surface-light space-y-2 pt-1">
+                              {replies.map(r => (
+                                <div
+                                  key={r.id}
+                                  className="p-2.5 rounded-xl bg-prevu-bg/80 border border-prevu-surface-light/60 space-y-1"
+                                >
+                                  <div className="flex items-center justify-between text-[11px]">
+                                    <div className="flex items-center gap-1.5">
+                                      <CornerDownRight className="w-3 h-3 text-prevu-accent" />
+                                      <span className="font-semibold text-white">
+                                        @{r.user?.username || r.user?.name || 'student'}
+                                      </span>
+                                      {r.user?.cu_verified && (
+                                        <CheckCircle className="w-3 h-3 text-emerald-400" />
+                                      )}
+                                      {(r.user?.role === 'admin' || r.user?.role === 'super_admin') && (
+                                        <span className="px-1.5 py-0.2 rounded text-[9px] bg-purple-500/20 text-purple-300 font-bold border border-purple-500/30">
+                                          Official Admin
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 font-mono text-[10px] text-prevu-text-muted">
+                                      <span>{new Date(r.created_at).toLocaleDateString()}</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDeleteComment(r.id)}
+                                        className="text-prevu-text-muted/60 hover:text-red-400 p-0.5 cursor-pointer"
+                                        title="Delete reply"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <p className="text-xs text-prevu-text leading-relaxed whitespace-pre-wrap pl-4">
+                                    {r.comment}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
                           )}
-                          {c.user?.role === 'admin' && (
-                            <span className="px-1.5 py-0.2 rounded text-[10px] bg-purple-500/20 text-purple-300 font-bold border border-purple-500/30">
-                              Admin
-                            </span>
+
+                          {/* Inline Reply Input */}
+                          {replyingToId === c.id && (
+                            <div className="flex gap-2 pt-1 pl-3 border-l-2 border-prevu-accent/50">
+                              <input
+                                type="text"
+                                value={replyText}
+                                onChange={e => setReplyText(e.target.value)}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault()
+                                    handleAddReply(c.id)
+                                  }
+                                }}
+                                placeholder="Write a helpful reply or solution step..."
+                                className="flex-1 px-3 py-1.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-xs text-prevu-text placeholder:text-prevu-text-muted/60 focus:outline-none focus:border-prevu-accent"
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                disabled={submittingComment || !replyText.trim()}
+                                onClick={() => handleAddReply(c.id)}
+                                className="px-3 text-xs font-semibold rounded-xl bg-prevu-accent text-white"
+                              >
+                                {submittingComment ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Reply'}
+                              </Button>
+                            </div>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 text-prevu-text-muted text-[11px] font-mono">
-                          <span>{new Date(c.created_at).toLocaleDateString()}</span>
-                          <button
-                            onClick={() => handleDeleteComment(c.id)}
-                            className="text-prevu-text-muted/60 hover:text-red-400 p-1 cursor-pointer"
-                            title="Delete comment"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-                      <p className="text-xs text-prevu-text leading-relaxed whitespace-pre-wrap">
-                        {c.comment}
-                      </p>
-                    </div>
-                  ))
+                      )
+                    })
+                  })()
                 ) : (
                   <div className="text-center py-16 text-prevu-text-muted text-xs space-y-2">
-                    <p>No questions or solutions shared yet for this paper.</p>
-                    <p className="text-[11px] text-prevu-text-muted/70">Be the first to post a hint or question!</p>
+                    <MessageSquare className="w-8 h-8 text-prevu-accent/60 mx-auto" />
+                    <p className="font-semibold text-white">No doubts asked for this document yet.</p>
+                    <p className="text-[11px] text-prevu-text-muted/70">Ask a question about any section or share a verified solution hint below!</p>
                   </div>
                 )}
               </div>

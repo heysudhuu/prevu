@@ -21,7 +21,8 @@ import {
   Compass,
   X,
   Sparkles,
-  SlidersHorizontal
+  SlidersHorizontal,
+  MessageSquare
 } from 'lucide-react'
 import { auth } from '@/lib/firebase/client'
 import { signOut } from 'firebase/auth'
@@ -30,6 +31,7 @@ export interface AdminNavBadgeCounts {
   pendingReview?: number
   openReports?: number
   openRequests?: number
+  openDoubts?: number
   pendingCbt?: number
 }
 
@@ -73,6 +75,13 @@ const NAV_ITEMS: NavItem[] = [
     icon: Inbox,
     badgeKey: 'openRequests',
     badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+  },
+  {
+    name: 'Student Doubts',
+    href: '/admin/doubts',
+    icon: MessageSquare,
+    badgeKey: 'openDoubts',
+    badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
   },
   {
     name: 'CBT Arena MCQs',

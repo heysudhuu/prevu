@@ -77,6 +77,7 @@ export default async function AdminLayout({
         pendingReview: stats?.pendingCount || 0,
         openReports: stats?.openReportsCount || 0,
         openRequests: stats?.openRequestsCount || 0,
+        openDoubts: stats?.openDoubtsCount || 0,
         pendingCbt: pendingCbtCount
       }}
       searchPapers={searchPapers}

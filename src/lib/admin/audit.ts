@@ -1,4 +1,11 @@
 import { getSupabaseAdmin } from '@/utils/supabase/admin'
+import {
+  isMissingSchemaObjectError,
+  isSchemaMarkedMissing,
+  markSchemaMissing,
+} from '@/lib/supabase/missingSchemaCache'
+
+const AUDIT_LOGS_MISSING_KEY = 'table:audit_logs'
 
 export type AdminActionType =
   | 'APPROVE_PAPER'
@@ -25,12 +32,16 @@ export type AdminActionType =
   | 'TOGGLE_NOTIFICATION'
   | 'DELETE_NOTIFICATION'
   | 'LOGIN_ADMIN'
+  | 'REPLY_DOUBT'
+  | 'UPDATE_DOUBT_STATUS'
+  | 'PIN_DOUBT'
+  | 'DELETE_DOUBT'
 
 export interface AuditLogPayload {
   adminEmail: string
   adminId?: string | null
   action: AdminActionType | string
-  targetType: 'paper' | 'user' | 'report' | 'request' | 'subject' | 'calendar' | 'notification' | 'system'
+  targetType: 'paper' | 'user' | 'report' | 'request' | 'subject' | 'calendar' | 'notification' | 'system' | 'doubt'
   targetId?: string | number | null
   details?: Record<string, unknown>
 }
@@ -40,9 +51,10 @@ export interface AuditLogPayload {
  * If the table does not exist yet (e.g. migration pending), fails silently to prevent breaking actions.
  */
 export async function logAdminAction(payload: AuditLogPayload): Promise<void> {
+  if (isSchemaMarkedMissing(AUDIT_LOGS_MISSING_KEY)) return
   try {
     const supabase = getSupabaseAdmin()
-    await supabase.from('audit_logs').insert({
+    const { error } = await supabase.from('audit_logs').insert({
       admin_id: payload.adminId || null,
       admin_email: payload.adminEmail,
       action: payload.action,
@@ -50,6 +62,9 @@ export async function logAdminAction(payload: AuditLogPayload): Promise<void> {
       target_id: payload.targetId ? String(payload.targetId) : null,
       details: payload.details || {}
     })
+    if (error && isMissingSchemaObjectError(error)) {
+      markSchemaMissing(AUDIT_LOGS_MISSING_KEY)
+    }
   } catch (error) {
     console.warn('Could not record audit log entry (migration may be pending):', error)
   }

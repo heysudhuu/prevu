@@ -125,7 +125,8 @@ const memoryStore = {
   pageViews: initialDisk.pageViews as MemoryView[],
   searchQueries: initialDisk.searchQueries as MemorySearchQuery[],
   tableCheckAt: 0,
-  tablesExist: false
+  tablesExist: false,
+  inFlightTableCheck: null as Promise<boolean> | null
 }
 
 export function recordSearchQueryEvent(query: string, resultCount: number = 0) {
@@ -157,34 +158,44 @@ function pruneMemoryStore() {
 
 /**
  * Checks whether Supabase analytics tables exist.
- * Re-checks every 30s if missing so executing the SQL migration takes effect immediately without restart.
+ * Coalesces concurrent checks and backs off for 10 minutes when tables are missing
+ * so Supabase REST logs aren't flooded with repeated 404 probes.
  */
 async function checkTablesExist(): Promise<boolean> {
   const now = Date.now()
   if (memoryStore.tablesExist) {
     return true
   }
-  if (now - memoryStore.tableCheckAt < 30000) {
+  if (now - memoryStore.tableCheckAt < 10 * 60 * 1000) {
     return false
   }
-  memoryStore.tableCheckAt = now
+  if (memoryStore.inFlightTableCheck) {
+    return memoryStore.inFlightTableCheck
+  }
 
-  try {
-    const supabase = getSupabaseAdmin()
-    const [activeRes, viewsRes] = await Promise.all([
-      supabase.from('active_visitors').select('visitor_id').limit(1),
-      supabase.from('site_page_views').select('id').limit(1)
-    ])
-    if (!activeRes.error && !viewsRes.error) {
-      memoryStore.tablesExist = true
-      return true
+  memoryStore.tableCheckAt = now
+  memoryStore.inFlightTableCheck = (async () => {
+    try {
+      const supabase = getSupabaseAdmin()
+      const [activeRes, viewsRes] = await Promise.all([
+        supabase.from('active_visitors').select('visitor_id', { count: 'exact', head: true }),
+        supabase.from('site_page_views').select('id', { count: 'exact', head: true })
+      ])
+      if (!activeRes.error && !viewsRes.error) {
+        memoryStore.tablesExist = true
+        return true
+      }
+      memoryStore.tablesExist = false
+      return false
+    } catch {
+      memoryStore.tablesExist = false
+      return false
+    } finally {
+      memoryStore.inFlightTableCheck = null
     }
-    memoryStore.tablesExist = false
-    return false
-  } catch {
-    memoryStore.tablesExist = false
-    return false
-  }
+  })()
+
+  return memoryStore.inFlightTableCheck
 }
 
 /**
@@ -258,6 +269,8 @@ export async function recordVisitorEvent(event: AnalyticsEvent): Promise<{ succe
       })
     }
   } catch (err) {
+    // Reset table cache if table was dropped/unavailable so fallback takes over cleanly
+    memoryStore.tablesExist = false
     console.warn('Analytics database sync warning (using persistent fallback):', err)
   }
 

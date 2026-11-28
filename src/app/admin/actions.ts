@@ -9,6 +9,15 @@ import { logAdminAction } from '@/lib/admin/audit'
 import { OFFICIAL_CU_CALENDAR_2026 } from '@/lib/data/academicCalendar'
 import { getLiveTrafficAnalyticsData } from '@/lib/analytics/tracker'
 import { sendStudentNotification } from '@/lib/notifications'
+import {
+  isMissingSchemaObjectError,
+  isSchemaMarkedMissing,
+  markSchemaMissing,
+} from '@/lib/supabase/missingSchemaCache'
+
+const REPORTS_MISSING_KEY = 'table:reports'
+const AUDIT_LOGS_MISSING_KEY = 'table:audit_logs'
+const PAPER_COMMENTS_EXT_MISSING_KEY = 'col:paper_comments.status'
 
 async function getAdminDb() {
   return getSupabaseAdmin()
@@ -112,13 +121,23 @@ export async function getAdminStats() {
     supabase.from('subjects').select('*', { count: 'exact', head: true })
   ])
 
-  // Optional counts for reports and requests with safe fallbacks
+  // Optional counts for reports, requests, and open doubts with safe fallbacks
   let openReportsCount = 0
   let openRequestsCount = 0
+  let openDoubtsCount = 0
 
   try {
-    const { count } = await supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'open')
-    openReportsCount = count || 0
+    if (!isSchemaMarkedMissing(REPORTS_MISSING_KEY)) {
+      const { count, error } = await supabase
+        .from('reports')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'open')
+      if (error && isMissingSchemaObjectError(error)) {
+        markSchemaMissing(REPORTS_MISSING_KEY)
+      } else {
+        openReportsCount = count || 0
+      }
+    }
   } catch {
     openReportsCount = 0
   }
@@ -130,6 +149,38 @@ export async function getAdminStats() {
     openRequestsCount = 0
   }
 
+  try {
+    if (!isSchemaMarkedMissing(PAPER_COMMENTS_EXT_MISSING_KEY)) {
+      const doubtsRes = await supabase
+        .from('paper_comments')
+        .select('id', { count: 'exact', head: true })
+        .is('parent_id', null)
+        .eq('status', 'open')
+
+      if (!doubtsRes.error) {
+        openDoubtsCount = doubtsRes.count || 0
+      } else {
+        if (isMissingSchemaObjectError(doubtsRes.error)) {
+          markSchemaMissing(PAPER_COMMENTS_EXT_MISSING_KEY)
+        }
+        // Fallback if status column isn't migrated yet: count parent doubts
+        const fallbackRes = await supabase
+          .from('paper_comments')
+          .select('id', { count: 'exact', head: true })
+          .is('parent_id', null)
+        openDoubtsCount = fallbackRes.count || 0
+      }
+    } else {
+      const fallbackRes = await supabase
+        .from('paper_comments')
+        .select('id', { count: 'exact', head: true })
+        .is('parent_id', null)
+      openDoubtsCount = fallbackRes.count || 0
+    }
+  } catch {
+    openDoubtsCount = 0
+  }
+
   return {
     pendingCount: pendingCount || 0,
     approvedCount: approvedCount || 0,
@@ -137,7 +188,8 @@ export async function getAdminStats() {
     usersCount: usersCount || 0,
     subjectsCount: subjectsCount || 0,
     openReportsCount,
-    openRequestsCount
+    openRequestsCount,
+    openDoubtsCount
   }
 }
 
@@ -167,17 +219,23 @@ export async function getAdminDashboardData() {
     .order('created_at', { ascending: false })
     .limit(8)
 
-  // Recent audit activity (falls back to resources if audit_logs table is not yet created)
+  // Recent audit activity (falls back cleanly if audit_logs table is not yet created)
   let recentAudit: Array<Record<string, unknown>> = []
-  try {
-    const { data: audits } = await supabase
-      .from('audit_logs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(8)
-    if (audits) recentAudit = audits
-  } catch {
-    recentAudit = []
+  if (!isSchemaMarkedMissing(AUDIT_LOGS_MISSING_KEY)) {
+    try {
+      const { data: audits, error } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(8)
+      if (error && isMissingSchemaObjectError(error)) {
+        markSchemaMissing(AUDIT_LOGS_MISSING_KEY)
+      } else if (audits) {
+        recentAudit = audits
+      }
+    } catch {
+      recentAudit = []
+    }
   }
 
   // Calculate semester distribution from approved resources
@@ -1077,6 +1135,8 @@ export async function getReportsList(statusFilter?: string) {
   const session = await getAdminSession()
   if (!session) return []
 
+  if (isSchemaMarkedMissing(REPORTS_MISSING_KEY)) return []
+
   const supabase = await getAdminDb()
 
   try {
@@ -1100,7 +1160,13 @@ export async function getReportsList(statusFilter?: string) {
     }
 
     const { data, error } = await query
-    if (error) throw error
+    if (error) {
+      if (isMissingSchemaObjectError(error)) {
+        markSchemaMissing(REPORTS_MISSING_KEY)
+        return []
+      }
+      throw error
+    }
     return data || []
   } catch (err) {
     console.warn('Reports table query error (migration may be pending):', err)
@@ -2078,6 +2144,8 @@ export async function getAuditLogsList(limit = 100) {
   const session = await getAdminSession()
   if (!session) return []
 
+  if (isSchemaMarkedMissing(AUDIT_LOGS_MISSING_KEY)) return []
+
   const supabase = await getAdminDb()
 
   try {
@@ -2087,7 +2155,13 @@ export async function getAuditLogsList(limit = 100) {
       .order('created_at', { ascending: false })
       .limit(limit)
 
-    if (error) throw error
+    if (error) {
+      if (isMissingSchemaObjectError(error)) {
+        markSchemaMissing(AUDIT_LOGS_MISSING_KEY)
+        return []
+      }
+      throw error
+    }
     return data || []
   } catch {
     return []
@@ -2111,15 +2185,21 @@ export async function getSecurityOverview() {
 
   // Fetch recent audit logs for security oversight
   let recentAdminActions: Array<Record<string, unknown>> = []
-  try {
-    const { data } = await supabase
-      .from('audit_logs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(20)
-    recentAdminActions = data || []
-  } catch {
-    recentAdminActions = []
+  if (!isSchemaMarkedMissing(AUDIT_LOGS_MISSING_KEY)) {
+    try {
+      const { data, error } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20)
+      if (error && isMissingSchemaObjectError(error)) {
+        markSchemaMissing(AUDIT_LOGS_MISSING_KEY)
+      } else {
+        recentAdminActions = data || []
+      }
+    } catch {
+      recentAdminActions = []
+    }
   }
 
   return {

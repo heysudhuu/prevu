@@ -1,6 +1,9 @@
+import PrevuLoadingIndicator from '@/components/ui/PrevuLoadingIndicator'
+
 export default function AdminLoading() {
   return (
     <div className="min-h-screen bg-prevu-bg">
+      <PrevuLoadingIndicator compact label="Loading admin" className="px-4 py-3" />
       {/* Admin header skeleton */}
       <div className="h-16 border-b border-prevu-surface-light bg-prevu-surface/50" />
       

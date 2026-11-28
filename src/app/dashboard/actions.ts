@@ -4,6 +4,11 @@ import { cookies } from 'next/headers'
 import { authAdmin } from '@/lib/firebase/server'
 import { getSupabaseAdmin } from '@/utils/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import {
+  isMissingSchemaObjectError,
+  isSchemaMarkedMissing,
+  markSchemaMissing,
+} from '@/lib/supabase/missingSchemaCache'
 
 /**
  * Toggles a bookmark for a specific resource
@@ -322,6 +327,8 @@ export async function getUserUpvotedResourceIds(): Promise<string[]> {
   }
 }
 
+const UPVOTE_RPC_MISSING_KEY = 'rpc:get_resource_upvote_counts'
+
 /**
  * Retrieves upvote counts map for resources using SQL-level aggregation.
  * Uses a grouped count query instead of fetching every row into JS memory.
@@ -329,28 +336,33 @@ export async function getUserUpvotedResourceIds(): Promise<string[]> {
 export async function getResourceUpvoteCounts(): Promise<Record<string, number>> {
   const supabase = getSupabaseAdmin()
   try {
-    // Use SQL aggregation — fetches one row per resource instead of one row per upvote
-    const { data, error } = await supabase
-      .rpc('get_resource_upvote_counts')
+    if (!isSchemaMarkedMissing(UPVOTE_RPC_MISSING_KEY)) {
+      // Use SQL aggregation — fetches one row per resource instead of one row per upvote
+      const { data, error } = await supabase.rpc('get_resource_upvote_counts')
 
-    // Fallback: if RPC doesn't exist yet, use the grouped select approach
-    if (error || !data) {
-      const { data: rawData } = await supabase
-        .from('resource_upvotes')
-        .select('resource_id')
+      if (!error && data) {
+        const counts: Record<string, number> = {}
+        data.forEach((r: { resource_id: string; upvote_count: number }) => {
+          counts[r.resource_id] = Number(r.upvote_count) || 0
+        })
+        return counts
+      }
 
-      if (!rawData) return {}
-
-      const counts: Record<string, number> = {}
-      rawData.forEach((r: { resource_id: string }) => {
-        counts[r.resource_id] = (counts[r.resource_id] || 0) + 1
-      })
-      return counts
+      if (error && isMissingSchemaObjectError(error)) {
+        markSchemaMissing(UPVOTE_RPC_MISSING_KEY)
+      }
     }
 
+    // Fallback: if RPC doesn't exist yet, use the grouped select approach
+    const { data: rawData } = await supabase
+      .from('resource_upvotes')
+      .select('resource_id')
+
+    if (!rawData) return {}
+
     const counts: Record<string, number> = {}
-    data.forEach((r: { resource_id: string; upvote_count: number }) => {
-      counts[r.resource_id] = r.upvote_count
+    rawData.forEach((r: { resource_id: string }) => {
+      counts[r.resource_id] = (counts[r.resource_id] || 0) + 1
     })
     return counts
   } catch {

@@ -31,6 +31,15 @@ import {
   getStoredQuestionReports
 } from './cbtStore'
 import { isSuperAdminEmail } from '@/lib/auth/admin-check'
+import {
+  isMissingSchemaObjectError,
+  isSchemaMarkedMissing,
+  markSchemaMissing,
+} from '@/lib/supabase/missingSchemaCache'
+
+const CBT_QUESTIONS_MISSING_KEY = 'table:cbt_questions_contributed'
+const CBT_SUBJ_OVERRIDES_MISSING_KEY = 'table:cbt_subject_overrides'
+const CBT_QUES_OVERRIDES_MISSING_KEY = 'table:cbt_question_overrides'
 
 /**
  * Helper to get authenticated user or return null
@@ -410,26 +419,30 @@ export async function getAllCbtQuestionsAdmin(statusFilter?: string) {
   }
 
   // 1. Try Supabase
-  try {
-    const supabase = getSupabaseAdmin()
-    let query = supabase
-      .from('cbt_questions_contributed')
-      .select(`
-        *,
-        users ( id, name, username, cu_verified )
-      `)
-      .order('created_at', { ascending: false })
+  if (!isSchemaMarkedMissing(CBT_QUESTIONS_MISSING_KEY)) {
+    try {
+      const supabase = getSupabaseAdmin()
+      let query = supabase
+        .from('cbt_questions_contributed')
+        .select(`
+          *,
+          users ( id, name, username, cu_verified )
+        `)
+        .order('created_at', { ascending: false })
 
-    if (statusFilter && statusFilter !== 'ALL' && statusFilter !== 'all') {
-      query = query.eq('status', statusFilter.toLowerCase())
-    }
+      if (statusFilter && statusFilter !== 'ALL' && statusFilter !== 'all') {
+        query = query.eq('status', statusFilter.toLowerCase())
+      }
 
-    const { data, error } = await query
-    if (!error && data && data.length > 0) {
-      return data
+      const { data, error } = await query
+      if (error && isMissingSchemaObjectError(error)) {
+        markSchemaMissing(CBT_QUESTIONS_MISSING_KEY)
+      } else if (!error && data && data.length > 0) {
+        return data
+      }
+    } catch {
+      // fallback to stored
     }
-  } catch {
-    // fallback to stored
   }
 
   // 2. Fallback to local store
@@ -452,24 +465,28 @@ export async function getPendingCbtQuestions() {
  */
 export async function getApprovedContributedQuestions(subjectCode?: string) {
   // 1. Try Supabase
-  try {
-    const supabase = getSupabaseAdmin()
-    let query = supabase
-      .from('cbt_questions_contributed')
-      .select('*')
-      .eq('status', 'approved')
-      .order('created_at', { ascending: false })
+  if (!isSchemaMarkedMissing(CBT_QUESTIONS_MISSING_KEY)) {
+    try {
+      const supabase = getSupabaseAdmin()
+      let query = supabase
+        .from('cbt_questions_contributed')
+        .select('*')
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false })
 
-    if (subjectCode) {
-      query = query.eq('subject_code', subjectCode.toUpperCase())
-    }
+      if (subjectCode) {
+        query = query.eq('subject_code', subjectCode.toUpperCase())
+      }
 
-    const { data, error } = await query
-    if (!error && data && data.length > 0) {
-      return data
+      const { data, error } = await query
+      if (error && isMissingSchemaObjectError(error)) {
+        markSchemaMissing(CBT_QUESTIONS_MISSING_KEY)
+      } else if (!error && data && data.length > 0) {
+        return data
+      }
+    } catch {
+      // fallback to store
     }
-  } catch {
-    // fallback to store
   }
 
   // 2. Fallback to local persistent store
@@ -864,12 +881,33 @@ export async function getCbtOverrides(): Promise<{
   const localSubjects = getStoredSubjectOverrides()
   const localQuestions = getStoredQuestionOverrides()
 
+  if (
+    isSchemaMarkedMissing(CBT_SUBJ_OVERRIDES_MISSING_KEY) &&
+    isSchemaMarkedMissing(CBT_QUES_OVERRIDES_MISSING_KEY)
+  ) {
+    return {
+      subjectOverrides: localSubjects,
+      questionOverrides: localQuestions,
+    }
+  }
+
   try {
     const supabase = getSupabaseAdmin()
     const [subjRes, quesRes] = await Promise.all([
-      supabase.from('cbt_subject_overrides').select('*'),
-      supabase.from('cbt_question_overrides').select('*')
+      isSchemaMarkedMissing(CBT_SUBJ_OVERRIDES_MISSING_KEY)
+        ? Promise.resolve({ data: null, error: null })
+        : supabase.from('cbt_subject_overrides').select('*'),
+      isSchemaMarkedMissing(CBT_QUES_OVERRIDES_MISSING_KEY)
+        ? Promise.resolve({ data: null, error: null })
+        : supabase.from('cbt_question_overrides').select('*')
     ])
+
+    if (subjRes.error && isMissingSchemaObjectError(subjRes.error)) {
+      markSchemaMissing(CBT_SUBJ_OVERRIDES_MISSING_KEY)
+    }
+    if (quesRes.error && isMissingSchemaObjectError(quesRes.error)) {
+      markSchemaMissing(CBT_QUES_OVERRIDES_MISSING_KEY)
+    }
 
     const subjMap = new Map<string, CbtSubjectOverride>()
     for (const s of localSubjects) subjMap.set(s.subjectCode.toUpperCase(), s)

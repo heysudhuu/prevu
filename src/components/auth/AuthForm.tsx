@@ -17,7 +17,9 @@ import { auth } from '@/lib/firebase/client'
 import { 
   syncUserToServer, 
   resolveEmailFromIdentifier, 
-  checkUsernameAvailable 
+  checkUsernameAvailable,
+  sendSignupOtp,
+  verifySignupOtp
 } from '@/app/login/actions'
 import { getFriendlyAuthErrorMessage } from '@/lib/firebase/auth-errors'
 import { Button } from '@/components/ui/Button'
@@ -35,7 +37,10 @@ import {
   Loader2,
   PartyPopper,
   ArrowRight,
-  ShieldCheck
+  ShieldCheck,
+  GraduationCap,
+  Layers,
+  KeyRound
 } from 'lucide-react'
 import Link from 'next/link'
 import SignOutButton from '@/components/auth/SignOutButton'
@@ -70,13 +75,27 @@ export default function AuthForm({ initialMode = 'login' }: { initialMode?: 'log
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  
+  const [branch, setBranch] = useState('BE-CSE')
+  const [currentSemester, setCurrentSemester] = useState<number>(1)
+
+  // Step 1 -> Step 2 OTP Verification State (Sign Up)
+  const [signupStep, setSignupStep] = useState<'email' | 'details'>('email')
+  const [otpSent, setOtpSent] = useState(false)
+  const [otpCode, setOtpCode] = useState('')
+  const [resendCooldown, setResendCooldown] = useState(0)
+
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const timer = setTimeout(() => setResendCooldown((prev) => Math.max(0, prev - 1)), 1000)
+    return () => clearTimeout(timer)
+  }, [resendCooldown])
 
   // Celebratory Success State after Signup
   const [signupSuccess, setSignupSuccess] = useState<{
@@ -95,6 +114,63 @@ export default function AuthForm({ initialMode = 'login' }: { initialMode?: 'log
     setInternalMode(newMode)
     setPassword('')
     setConfirmPassword('')
+    if (newMode !== 'signup') {
+      setSignupStep('email')
+      setOtpSent(false)
+      setOtpCode('')
+    }
+  }
+
+  const handleSendOtp = async () => {
+    clearMessages()
+    const cleanEmail = email.trim().toLowerCase()
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      setError('Please enter a valid email address.')
+      return
+    }
+    setLoading(true)
+    try {
+      const res = await sendSignupOtp(cleanEmail)
+      if (res.error) {
+        setError(res.error)
+      } else {
+        setEmail(cleanEmail)
+        setOtpSent(true)
+        setResendCooldown(60)
+        setSuccessMessage(
+          res.devMode
+            ? `Verification code generated for ${cleanEmail} (check server terminal in dev mode).`
+            : `6-digit verification code sent to ${cleanEmail}. Check your inbox or Spam folder.`
+        )
+      }
+    } catch {
+      setError('Failed to send verification code. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleVerifyOtp = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    clearMessages()
+    if (!/^\d{6}$/.test(otpCode.trim())) {
+      setError('Please enter the 6-digit verification code.')
+      return
+    }
+    setLoading(true)
+    try {
+      const res = await verifySignupOtp(email.trim().toLowerCase(), otpCode.trim())
+      if (res.error) {
+        setError(res.error)
+      } else {
+        setSignupStep('details')
+        setSuccessMessage('Email verified! Complete your profile and set your password below.')
+      }
+    } catch {
+      setError('Could not verify the code. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleEmailAuth = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -158,9 +234,9 @@ export default function AuthForm({ initialMode = 'login' }: { initialMode?: 'log
         // 3. Update Firebase Profile
         await updateProfile(userCredential.user, { displayName: name.trim() })
         
-        // 4. Sync to Supabase Database
+        // 4. Sync to Supabase Database (includes verified email + academic details)
         const idToken = await userCredential.user.getIdToken(true)
-        await syncUserToServer(idToken, name.trim(), cleanUsername)
+        await syncUserToServer(idToken, name.trim(), cleanUsername, branch, currentSemester)
 
         // 5. Show Celebration Gesture
         setSignupSuccess({
@@ -395,14 +471,14 @@ export default function AuthForm({ initialMode = 'login' }: { initialMode?: 'log
   // REGULAR AUTH FORM VIEW
   // -------------------------------------------------------------
   return (
-    <div className="w-full max-w-md">
+    <div className={`w-full transition-all duration-300 ${mode === 'signup' && signupStep === 'details' ? 'max-w-xl' : 'max-w-md'}`}>
       {/* Brand Header */}
-      <div className="text-center mb-6">
+      <div className="text-center mb-4">
         <Link href="/" className="inline-flex items-center gap-2 font-sans text-3xl font-extrabold tracking-tighter text-prevu-text hover:text-prevu-accent transition-colors">
           <Sparkles className="w-6 h-6 text-prevu-accent" />
           Prevu
         </Link>
-        <p className="text-sm text-prevu-text-muted mt-2">
+        <p className="text-sm text-prevu-text-muted mt-1.5">
           {mode === 'login' && 'Sign in with your username, student UID, or email.'}
           {mode === 'signup' && 'Create your account to access and contribute resources.'}
           {mode === 'forgot-password' && 'Reset your password to regain access.'}
@@ -410,7 +486,7 @@ export default function AuthForm({ initialMode = 'login' }: { initialMode?: 'log
       </div>
 
       {/* Main Card */}
-      <div className="backdrop-blur-xl bg-prevu-surface/90 border border-prevu-surface-light rounded-2xl shadow-2xl p-6 sm:p-8">
+      <div className="backdrop-blur-xl bg-prevu-surface/90 border border-prevu-surface-light rounded-2xl shadow-2xl p-5 sm:p-6">
         
         {searchParams.get('deleted') === 'true' && (
           <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-300 flex items-start gap-2.5">
@@ -426,7 +502,7 @@ export default function AuthForm({ initialMode = 'login' }: { initialMode?: 'log
 
         {/* Segmented Mode Switcher */}
         {mode !== 'forgot-password' ? (
-          <div className="flex bg-prevu-bg/80 p-1 rounded-xl border border-prevu-surface-light mb-6">
+          <div className="flex bg-prevu-bg/80 p-1 rounded-xl border border-prevu-surface-light mb-4">
             <button
               type="button"
               onClick={() => handleModeSwitch('login')}
@@ -544,8 +620,117 @@ export default function AuthForm({ initialMode = 'login' }: { initialMode?: 'log
               )}
             </Button>
           </form>
+        ) : mode === 'signup' && signupStep === 'email' ? (
+          <form onSubmit={handleVerifyOtp} className="space-y-4">
+            {/* 2-Step Progress Indicator */}
+            <div className="flex items-center justify-between text-[11px] font-mono text-prevu-text-muted bg-prevu-bg/60 border border-prevu-surface-light rounded-xl px-3 py-2">
+              <span className="text-prevu-accent font-bold">1. Verify Email</span>
+              <span className="text-prevu-surface-light">→</span>
+              <span>2. Profile &amp; Academics</span>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-prevu-text-muted" htmlFor="signup-email">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-prevu-text-muted" />
+                <input
+                  type="email"
+                  id="signup-email"
+                  value={email}
+                  disabled={otpSent}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@example.com or you@cuchd.in"
+                  required
+                  className="w-full pl-10 pr-4 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text placeholder:text-prevu-text-muted/50 focus:outline-none focus:border-prevu-accent transition-colors disabled:opacity-60"
+                />
+              </div>
+              {otpSent && (
+                <div className="flex items-center justify-between text-[11px] pt-0.5">
+                  <span className="text-emerald-400">6-digit code sent to your email</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      clearMessages()
+                      setOtpSent(false)
+                      setOtpCode('')
+                    }}
+                    className="text-prevu-text-muted hover:text-prevu-accent underline cursor-pointer"
+                  >
+                    Change email
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {!otpSent ? (
+              <Button
+                type="button"
+                onClick={handleSendOtp}
+                className="w-full py-2.5"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Sending Code...
+                  </>
+                ) : (
+                  'Send Verification Code'
+                )}
+              </Button>
+            ) : (
+              <>
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-1.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-medium text-prevu-text-muted" htmlFor="signup-otp">
+                      6-Digit Verification Code
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleSendOtp}
+                      disabled={loading || resendCooldown > 0}
+                      className="text-[11px] text-prevu-accent hover:text-purple-400 disabled:text-prevu-text-muted/60 cursor-pointer"
+                    >
+                      {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-prevu-text-muted" />
+                    <input
+                      type="text"
+                      id="signup-otp"
+                      inputMode="numeric"
+                      maxLength={6}
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="••••••"
+                      required
+                      className="w-full pl-10 pr-4 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-base font-mono font-bold tracking-[0.4em] text-center text-prevu-text placeholder:text-prevu-text-muted/40 focus:outline-none focus:border-prevu-accent transition-colors"
+                    />
+                  </div>
+                </motion.div>
+
+                <Button type="submit" className="w-full py-2.5" disabled={loading || otpCode.length !== 6}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Verifying Code...
+                    </>
+                  ) : (
+                    'Verify Email & Continue'
+                  )}
+                </Button>
+              </>
+            )}
+          </form>
         ) : (
-          <form onSubmit={handleEmailAuth} className="space-y-4">
+          <form onSubmit={handleEmailAuth} className="space-y-3.5">
             
             {/* SIGN IN: Username or Email Field */}
             {mode === 'login' && (
@@ -568,153 +753,213 @@ export default function AuthForm({ initialMode = 'login' }: { initialMode?: 'log
               </div>
             )}
 
-            {/* SIGN UP: Name, Username, and Email Fields */}
+            {/* SIGN UP STEP 2: Verified Email Pill + 2-Column Name, Username, Dept, Year/Sem */}
             {mode === 'signup' && (
-              <>
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  className="space-y-1.5"
-                >
-                  <label className="block text-xs font-medium text-prevu-text-muted" htmlFor="name">
-                    Full Name
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-prevu-text-muted" />
-                    <input
-                      type="text"
-                      id="name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g. Alex Sharma"
-                      required
-                      className="w-full pl-10 pr-4 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text placeholder:text-prevu-text-muted/50 focus:outline-none focus:border-prevu-accent transition-colors"
-                    />
+              <div className="space-y-3.5">
+                {/* 2-Step Progress Indicator + Verified Email Badge */}
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs bg-emerald-500/10 border border-emerald-500/25 rounded-xl px-3.5 py-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span className="font-mono text-emerald-300 truncate">{email}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 shrink-0">
+                      Verified
+                    </span>
                   </div>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  className="space-y-1.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-medium text-prevu-text-muted" htmlFor="username">
-                      Username or Student UID
-                    </label>
-                    <span className="text-[11px] text-prevu-text-muted/70">Unique login handle</span>
-                  </div>
-                  <div className="relative">
-                    <AtSign className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-prevu-text-muted" />
-                    <input
-                      type="text"
-                      id="username"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s+/g, ''))}
-                      placeholder="e.g. 21BCS10145 or alex_cse"
-                      required
-                      className="w-full pl-10 pr-4 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text placeholder:text-prevu-text-muted/50 focus:outline-none focus:border-prevu-accent transition-colors font-mono text-[13px]"
-                    />
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  className="space-y-1.5"
-                >
-                  <label className="block text-xs font-medium text-prevu-text-muted" htmlFor="email">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-prevu-text-muted" />
-                    <input
-                      type="email"
-                      id="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="name@example.com or you@cuchd.in"
-                      required
-                      className="w-full pl-10 pr-4 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text placeholder:text-prevu-text-muted/50 focus:outline-none focus:border-prevu-accent transition-colors"
-                    />
-                  </div>
-                </motion.div>
-              </>
-            )}
-
-            {/* PASSWORD FIELD */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-medium text-prevu-text-muted" htmlFor="password">
-                  Password
-                </label>
-                {mode === 'login' && (
                   <button
                     type="button"
-                    onClick={() => handleModeSwitch('forgot-password')}
-                    className="text-xs text-prevu-accent hover:text-purple-400 transition-colors"
+                    onClick={() => {
+                      clearMessages()
+                      setSignupStep('email')
+                      setOtpSent(false)
+                      setOtpCode('')
+                    }}
+                    className="text-[11px] text-prevu-text-muted hover:text-white underline shrink-0 cursor-pointer"
                   >
-                    Forgot password?
+                    Change
                   </button>
-                )}
-              </div>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-prevu-text-muted" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  className="w-full pl-10 pr-10 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text placeholder:text-prevu-text-muted/50 focus:outline-none focus:border-prevu-accent transition-colors"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-prevu-text-muted hover:text-prevu-text transition-colors"
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
+                </div>
 
-            {/* CONFIRM PASSWORD FIELD (SIGN UP ONLY) */}
-            {mode === 'signup' && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="space-y-1.5"
-              >
-                <label className="block text-xs font-medium text-prevu-text-muted" htmlFor="confirm-password">
-                  Confirm Password
-                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-1.5"
+                  >
+                    <label className="block text-xs font-medium text-prevu-text-muted" htmlFor="name">
+                      Full Name
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-prevu-text-muted" />
+                      <input
+                        type="text"
+                        id="name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="e.g. Alex Sharma"
+                        required
+                        className="w-full pl-10 pr-4 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text placeholder:text-prevu-text-muted/50 focus:outline-none focus:border-prevu-accent transition-colors"
+                      />
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-1.5"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <label className="block text-xs font-medium text-prevu-text-muted truncate" htmlFor="username">
+                        Username / UID
+                      </label>
+                      <span className="text-[10px] text-prevu-text-muted/70 shrink-0">Unique handle</span>
+                    </div>
+                    <div className="relative">
+                      <AtSign className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-prevu-text-muted" />
+                      <input
+                        type="text"
+                        id="username"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s+/g, ''))}
+                        placeholder="e.g. 21BCS10145"
+                        required
+                        className="w-full pl-10 pr-4 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text placeholder:text-prevu-text-muted/50 focus:outline-none focus:border-prevu-accent transition-colors font-mono text-[13px]"
+                      />
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-1.5"
+                  >
+                    <label className="block text-xs font-medium text-prevu-text-muted" htmlFor="department">
+                      Department / Course
+                    </label>
+                    <div className="relative">
+                      <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-prevu-text-muted pointer-events-none" />
+                      <select
+                        id="department"
+                        value={branch}
+                        onChange={(e) => setBranch(e.target.value)}
+                        className="w-full pl-10 pr-3 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text focus:outline-none focus:border-prevu-accent transition-colors"
+                      >
+                        <option value="BE-CSE">BE-CSE (Core)</option>
+                        <option value="CSE-AIML">BE-CSE (AI &amp; ML)</option>
+                        <option value="CSE-DS">BE-CSE (Data Science)</option>
+                        <option value="CSE-CLOUD">BE-CSE (Cloud &amp; DevOps)</option>
+                        <option value="CSE-CYBER">BE-CSE (Cyber Security)</option>
+                        <option value="CSE-IOT">BE-CSE (IoT)</option>
+                        <option value="IT">Information Technology (IT)</option>
+                        <option value="OTHER">Other Engineering / Non-CSE</option>
+                      </select>
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-1.5"
+                  >
+                    <label className="block text-xs font-medium text-prevu-text-muted" htmlFor="semester">
+                      Year &amp; Semester
+                    </label>
+                    <div className="relative">
+                      <Layers className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-prevu-text-muted pointer-events-none" />
+                      <select
+                        id="semester"
+                        value={currentSemester}
+                        onChange={(e) => setCurrentSemester(Number(e.target.value))}
+                        className="w-full pl-10 pr-3 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text focus:outline-none focus:border-prevu-accent transition-colors"
+                      >
+                        <option value={1}>1st Year • Semester 1</option>
+                        <option value={2}>1st Year • Semester 2</option>
+                        <option value={3}>2nd Year • Semester 3</option>
+                        <option value={4}>2nd Year • Semester 4</option>
+                        <option value={5}>3rd Year • Semester 5</option>
+                        <option value={6}>3rd Year • Semester 6</option>
+                        <option value={7}>4th Year • Semester 7</option>
+                        <option value={8}>4th Year • Semester 8</option>
+                      </select>
+                    </div>
+                  </motion.div>
+                </div>
+              </div>
+            )}
+
+            {/* PASSWORD & CONFIRM PASSWORD (2-Column in Signup, Single in Login) */}
+            <div className={mode === 'signup' ? 'grid grid-cols-1 sm:grid-cols-2 gap-3.5' : ''}>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-medium text-prevu-text-muted" htmlFor="password">
+                    Password
+                  </label>
+                  {mode === 'login' && (
+                    <button
+                      type="button"
+                      onClick={() => handleModeSwitch('forgot-password')}
+                      className="text-xs text-prevu-accent hover:text-purple-400 transition-colors"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-prevu-text-muted" />
                   <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    id="confirm-password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    type={showPassword ? 'text' : 'password'}
+                    id="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    required={mode === 'signup'}
+                    required
                     className="w-full pl-10 pr-10 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text placeholder:text-prevu-text-muted/50 focus:outline-none focus:border-prevu-accent transition-colors"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3.5 top-1/2 -translate-y-1/2 text-prevu-text-muted hover:text-prevu-text transition-colors"
                     tabIndex={-1}
                   >
-                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-              </motion.div>
-            )}
+              </div>
+
+              {mode === 'signup' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-1.5"
+                >
+                  <label className="block text-xs font-medium text-prevu-text-muted" htmlFor="confirm-password">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-prevu-text-muted" />
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      id="confirm-password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required={mode === 'signup'}
+                      className="w-full pl-10 pr-10 py-2.5 bg-prevu-bg border border-prevu-surface-light rounded-xl text-sm text-prevu-text placeholder:text-prevu-text-muted/50 focus:outline-none focus:border-prevu-accent transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-prevu-text-muted hover:text-prevu-text transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </div>
 
             {/* Submit Button */}
-            <Button type="submit" className="w-full py-2.5 mt-2" disabled={loading}>
+            <Button type="submit" className="w-full py-2.5 mt-1" disabled={loading}>
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -728,7 +973,7 @@ export default function AuthForm({ initialMode = 'login' }: { initialMode?: 'log
         )}
 
         {/* Social Login Divider */}
-        <div className="my-6 flex items-center gap-3">
+        <div className="my-4 flex items-center gap-3">
           <div className="h-px flex-1 bg-prevu-surface-light" />
           <span className="text-[11px] uppercase tracking-wider text-prevu-text-muted font-medium">
             {mode === 'forgot-password' ? 'Or sign in directly with' : 'Or continue with'}
@@ -768,7 +1013,7 @@ export default function AuthForm({ initialMode = 'login' }: { initialMode?: 'log
       </div>
 
       {/* Footer Helper Note */}
-      <p className="text-center text-xs text-prevu-text-muted mt-6">
+      <p className="text-center text-xs text-prevu-text-muted mt-4">
         Student-run initiative for BE-CSE • Chandigarh University
       </p>
     </div>

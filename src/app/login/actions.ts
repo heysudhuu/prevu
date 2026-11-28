@@ -1,10 +1,179 @@
 'use server'
 
+import crypto from 'crypto'
 import { cookies } from 'next/headers'
 import { authAdmin } from '@/lib/firebase/server'
 import { getSupabaseAdmin } from '@/utils/supabase/admin'
 import { isSuperAdminEmail } from '@/lib/auth/admin-check'
 import { sendStudentNotification } from '@/lib/notifications'
+import {
+  isDisposableEmail,
+  hashOtp,
+  safeCompareHex,
+  signTokenPayload,
+  verifyTokenPayload,
+  sendOtpEmail
+} from '@/lib/auth/otp'
+
+const OTP_COOKIE_NAME = 'prevu-signup-otp'
+const VERIFIED_EMAIL_COOKIE_NAME = 'prevu-verified-email'
+
+interface SignupOtpCookie {
+  email: string
+  otpHash: string
+  exp: number
+  sentAt: number
+  attempts: number
+}
+
+interface VerifiedEmailCookie {
+  email: string
+  verifiedAt: number
+  exp: number
+}
+
+/**
+ * Step 1a: Send a 6-digit OTP verification code to the student's email before account creation.
+ */
+export async function sendSignupOtp(rawEmail: string): Promise<{ success?: boolean; error?: string; devMode?: boolean }> {
+  try {
+    const email = rawEmail.trim().toLowerCase()
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!email || !emailRegex.test(email)) {
+      return { error: 'Please enter a valid email address.' }
+    }
+
+    if (isDisposableEmail(email)) {
+      return { error: 'Temporary or disposable email addresses are not allowed. Please use your personal or university email.' }
+    }
+
+    const cookieStore = await cookies()
+    const existingOtpRaw = cookieStore.get(OTP_COOKIE_NAME)?.value
+    if (existingOtpRaw) {
+      const existing = verifyTokenPayload<SignupOtpCookie>(existingOtpRaw)
+      if (existing && existing.email === email && Date.now() - existing.sentAt < 60_000) {
+        const waitSec = Math.ceil((60_000 - (Date.now() - existing.sentAt)) / 1000)
+        return { error: `Please wait ${waitSec}s before requesting another verification code.` }
+      }
+    }
+
+    // Check if email already exists in Supabase
+    const supabase = getSupabaseAdmin()
+    const { data: existingDbUser } = await supabase
+      .from('users')
+      .select('id')
+      .or(`email.ilike.${email},cu_email.ilike.${email}`)
+      .limit(1)
+      .maybeSingle()
+
+    if (existingDbUser) {
+      return { error: 'An account with this email already exists. Please sign in instead.' }
+    }
+
+    const otp = String(crypto.randomInt(100000, 1000000))
+    const now = Date.now()
+    const cookiePayload: SignupOtpCookie = {
+      email,
+      otpHash: hashOtp(email, otp),
+      exp: now + 10 * 60_000, // 10 minutes
+      sentAt: now,
+      attempts: 0
+    }
+
+    const emailRes = await sendOtpEmail(email, otp)
+
+    cookieStore.set(OTP_COOKIE_NAME, signTokenPayload(cookiePayload), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 10 * 60
+    })
+
+    return { success: true, devMode: emailRes.devMode }
+  } catch (err: unknown) {
+    console.error('[Prevu OTP] sendSignupOtp error:', err)
+    return {
+      error: err instanceof Error ? err.message : 'Failed to send verification code. Please try again.'
+    }
+  }
+}
+
+/**
+ * Step 1b: Verify the 6-digit OTP and issue a signed email-verified cookie for Step 2.
+ */
+export async function verifySignupOtp(rawEmail: string, rawOtp: string): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const email = rawEmail.trim().toLowerCase()
+    const otp = rawOtp.trim().replace(/\s+/g, '')
+
+    if (!email || !/^\d{6}$/.test(otp)) {
+      return { error: 'Please enter the 6-digit verification code sent to your email.' }
+    }
+
+    const cookieStore = await cookies()
+    const token = cookieStore.get(OTP_COOKIE_NAME)?.value
+    if (!token) {
+      return { error: 'Verification code expired or not found. Please request a new code.' }
+    }
+
+    const payload = verifyTokenPayload<SignupOtpCookie>(token)
+    if (!payload || payload.email !== email) {
+      return { error: 'Verification session mismatch. Please request a new code.' }
+    }
+
+    if (Date.now() > payload.exp) {
+      cookieStore.delete(OTP_COOKIE_NAME)
+      return { error: 'This verification code has expired. Please request a new code.' }
+    }
+
+    if (payload.attempts >= 5) {
+      cookieStore.delete(OTP_COOKIE_NAME)
+      return { error: 'Too many incorrect attempts. Please request a new verification code.' }
+    }
+
+    const expectedHash = hashOtp(email, otp)
+    if (!safeCompareHex(expectedHash, payload.otpHash)) {
+      const nextAttempts = payload.attempts + 1
+      if (nextAttempts >= 5) {
+        cookieStore.delete(OTP_COOKIE_NAME)
+        return { error: 'Too many incorrect attempts. Please request a new verification code.' }
+      }
+      cookieStore.set(
+        OTP_COOKIE_NAME,
+        signTokenPayload({ ...payload, attempts: nextAttempts }),
+        {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+          maxAge: Math.max(60, Math.floor((payload.exp - Date.now()) / 1000))
+        }
+      )
+      return { error: `Incorrect verification code. ${5 - nextAttempts} attempt(s) remaining.` }
+    }
+
+    // OTP verified! Clear OTP cookie and set signed verified-email cookie (valid 30 mins)
+    cookieStore.delete(OTP_COOKIE_NAME)
+    const verifiedPayload: VerifiedEmailCookie = {
+      email,
+      verifiedAt: Date.now(),
+      exp: Date.now() + 30 * 60_000
+    }
+    cookieStore.set(VERIFIED_EMAIL_COOKIE_NAME, signTokenPayload(verifiedPayload), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 30 * 60
+    })
+
+    return { success: true }
+  } catch (err) {
+    console.error('[Prevu OTP] verifySignupOtp error:', err)
+    return { error: 'Could not verify code. Please try again.' }
+  }
+}
 
 /**
  * Checks whether a given username is available or already taken.
@@ -65,24 +234,6 @@ export async function resolveEmailFromIdentifier(identifier: string): Promise<{ 
         return { email: userByEmail.email }
       }
 
-      // Check if user had a typo in the email (e.g., extra character at the end)
-      const prefix = cleanIdentifier.split('@')[0]
-      if (prefix.length >= 4) {
-        const shortenedPrefix = prefix.slice(0, -1)
-        const { data: similarUser } = await supabase
-          .from('users')
-          .select('email, username')
-          .or(`email.ilike.%${shortenedPrefix}%,username.ilike.%${shortenedPrefix}%`)
-          .limit(1)
-          .maybeSingle()
-
-        if (similarUser?.email) {
-          return {
-            error: `No account found for "${cleanIdentifier}". Did you mean ${similarUser.email} (username @${similarUser.username})?`
-          }
-        }
-      }
-
       return { email: cleanIdentifier }
     }
 
@@ -131,23 +282,19 @@ export async function resolveEmailFromIdentifier(identifier: string): Promise<{ 
 /**
  * Synchronizes authenticated Firebase user into Supabase `users` database table.
  */
-export async function syncUserToServer(idToken: string, name?: string, username?: string) {
+export async function syncUserToServer(
+  idToken: string,
+  name?: string,
+  username?: string,
+  branch?: string,
+  currentSemester?: number
+) {
   try {
     const decodedToken = await authAdmin.verifyIdToken(idToken)
     const uid = decodedToken.uid
-    const email = decodedToken.email
+    const email = decodedToken.email?.toLowerCase()
 
-    // Store token in cookie
     const cookieStore = await cookies()
-    cookieStore.set('firebase-token', idToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7 // 7 days
-    })
-
-    // Sync user to Supabase Database
     const supabase = getSupabaseAdmin()
 
     // Check if user exists
@@ -156,6 +303,30 @@ export async function syncUserToServer(idToken: string, name?: string, username?
       .select('id, name, username, role')
       .eq('id', uid)
       .maybeSingle()
+
+    // Enforce email verification for new email/password signups
+    if (!existingUser && !decodedToken.email_verified) {
+      const verifiedCookieRaw = cookieStore.get(VERIFIED_EMAIL_COOKIE_NAME)?.value
+      const verifiedPayload = verifiedCookieRaw
+        ? verifyTokenPayload<VerifiedEmailCookie>(verifiedCookieRaw)
+        : null
+
+      if (!verifiedPayload || !email || verifiedPayload.email !== email || Date.now() > verifiedPayload.exp) {
+        throw new Error('Email verification required. Please verify your email with the OTP code first.')
+      }
+
+      // Valid OTP verification cookie confirmed — clear it so it cannot be reused
+      cookieStore.delete(VERIFIED_EMAIL_COOKIE_NAME)
+    }
+
+    // Store token in cookie
+    cookieStore.set('firebase-token', idToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7 // 7 days
+    })
 
     const resolvedName = name?.trim() || decodedToken.name || email?.split('@')[0] || 'Student'
     
@@ -166,12 +337,19 @@ export async function syncUserToServer(idToken: string, name?: string, username?
     const isSuperAdmin = isSuperAdminEmail(email)
     const finalRole = isSuperAdmin ? 'admin' : (existingUser?.role || 'student')
 
+    const validSemester =
+      typeof currentSemester === 'number' && currentSemester >= 1 && currentSemester <= 8
+        ? currentSemester
+        : 1
+
     if (!existingUser) {
       await supabase.from('users').insert({
         id: uid,
         name: resolvedName,
         username: resolvedUsername,
         email: email,
+        branch: branch?.trim() || 'BE-CSE',
+        current_semester: validSemester,
         cu_verified: email?.endsWith('@cuchd.in') ? true : false,
         cu_email: email?.endsWith('@cuchd.in') ? email : null,
         role: finalRole

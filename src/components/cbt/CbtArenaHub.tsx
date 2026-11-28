@@ -181,7 +181,7 @@ export default function CbtArenaHub({
     {
       id: 'open-elective',
       label: 'Open Electives (7th Sem)',
-      count: `${subjects.find(s => s.category === 'open-elective')?.totalQuestions || 162} MCQs`,
+      count: `${subjects.filter(s => s.category === 'open-elective' && s.isReady).reduce((sum, s) => sum + s.totalQuestions, 0)} MCQs`,
       icon: Compass
     },
     {
@@ -634,9 +634,8 @@ export default function CbtArenaHub({
                   type="button"
                   whileTap={{ scale: 0.96 }}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`relative px-4 py-2.5 rounded-2xl text-xs font-semibold whitespace-nowrap transition-colors duration-200 cursor-pointer flex items-center gap-2 shrink-0 ${
-                    isSelected ? 'text-white' : 'text-prevu-text-muted hover:text-white'
-                  }`}
+                  className={`relative px-4 py-2.5 rounded-2xl text-xs font-semibold whitespace-nowrap transition-colors duration-200 cursor-pointer flex items-center gap-2 shrink-0 ${isSelected ? 'text-white' : 'text-prevu-text-muted hover:text-white'
+                    }`}
                 >
                   {isSelected && (
                     <motion.div
@@ -647,11 +646,10 @@ export default function CbtArenaHub({
                   )}
                   <Icon className={`w-3.5 h-3.5 relative z-10 ${isSelected ? 'text-white' : 'text-prevu-text-muted'}`} />
                   <span className="relative z-10">{cat.label}</span>
-                  <span className={`relative z-10 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-                    isSelected
-                      ? 'bg-white/20 text-white'
-                      : 'bg-prevu-bg/90 border border-prevu-surface-light text-prevu-text-muted'
-                  }`}>
+                  <span className={`relative z-10 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${isSelected
+                    ? 'bg-white/20 text-white'
+                    : 'bg-prevu-bg/90 border border-prevu-surface-light text-prevu-text-muted'
+                    }`}>
                     {cat.count}
                   </span>
                 </motion.button>
@@ -731,15 +729,14 @@ export default function CbtArenaHub({
 
           <motion.div
             layout
-            className={`grid grid-cols-1 gap-5 ${
-              liveFilteredSubjects.length === 1
-                ? 'max-w-2xl'
-                : liveFilteredSubjects.length === 2 || liveFilteredSubjects.length === 4
-                  ? 'md:grid-cols-2'
-                  : liveFilteredSubjects.length === 5
-                    ? 'md:grid-cols-2 lg:grid-cols-6'
-                    : 'md:grid-cols-2 lg:grid-cols-3'
-            }`}
+            className={`grid grid-cols-1 gap-5 ${liveFilteredSubjects.length === 1
+              ? 'max-w-2xl'
+              : liveFilteredSubjects.length === 2 || liveFilteredSubjects.length === 4
+                ? 'md:grid-cols-2'
+                : liveFilteredSubjects.length === 5
+                  ? 'md:grid-cols-2 lg:grid-cols-6'
+                  : 'md:grid-cols-2 lg:grid-cols-3'
+              }`}
           >
             <AnimatePresence mode="popLayout">
               {liveFilteredSubjects.map((subject, idx) => {

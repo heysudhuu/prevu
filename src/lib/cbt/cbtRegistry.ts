@@ -5,6 +5,7 @@ import { ACP101_QUESTIONS } from './questions/acp101'
 import { UHV101_QUESTIONS } from './questions/uhv101'
 import { ENT101_QUESTIONS } from './questions/ent101'
 import { COA201_QUESTIONS } from './questions/coa201'
+import { CPE301_QUESTIONS } from './questions/cpe301'
 
 /**
  * Registry of available CBT Mock Test subjects in Prevu
@@ -634,6 +635,57 @@ export const CBT_SUBJECTS: CbtSubject[] = [
     credits: 4,
     isReady: true,
     badgeColor: 'from-sky-600 to-indigo-600'
+  },
+  {
+    code: 'CPE-301',
+    name: 'Cleaner Production & Circular Economy',
+    semester: 7,
+    year: 4,
+    category: 'open-elective',
+    categoryLabel: 'Open Elective',
+    totalQuestions: CPE301_QUESTIONS.length,
+    description: '160 practice MCQs (105 direct + 11 case-study passages / 55 MCQs) covering Sustainability & Circular Economy, Sustainable Materials Management, and Sustainable Construction.',
+    topics: [
+      'Course 1: Sustainability & Circular Economy',
+      'Course 2: Sustainable Materials Management',
+      'Course 3: Sustainable Construction',
+      'Paragraph-Based Passage MCQs'
+    ],
+    topicsList: [
+      {
+        id: 'all',
+        name: 'All Courses & Passages (Mix Practice)',
+        count: CPE301_QUESTIONS.length,
+        description: 'Complete 160-question CBT bank across Section A (Direct MCQs) and Section B (11 Passages)'
+      },
+      {
+        id: 'course-1-sustainability',
+        name: 'Course 1: Sustainability & Circular Economy',
+        count: CPE301_QUESTIONS.filter(q => q.topic === 'course-1-sustainability').length,
+        description: 'Planetary Boundaries, IPAT, Keeling Curve, GWP, Doughnut Economics, Butterfly Diagram, and UN SDGs'
+      },
+      {
+        id: 'course-2-materials',
+        name: 'Course 2: Sustainable Materials Management',
+        count: CPE301_QUESTIONS.filter(q => q.topic === 'course-2-materials').length,
+        description: 'Slowing/narrowing/closing loops, LCA phases, material criticality, PaaS, EPR, PESTEL, and ecodesign'
+      },
+      {
+        id: 'course-3-construction',
+        name: 'Course 3: Sustainable Construction',
+        count: CPE301_QUESTIONS.filter(q => q.topic === 'course-3-construction').length,
+        description: 'Site safety, SDS/PPE, IAQ plans, urban mining, 15-minute cities, systems thinking, and silvopasture'
+      },
+      {
+        id: 'unseen-passages',
+        name: 'Paragraph-Based Passage MCQs (11 Passages • 55 MCQs)',
+        count: CPE301_QUESTIONS.filter(q => q.topic === 'unseen-passages').length,
+        description: 'All 11 scenario passages across Courses 1, 2, and 3 (Q106–Q160)'
+      }
+    ],
+    credits: 3,
+    isReady: true,
+    badgeColor: 'from-emerald-600 to-lime-600'
   }
 ]
 
@@ -705,6 +757,8 @@ export function getQuestionsForSubject(
     pool = [...ENT101_QUESTIONS]
   } else if (code === 'COA-201' || code === 'COA201') {
     pool = [...COA201_QUESTIONS]
+  } else if (code === 'CPE-301' || code === 'CPE301' || code.includes('CLEANER')) {
+    pool = [...CPE301_QUESTIONS]
   }
 
   if (extraApprovedQuestions && extraApprovedQuestions.length > 0) {
